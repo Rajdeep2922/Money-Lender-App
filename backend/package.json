@@ -1,0 +1,34 @@
+{
+  "name": "loan-app-backend",
+  "version": "1.0.0",
+  "description": "MERN Money Loan Lender Application Backend",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "loan",
+    "mern",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "mongoose": "^8.0.3",
+    "node-cron": "^4.2.1",
+    "pdfmake": "^0.2.9"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
