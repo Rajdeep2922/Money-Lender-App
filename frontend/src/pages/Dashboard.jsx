@@ -24,19 +24,19 @@ const itemVariants = {
 };
 
 const StatCard = ({ title, value, icon: Icon, color, link }) => (
-    <motion.div variants={itemVariants}>
+    <motion.div variants={itemVariants} className="h-full">
         <Link
             to={link}
-            className="card p-6 flex items-center gap-4 hover:shadow-md transition-shadow group"
+            className="card p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow group h-full justify-between sm:justify-start text-left w-full"
         >
-            <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center`}>
-                <Icon className="w-6 h-6 text-white" />
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${color} flex items-center justify-center shrink-0 mb-1 sm:mb-0`}>
+                <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div className="flex-1">
-                <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-200">{value}</p>
+            <div className="flex-1 w-full min-w-0 flex flex-col items-start justify-end">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-1 text-left">{title}</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-200 truncate mt-0.5 sm:mt-0 text-left">{value}</p>
             </div>
-            <FiArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
+            <FiArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform hidden sm:block ml-auto" />
         </Link>
     </motion.div>
 );
@@ -112,7 +112,7 @@ export const Dashboard = () => {
             </motion.div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <StatCard
                     title="Active Portfolio"
                     value={formatCurrency(totalRemaining)}
@@ -146,7 +146,7 @@ export const Dashboard = () => {
             {/* Middle Section: Chart & Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Financial Overview Chart */}
-                <motion.div variants={itemVariants} className="card p-6 lg:col-span-2">
+                <motion.div variants={itemVariants} className="card p-4 sm:p-6 lg:col-span-2">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
                         Financial Overview
                     </h2>
@@ -206,7 +206,7 @@ export const Dashboard = () => {
                 {/* Portfolio Health & Quick Actions */}
                 <div className="flex flex-col gap-6">
                     {/* Portfolio Health Pie Chart */}
-                    <motion.div variants={itemVariants} className="card p-6">
+                    <motion.div variants={itemVariants} className="card p-4 sm:p-6">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                             Portfolio Health
                         </h2>
@@ -243,7 +243,7 @@ export const Dashboard = () => {
                     </motion.div>
 
                     {/* Quick Actions */}
-                    <motion.div variants={itemVariants} className="card p-6">
+                    <motion.div variants={itemVariants} className="card p-4 sm:p-6">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                             Quick Actions
                         </h2>
