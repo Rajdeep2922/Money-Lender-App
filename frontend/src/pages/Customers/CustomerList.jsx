@@ -88,7 +88,7 @@ export const CustomerList = () => {
                             <Link
                                 key={customer._id}
                                 to={`/customers/${customer._id}`}
-                                className="p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                             >
                                 <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400 font-semibold">
                                     {customer.firstName?.[0]}{customer.lastName?.[0]}
