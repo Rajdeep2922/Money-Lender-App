@@ -40,7 +40,7 @@ const CustomerDetails = () => {
             className="space-y-6"
         >
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div className="flex items-center gap-4">
                     <Link to="/customers" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
                         <FiArrowLeft className="w-5 h-5 text-gray-500" />
@@ -54,7 +54,7 @@ const CustomerDetails = () => {
                         </p>
                     </div>
                 </div>
-                <Link to={`/customers/${id}/edit`} className="btn btn-secondary gap-2">
+                <Link to={`/customers/${id}/edit`} className="btn btn-secondary gap-2 w-full sm:w-auto justify-center">
                     <FiEdit className="w-4 h-4" />
                     Edit Profile
                 </Link>
@@ -62,7 +62,7 @@ const CustomerDetails = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Profile Card */}
-                <div className="card p-6 lg:col-span-1 space-y-6">
+                <div className="card p-4 sm:p-6 lg:col-span-1 space-y-6">
                     <div className="flex items-center gap-4 pb-6 border-b border-gray-100 dark:border-gray-700">
                         <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-teal-600 dark:text-teal-400">
                             <FiUser className="w-8 h-8" />
