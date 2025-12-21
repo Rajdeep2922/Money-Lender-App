@@ -94,7 +94,7 @@ const generateLoanAgreement = async (loan, lender) => {
                     {
                         width: '*',
                         stack: [
-                            { text: 'LENDER SIGNATURE', style: 'signatureTitle' },
+                            { text: 'AUTHORIZED SIGNATORY', style: 'signatureTitle' },
                             lender?.companyStamp ? {
                                 image: lender.companyStamp,
                                 width: 100,
@@ -221,7 +221,7 @@ const generateLoanStatement = async (loan, lender, payments) => {
                         width: 80,
                         alignment: 'right'
                     } : { text: '' },
-                    { text: 'Company Seal & Signature', fontSize: 8, alignment: 'right', margin: [0, 5, 0, 0] }
+                    { text: 'Authorized Signatory', fontSize: 8, alignment: 'right', margin: [0, 5, 0, 0] }
                 ]
             }
         ],
@@ -390,14 +390,25 @@ const generatePaymentReceipt = async (payment, lender) => {
                         ]
                     },
                     {
-                        width: 150,
+                        width: 120,
                         stack: [
                             { text: 'CUSTOMER ACKNOWLEDGEMENT', fontSize: 8, bold: true, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 8] },
                             customer.signature ? { image: customer.signature, width: 80, height: 40, alignment: 'center' } : { text: '', margin: [0, 40, 0, 0] },
-                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 120, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [15, 8, 0, 5] },
-                            { text: `${customer.firstName} ${customer.lastName}`, fontSize: 9, color: '#4b5563', alignment: 'center' }
+                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 100, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [0, 8, 0, 5] },
+                            { text: 'Payer', fontSize: 8, color: '#4b5563', alignment: 'center' }
                         ],
                         alignment: 'center'
+                    },
+                    {
+                        width: 120,
+                        stack: [
+                            { text: 'AUTHORIZED SIGNATORY', fontSize: 8, bold: true, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 8] },
+                            lender?.companyStamp ? { image: lender.companyStamp, width: 80, height: 40, alignment: 'center' } : { text: '', margin: [0, 40, 0, 0] },
+                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 100, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [0, 8, 0, 5] },
+                            { text: 'For ' + businessName, fontSize: 8, color: '#4b5563', alignment: 'center' }
+                        ],
+                        alignment: 'center',
+                        margin: [20, 0, 0, 0]
                     }
                 ]
             }
@@ -680,14 +691,25 @@ const generateInvoicePDF = async (invoice, lender) => {
                         ]
                     },
                     {
-                        width: 150,
+                        width: 120,
                         stack: [
                             { text: 'CUSTOMER SIGNATURE', fontSize: 8, bold: true, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 8] },
                             customer.signature ? { image: customer.signature, width: 80, height: 40, alignment: 'center' } : { text: '', margin: [0, 40, 0, 0] },
-                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 120, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [15, 8, 0, 5] },
-                            { text: `${customer.firstName} ${customer.lastName}`, fontSize: 9, color: '#4b5563', alignment: 'center' }
+                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 100, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [0, 8, 0, 5] },
+                            { text: 'Borrower', fontSize: 8, color: '#4b5563', alignment: 'center' }
                         ],
                         alignment: 'center'
+                    },
+                    {
+                        width: 120,
+                        stack: [
+                            { text: 'AUTHORIZED SIGNATORY', fontSize: 8, bold: true, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 8] },
+                            lender?.companyStamp ? { image: lender.companyStamp, width: 80, height: 40, alignment: 'center' } : { text: '', margin: [0, 40, 0, 0] },
+                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 100, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [0, 8, 0, 5] },
+                            { text: 'For ' + businessName, fontSize: 8, color: '#4b5563', alignment: 'center' }
+                        ],
+                        alignment: 'center',
+                        margin: [20, 0, 0, 0]
                     }
                 ]
             },
