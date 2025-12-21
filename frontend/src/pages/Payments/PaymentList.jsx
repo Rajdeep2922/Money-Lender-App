@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiPlus, FiSearch, FiCalendar, FiDownload } from 'react-icons/fi';
-import { usePayments, useDownloadReceipt } from '../../hooks/usePayments';
+import { FiPlus, FiSearch, FiCalendar, FiDownload, FiTrash2 } from 'react-icons/fi';
+import { usePayments, useDownloadReceipt, useDeletePayment } from '../../hooks/usePayments';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
@@ -22,6 +22,7 @@ export const PaymentList = () => {
     const [dateTo, setDateTo] = useState('');
     const [page, setPage] = useState(1);
     const downloadReceipt = useDownloadReceipt();
+    const deletePayment = useDeletePayment();
 
     const { data, isLoading, error } = usePayments({
         page,
@@ -132,11 +133,22 @@ export const PaymentList = () => {
                                     <button
                                         onClick={() => downloadReceipt.mutate(payment._id)}
                                         disabled={downloadReceipt.isPending}
-                                        className="text-teal-600 hover:text-teal-700 p-1 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors inline-flex items-center gap-1"
+                                        className="text-teal-600 hover:text-teal-700 p-1 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors inline-flex items-center gap-1 mr-2"
                                         title="Download Receipt"
                                     >
                                         <FiDownload className="w-4 h-4" />
                                         <span className="text-xs font-medium">Receipt</span>
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm('Are you sure you want to delete this payment record? This will revert the loan balance.')) {
+                                                deletePayment.mutate(payment._id);
+                                            }
+                                        }}
+                                        className="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors inline-flex items-center gap-1"
+                                        title="Delete Payment"
+                                    >
+                                        <FiTrash2 className="w-4 h-4" />
                                     </button>
                                 </td>
                             </tr>

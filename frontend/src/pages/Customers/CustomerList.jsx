@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiPlus, FiSearch, FiPhone, FiMail } from 'react-icons/fi';
-import { useCustomers } from '../../hooks/useCustomers';
+import { FiPlus, FiSearch, FiPhone, FiMail, FiTrash2 } from 'react-icons/fi';
+import { useCustomers, useDeleteCustomer } from '../../hooks/useCustomers';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import { formatPhone, formatDate } from '../../utils/formatters';
 
@@ -20,6 +20,7 @@ export const CustomerList = () => {
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('');
     const [page, setPage] = useState(1);
+    const deleteCustomer = useDeleteCustomer();
 
     const { data, isLoading, error, isFetching } = useCustomers({ page, limit: 20, search, status: status || undefined });
 
@@ -85,15 +86,18 @@ export const CustomerList = () => {
                 ) : (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
                         {customers.map((customer) => (
-                            <Link
+                            <div
                                 key={customer._id}
-                                to={`/customers/${customer._id}`}
-                                className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors relative group"
                             >
-                                <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400 font-semibold">
+                                <Link
+                                    to={`/customers/${customer._id}`}
+                                    className="absolute inset-0 z-0"
+                                />
+                                <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400 font-semibold z-10 relative pointer-events-none">
                                     {customer.firstName?.[0]}{customer.lastName?.[0]}
                                 </div>
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 z-10 relative pointer-events-none">
                                     <p className="font-medium text-gray-900 dark:text-white truncate">
                                         {customer.firstName} {customer.lastName}
                                     </p>
@@ -108,10 +112,25 @@ export const CustomerList = () => {
                                         </span>
                                     </div>
                                 </div>
-                                <span className={`badge ${customer.status === 'active' ? 'badge-success' : 'badge-error'}`}>
-                                    {customer.status}
-                                </span>
-                            </Link>
+                                <div className="flex items-center gap-3 z-10 relative">
+                                    <span className={`badge ${customer.status === 'active' ? 'badge-success' : 'badge-error'}`}>
+                                        {customer.status}
+                                    </span>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            if (window.confirm('Are you sure you want to delete this customer?')) {
+                                                deleteCustomer.mutate(customer._id);
+                                            }
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                                        title="Delete Customer"
+                                    >
+                                        <FiTrash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 )}

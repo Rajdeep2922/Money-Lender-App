@@ -56,6 +56,15 @@ export const loanAPI = {
     downloadAgreement: (id) => api.get(`/loans/${id}/agreement`, { responseType: 'blob' }),
     downloadStatement: (id) => api.get(`/loans/${id}/statement`, { responseType: 'blob' }),
     downloadNOC: (id) => api.get(`/loans/${id}/noc`, { responseType: 'blob' }),
+    delete: (id) => api.delete(`/loans/${id}`),
+};
+
+// Invoice API
+export const invoiceAPI = {
+    list: (params = {}) => api.get('/invoices', { params }),
+    generate: (data) => api.post('/invoices/generate', data),
+    download: (id) => api.get(`/invoices/${id}/download`, { responseType: 'blob' }),
+    delete: (id) => api.delete(`/invoices/${id}`),
 };
 
 // Payment API

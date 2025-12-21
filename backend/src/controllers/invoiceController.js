@@ -113,3 +113,23 @@ exports.downloadInvoice = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Delete invoice
+ */
+exports.deleteInvoice = async (req, res, next) => {
+    try {
+        const invoice = await Invoice.findByIdAndDelete(req.params.id);
+
+        if (!invoice) {
+            return next(new AppError('Invoice not found', 404));
+        }
+
+        res.json({
+            success: true,
+            message: 'Invoice deleted successfully',
+        });
+    } catch (error) {
+        next(error);
+    }
+};

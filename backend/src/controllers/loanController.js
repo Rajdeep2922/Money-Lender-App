@@ -480,3 +480,27 @@ exports.updateLoanStatus = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Delete loan
+ */
+exports.deleteLoan = async (req, res, next) => {
+    try {
+        const loan = await Loan.findByIdAndDelete(req.params.id);
+
+        if (!loan) {
+            return next(new AppError('Loan not found', 404));
+        }
+
+        // Optional: Delete related payments and invoices
+        // await Payment.deleteMany({ loanId: loan._id });
+        // await Invoice.deleteMany({ loanId: loan._id });
+
+        res.json({
+            success: true,
+            message: 'Loan deleted successfully',
+        });
+    } catch (error) {
+        next(error);
+    }
+};

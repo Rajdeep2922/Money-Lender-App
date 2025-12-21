@@ -28,4 +28,7 @@ router.get('/:id/agreement', loanController.downloadAgreement);
 router.get('/:id/statement', loanController.downloadStatement);
 router.get('/:id/noc', loanController.downloadNOC);
 
+// Delete loan
+router.delete('/:id', loanController.deleteLoan);
+
 module.exports = router;

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiPlus, FiSearch } from 'react-icons/fi';
-import { useLoans, useUpdateLoanStatus } from '../../hooks/useLoans';
+import { FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
+import { useLoans, useUpdateLoanStatus, useDeleteLoan } from '../../hooks/useLoans';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import { formatCurrency, formatDate, formatStatus, getStatusColor } from '../../utils/formatters';
 
@@ -20,6 +20,7 @@ export const LoanList = () => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [status, setStatus] = useState('');
+    const deleteLoan = useDeleteLoan();
 
     const { data, isLoading, error } = useLoans({ page, limit: 20, status: status || undefined, search });
 
@@ -88,6 +89,7 @@ export const LoanList = () => {
                             <th>Rate</th>
                             <th>Balance</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -108,11 +110,24 @@ export const LoanList = () => {
                                 <td>
                                     <StatusToggle loan={loan} />
                                 </td>
+                                <td>
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm('Are you sure you want to delete this loan? This action cannot be undone.')) {
+                                                deleteLoan.mutate(loan._id);
+                                            }
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                                        title="Delete Loan"
+                                    >
+                                        <FiTrash2 className="w-4 h-4" />
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                         {loans.length === 0 && (
                             <tr>
-                                <td colSpan={7} className="text-center py-8 text-gray-500">
+                                <td colSpan={8} className="text-center py-8 text-gray-500">
                                     No loans found. <Link to="/loans/new" className="text-teal-600">Create your first loan</Link>
                                 </td>
                             </tr>
@@ -188,9 +203,9 @@ const StatusToggle = ({ loan }) => {
                 value={loan.status}
                 onChange={handleChange}
                 className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-semibold border-none focus:ring-2 focus:ring-offset-1 focus:outline-none transition-colors ${loan.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
-                        loan.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                            loan.status === 'active' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800'
+                    loan.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                        loan.status === 'active' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
                     }`}
             >
                 <option value="pending_approval">Pending</option>
@@ -200,9 +215,9 @@ const StatusToggle = ({ loan }) => {
             {/* Custom Arrow */}
             <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
                 <svg className={`w-3 h-3 ${loan.status === 'pending_approval' ? 'text-yellow-800' :
-                        loan.status === 'approved' ? 'text-blue-800' :
-                            loan.status === 'active' ? 'text-green-800' :
-                                'text-gray-600'
+                    loan.status === 'approved' ? 'text-blue-800' :
+                        loan.status === 'active' ? 'text-green-800' :
+                            'text-gray-600'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>

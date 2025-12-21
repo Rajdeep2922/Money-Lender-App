@@ -184,3 +184,17 @@ export const useDownloadNOC = () => {
         },
     });
 };
+
+/**
+ * Delete loan mutation
+ */
+export const useDeleteLoan = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: loanAPI.delete,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
+        },
+    });
+};

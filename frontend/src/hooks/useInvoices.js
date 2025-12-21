@@ -42,3 +42,13 @@ export const useDownloadInvoice = () => {
         }
     });
 };
+
+export const useDeleteInvoice = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id) => api.delete(`/invoices/${id}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: invoiceKeys.all });
+        }
+    });
+};

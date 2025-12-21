@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FiFileText, FiDownload, FiRefreshCw, FiAlertCircle, FiCheckCircle, FiClock } from 'react-icons/fi';
-import { useInvoices, useGenerateInvoices, useDownloadInvoice } from '../../hooks/useInvoices';
+import { FiFileText, FiDownload, FiRefreshCw, FiAlertCircle, FiCheckCircle, FiClock, FiTrash2 } from 'react-icons/fi';
+import { useInvoices, useGenerateInvoices, useDownloadInvoice, useDeleteInvoice } from '../../hooks/useInvoices';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 
@@ -9,6 +9,7 @@ const InvoiceList = () => {
     const { data, isLoading, refetch } = useInvoices();
     const generateInvoices = useGenerateInvoices();
     const downloadInvoice = useDownloadInvoice();
+    const deleteInvoice = useDeleteInvoice();
 
     const handleGenerate = async () => {
         try {
@@ -96,13 +97,27 @@ const InvoiceList = () => {
                                     Due: {formatDate(invoice.dueDate)}
                                 </p>
                             </div>
-                            <button
-                                onClick={() => downloadInvoice.mutate(invoice._id)}
-                                disabled={downloadInvoice.isPending}
-                                className="p-2 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
-                            >
-                                <FiDownload className="w-5 h-5" />
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => downloadInvoice.mutate(invoice._id)}
+                                    disabled={downloadInvoice.isPending}
+                                    className="p-2 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
+                                    title="Download PDF"
+                                >
+                                    <FiDownload className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm('Are you sure you want to delete this invoice?')) {
+                                            deleteInvoice.mutate(invoice._id);
+                                        }
+                                    }}
+                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                    title="Delete Invoice"
+                                >
+                                    <FiTrash2 className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
                     </motion.div>
                 ))}
@@ -156,10 +171,21 @@ const InvoiceList = () => {
                                         <button
                                             onClick={() => downloadInvoice.mutate(invoice._id)}
                                             disabled={downloadInvoice.isPending}
-                                            className="p-2 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
+                                            className="p-2 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors inline-block mr-1"
                                             title="Download PDF"
                                         >
                                             <FiDownload className="w-5 h-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm('Are you sure you want to delete this invoice?')) {
+                                                    deleteInvoice.mutate(invoice._id);
+                                                }
+                                            }}
+                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors inline-block"
+                                            title="Delete Invoice"
+                                        >
+                                            <FiTrash2 className="w-5 h-5" />
                                         </button>
                                     </td>
                                 </motion.tr>
