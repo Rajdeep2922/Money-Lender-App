@@ -48,7 +48,7 @@ const InvoiceList = () => {
             animate="visible"
             className="space-y-6"
         >
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Billing & Invoices</h1>
                     <p className="text-gray-500 dark:text-gray-400">Manage monthly EMI billing for your customers</p>
@@ -56,14 +56,65 @@ const InvoiceList = () => {
                 <button
                     onClick={handleGenerate}
                     disabled={generateInvoices.isPending}
-                    className="btn btn-primary gap-2"
+                    className="btn btn-primary gap-2 w-full sm:w-auto"
                 >
                     <FiRefreshCw className={`w-4 h-4 ${generateInvoices.isPending ? 'animate-spin' : ''}`} />
                     {generateInvoices.isPending ? 'Generating...' : 'Generate Monthly Invoices'}
                 </button>
             </div>
 
-            <div className="card overflow-hidden">
+            {/* Mobile View (Cards) */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+                {invoices.map((invoice) => (
+                    <motion.div
+                        key={invoice._id}
+                        variants={itemVariants}
+                        className="card p-4 space-y-3"
+                    >
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="font-semibold text-teal-600">{invoice.invoiceNumber}</p>
+                                <p className="font-medium text-gray-900 dark:text-white mt-1">
+                                    {invoice.customerId?.firstName} {invoice.customerId?.lastName}
+                                </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                                <span className="font-bold text-gray-900 dark:text-white">
+                                    {formatCurrency(invoice.amountDue)}
+                                </span>
+                                <div className="flex items-center gap-1 text-xs capitalize">
+                                    {getStatusIcon(invoice.status)}
+                                    {invoice.status}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between items-center text-sm pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <div className="text-gray-500">
+                                <p>Loan: {invoice.loanId?.loanNumber}</p>
+                                <p className={`mt-0.5 ${new Date(invoice.dueDate) < new Date() && invoice.status !== 'paid' ? 'text-red-500' : ''}`}>
+                                    Due: {formatDate(invoice.dueDate)}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => downloadInvoice.mutate(invoice._id)}
+                                disabled={downloadInvoice.isPending}
+                                className="p-2 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
+                            >
+                                <FiDownload className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </motion.div>
+                ))}
+                {invoices.length === 0 && (
+                    <div className="text-center py-10 text-gray-500">
+                        <p>No invoices found.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Desktop View (Table) */}
+            <div className="card overflow-hidden hidden md:block">
                 <div className="overflow-x-auto">
                     <table className="table">
                         <thead>
