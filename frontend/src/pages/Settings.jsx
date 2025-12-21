@@ -116,8 +116,8 @@ const ProfileSettings = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                alert('File size too large. Max 2MB.');
+            if (file.size > 100 * 1024) {
+                alert('File size too large. Max 100KB.');
                 return;
             }
             const reader = new FileReader();
@@ -240,7 +240,7 @@ const ProfileSettings = () => {
                                 <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                             </label>
                             <p className="text-xs text-gray-500">
-                                Recommended: PNG with transparent background. Max 2MB.
+                                Recommended: PNG with transparent background. Max 100KB.
                             </p>
                             {stampPreview && (
                                 <button

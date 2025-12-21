@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiPlus, FiSearch } from 'react-icons/fi';
-import { useLoans } from '../../hooks/useLoans';
+import { useLoans, useUpdateLoanStatus } from '../../hooks/useLoans';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import { formatCurrency, formatDate, formatStatus, getStatusColor } from '../../utils/formatters';
 
@@ -106,9 +106,7 @@ export const LoanList = () => {
                                 <td>{loan.monthlyInterestRate}%</td>
                                 <td className="font-medium">{formatCurrency(loan.remainingBalance)}</td>
                                 <td>
-                                    <span className={`badge ${getStatusColor(loan.status)}`}>
-                                        {formatStatus(loan.status)}
-                                    </span>
+                                    <StatusToggle loan={loan} />
                                 </td>
                             </tr>
                         ))}
@@ -148,6 +146,68 @@ export const LoanList = () => {
                 )
             }
         </motion.div >
+    );
+};
+
+const StatusToggle = ({ loan }) => {
+    const updateLoanStatus = useUpdateLoanStatus();
+
+    const handleChange = async (e) => {
+        const newStatus = e.target.value;
+        const currentStatus = loan.status;
+
+        if (newStatus === currentStatus) return;
+
+        // Prevent reverting if payments exist
+        if (newStatus === 'pending_approval' && loan.paymentsReceived > 0) {
+            alert('Cannot revert to Pending: Payments have already been recorded.');
+            return;
+        }
+
+        if (window.confirm(`Change status to ${newStatus.replace('_', ' ').toUpperCase()}?`)) {
+            try {
+                await updateLoanStatus.mutateAsync({ id: loan._id, status: newStatus });
+            } catch (error) {
+                alert(`Failed to update status: ${error.message}`);
+            }
+        }
+    };
+
+    // If status is not one of the manual manageable ones, just show badge
+    if (!['pending_approval', 'approved', 'active'].includes(loan.status)) {
+        return (
+            <span className={`badge ${getStatusColor(loan.status)}`}>
+                {formatStatus(loan.status)}
+            </span>
+        );
+    }
+
+    return (
+        <div className="relative inline-block">
+            <select
+                value={loan.status}
+                onChange={handleChange}
+                className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-semibold border-none focus:ring-2 focus:ring-offset-1 focus:outline-none transition-colors ${loan.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
+                        loan.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                            loan.status === 'active' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                    }`}
+            >
+                <option value="pending_approval">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="active">Active</option>
+            </select>
+            {/* Custom Arrow */}
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg className={`w-3 h-3 ${loan.status === 'pending_approval' ? 'text-yellow-800' :
+                        loan.status === 'approved' ? 'text-blue-800' :
+                            loan.status === 'active' ? 'text-green-800' :
+                                'text-gray-600'
+                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </div>
+        </div>
     );
 };
 

@@ -20,6 +20,9 @@ router.post('/:id/foreclose', loanController.forecloseLoan);
 // Update loan (before approval)
 router.put('/:id', loanController.updateLoan);
 
+// Manual Status Toggle
+router.patch('/:id/status', loanController.updateLoanStatus);
+
 // Documents
 router.get('/:id/agreement', loanController.downloadAgreement);
 router.get('/:id/statement', loanController.downloadStatement);

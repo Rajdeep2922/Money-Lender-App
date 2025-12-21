@@ -99,6 +99,21 @@ export const useApproveLoan = () => {
 };
 
 /**
+ * Update loan status mutation (Manual Toggle)
+ */
+export const useUpdateLoanStatus = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, status }) => loanAPI.updateStatus(id, status),
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: loanKeys.detail(id) });
+        },
+    });
+};
+
+/**
  * Foreclose loan mutation
  */
 export const useForecloseLoan = () => {

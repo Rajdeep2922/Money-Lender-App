@@ -48,6 +48,7 @@ export const loanAPI = {
     create: (data) => api.post('/loans', data),
     update: (id, data) => api.put(`/loans/${id}`, data),
     approve: (id) => api.post(`/loans/${id}/approve`),
+    updateStatus: (id, status) => api.patch(`/loans/${id}/status`, { status }),
     cancel: (id) => api.post(`/loans/${id}/cancel`),
     foreclose: (id, data) => api.post(`/loans/${id}/foreclose`, data),
     getAmortization: (id) => api.get(`/loans/${id}/amortization`),

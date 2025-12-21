@@ -434,3 +434,49 @@ exports.downloadNOC = async (req, res, next) => {
         next(error);
     }
 };
+/**
+ * Manually update loan status (Toggle between Pending/Active)
+ */
+exports.updateLoanStatus = async (req, res, next) => {
+    try {
+        const { status } = req.body;
+        const loan = await Loan.findById(req.params.id);
+
+        if (!loan) {
+            return next(new AppError('Loan not found', 404));
+        }
+
+        // Validate Status Transition
+        const allowedStatuses = [LOAN_STATUS.PENDING_APPROVAL, LOAN_STATUS.APPROVED, LOAN_STATUS.ACTIVE];
+
+        if (!allowedStatuses.includes(status)) {
+            return next(new AppError('Invalid status update. Only Pending, Approved, or Active status can be set manually.', 400));
+        }
+
+        if (status === LOAN_STATUS.PENDING_APPROVAL) {
+            // Check if payments exist
+            if (loan.paymentsReceived > 0) {
+                return next(new AppError('Cannot revert to Pending: Payments have already been recorded.', 400));
+            }
+            loan.status = LOAN_STATUS.PENDING_APPROVAL;
+            loan.approvalDate = undefined; // Clear approval date
+        } else {
+            // For Approved or Active
+            loan.status = status;
+            // Set approval date if not already set
+            if (!loan.approvalDate) {
+                loan.approvalDate = new Date();
+            }
+        }
+
+        await loan.save();
+
+        res.json({
+            success: true,
+            message: `Loan status updated to ${status}`,
+            loan,
+        });
+    } catch (error) {
+        next(error);
+    }
+};

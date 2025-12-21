@@ -47,9 +47,9 @@ export const AddCustomer = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Check size (max 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                alert('File is too large. Max 5MB allowed.');
+            // Check size (max 100KB)
+            if (file.size > 100 * 1024) {
+                alert('File is too large. Max 100KB allowed.');
                 return;
             }
 
@@ -214,7 +214,7 @@ export const AddCustomer = () => {
                                     Click to upload signature
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
-                                    Supports PDF, PNG, JPG (Max 5MB)
+                                    Supports PDF, PNG, JPG (Max 100KB)
                                 </p>
                             </div>
                         </div>

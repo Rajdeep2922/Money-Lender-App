@@ -164,37 +164,32 @@ const LoanDetails = () => {
             className="space-y-6"
         >
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Link to="/loans" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
                         <FiArrowLeft className="w-5 h-5 text-gray-500" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            {loan.loanNumber}
-                        </h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {loan.loanNumber}
+                            </h1>
+                        </div>
                         <div className="flex items-center gap-2 mt-1">
                             <span className={`badge ${getStatusColor(loan.status)} `}>
                                 {formatStatus(loan.status)}
                             </span>
                             <span className="text-sm text-gray-500">•</span>
-                            <Link to={`/ customers / ${loan.customerId?._id} `} className="text-sm text-teal-600 hover:text-teal-700">
+                            <Link to={`/customers/${loan.customerId?._id}`} className="text-sm text-teal-600 hover:text-teal-700">
                                 {loan.customerId?.firstName} {loan.customerId?.lastName}
                             </Link>
+                            <span className="text-sm text-gray-500">•</span>
+                            <span className="text-sm text-gray-500">{loan.customerId?.phone}</span>
                         </div>
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    {loan.status === 'pending_approval' && (
-                        <button
-                            className="btn btn-primary gap-2"
-                            onClick={handleApprove}
-                            disabled={approveLoan.isPending}
-                        >
-                            <FiCheckCircle className="w-4 h-4" />
-                            {approveLoan.isPending ? 'Approving...' : 'Approve Loan'}
-                        </button>
-                    )}
+                    {/* Approve button removed - handled by toggle */}
                     {loan.status === 'active' && (
                         <button
                             className="btn btn-ghost text-error border border-error/20 hover:bg-error/10 gap-2"
