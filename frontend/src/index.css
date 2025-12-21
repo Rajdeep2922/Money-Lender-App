@@ -30,9 +30,6 @@ body {
   background-color: var(--color-background);
   color: var(--color-text);
   min-height: 100vh;
-  /* Prevent horizontal scroll on mobile */
-  overflow-x: hidden;
-  -webkit-tap-highlight-color: transparent;
 }
 
 /* Mobile Optimizations */
