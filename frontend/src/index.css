@@ -30,6 +30,42 @@ body {
   background-color: var(--color-background);
   color: var(--color-text);
   min-height: 100vh;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+
+  /* Prevent iOS zoom on inputs */
+  input,
+  select,
+  textarea,
+  .input {
+    font-size: 16px !important;
+  }
+
+  /* Improve touch targets */
+  button,
+  [role="button"],
+  .btn,
+  a {
+    min-height: 44px;
+    /* Apple Human Interface Guidelines minimum */
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Reset for specific small buttons/links inside text */
+  p a,
+  span a {
+    min-height: auto;
+    min-width: auto;
+    display: inline;
+  }
 }
 
 /* Custom component classes */
