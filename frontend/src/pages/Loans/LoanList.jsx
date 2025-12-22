@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
+import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 import { useLoans, useUpdateLoanStatus, useDeleteLoan } from '../../hooks/useLoans';
 import { PageLoader } from '../../components/common/LoadingSpinner';
+import { TableSkeleton } from '../../components/common/Skeletons';
 import { formatCurrency, formatDate, formatStatus, getStatusColor } from '../../utils/formatters';
 
 const containerVariants = {
@@ -24,7 +27,7 @@ export const LoanList = () => {
 
     const { data, isLoading, error } = useLoans({ page, limit: 20, status: status || undefined, search });
 
-    if (isLoading && !data) return <PageLoader />;
+    if (isLoading && !data) return <TableSkeleton columns={8} rows={10} />;
     if (error) return <div className="text-red-500">Error: {error.message}</div>;
 
     const { loans = [], pagination = {} } = data || {};
@@ -113,9 +116,27 @@ export const LoanList = () => {
                                 <td>
                                     <button
                                         onClick={() => {
-                                            if (window.confirm('Are you sure you want to delete this loan? This action cannot be undone.')) {
-                                                deleteLoan.mutate(loan._id);
-                                            }
+                                            Swal.fire({
+                                                title: 'Are you sure?',
+                                                text: "This action cannot be undone. All related data will be removed.",
+                                                icon: 'warning',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#ef4444',
+                                                cancelButtonColor: '#3b82f6',
+                                                confirmButtonText: 'Yes, delete loan!'
+                                            }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    const toastId = toast.loading('Deleting loan...');
+                                                    deleteLoan.mutate(loan._id, {
+                                                        onSuccess: () => {
+                                                            toast.success('Loan deleted successfully', { id: toastId });
+                                                        },
+                                                        onError: (err) => {
+                                                            toast.error(err.message || 'Failed to delete loan', { id: toastId });
+                                                        }
+                                                    });
+                                                }
+                                            });
                                         }}
                                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                                         title="Delete Loan"
@@ -179,13 +200,23 @@ const StatusToggle = ({ loan }) => {
             return;
         }
 
-        if (window.confirm(`Change status to ${newStatus.replace('_', ' ').toUpperCase()}?`)) {
-            try {
-                await updateLoanStatus.mutateAsync({ id: loan._id, status: newStatus });
-            } catch (error) {
-                alert(`Failed to update status: ${error.message}`);
+        Swal.fire({
+            title: 'Confirm Status Change',
+            text: `Change status to ${newStatus.replace('_', ' ').toUpperCase()}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, update it!'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await updateLoanStatus.mutateAsync({ id: loan._id, status: newStatus });
+                } catch (error) {
+                    toast.error(`Failed to update status: ${error.message}`);
+                }
             }
-        }
+        });
     };
 
     // If status is not one of the manual manageable ones, just show badge

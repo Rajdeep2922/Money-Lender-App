@@ -2,9 +2,10 @@ const Payment = require('../models/Payment');
 const Loan = require('../models/Loan');
 const Customer = require('../models/Customer');
 const Lender = require('../models/Lender');
+const Invoice = require('../models/Invoice');
 const { generatePaymentReceipt } = require('../utils/pdfGenerator');
 const { AppError } = require('../middleware/errorHandler');
-const { PAGINATION, LOAN_STATUS } = require('../config/constants');
+const { PAGINATION, LOAN_STATUS, INVOICE_STATUS } = require('../config/constants');
 
 /**
  * List all payments with pagination
@@ -178,6 +179,33 @@ exports.recordPayment = async (req, res, next) => {
 
         await loan.save();
 
+        // ------------------------------------------------------------------
+        // NEW: Update linked Invoice if exists
+        // ------------------------------------------------------------------
+        // Strategy: Find the oldest 'pending' invoice for this loan
+        const pendingInvoice = await Invoice.findOne({
+            loanId: loan._id,
+            status: { $in: [INVOICE_STATUS.PENDING, INVOICE_STATUS.OVERDUE, INVOICE_STATUS.ISSUED] }
+        }).sort({ 'period.year': 1, 'period.month': 1 }); // Oldest first
+
+        if (pendingInvoice) {
+            // Calculate how much this payment covers
+            const coverage = amountPaid;
+
+            pendingInvoice.amountPaid += coverage;
+            pendingInvoice.balanceDue = Math.max(0, pendingInvoice.amountDue - pendingInvoice.amountPaid);
+            pendingInvoice.paymentId = payment._id; // Link the payment
+
+            if (pendingInvoice.balanceDue <= 0) {
+                pendingInvoice.status = INVOICE_STATUS.PAID;
+            } else {
+                // Partial payment logic could go here (e.g. PARTIALLY_PAID status if you had one)
+                // For now, keep as pending/overdue/issued unless fully paid
+            }
+
+            await pendingInvoice.save();
+        }
+
         res.status(201).json({
             success: true,
             message: 'Payment recorded successfully',
@@ -310,6 +338,23 @@ exports.deletePayment = async (req, res, next) => {
                 loan.status = LOAN_STATUS.ACTIVE;
             }
             await loan.save();
+        }
+
+        // ------------------------------------------------------------------
+        // NEW: Revert linked Invoice if exists
+        // ------------------------------------------------------------------
+        const linkedInvoice = await Invoice.findOne({ paymentId: payment._id });
+        if (linkedInvoice) {
+            linkedInvoice.amountPaid = Math.max(0, linkedInvoice.amountPaid - payment.amountPaid);
+            linkedInvoice.balanceDue = linkedInvoice.amountDue - linkedInvoice.amountPaid;
+
+            // If balance due > 0, revert status to PENDING (or OVERDUE based on date, simplified to PENDING here)
+            if (linkedInvoice.balanceDue > 0) {
+                linkedInvoice.status = INVOICE_STATUS.PENDING;
+            }
+            // Remove payment link
+            linkedInvoice.paymentId = undefined;
+            await linkedInvoice.save();
         }
 
         await payment.deleteOne();

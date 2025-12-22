@@ -336,7 +336,7 @@ const generatePaymentReceipt = async (payment, lender) => {
                         stack: [
                             { text: 'PAYMENT', fontSize: 24, bold: true, color: '#16a34a', alignment: 'right' },
                             { text: 'RECEIPT', fontSize: 24, bold: true, color: '#111827', alignment: 'right' },
-                            { text: '✓ RECEIVED', fontSize: 10, bold: true, color: '#16a34a', alignment: 'right', margin: [0, 5, 0, 0] }
+                            { text: 'RECEIVED', fontSize: 10, bold: true, color: '#16a34a', alignment: 'right', margin: [0, 5, 0, 0] }
                         ]
                     }
                 ]
@@ -396,7 +396,7 @@ const generatePaymentReceipt = async (payment, lender) => {
                         fillColor: '#f0fdf4',
                         stack: [
                             { text: 'AMOUNT RECEIVED', fontSize: 12, bold: true, color: '#166534', alignment: 'center', margin: [0, 0, 0, 8] },
-                            { text: `₹ ${payment.amountPaid.toLocaleString()}`, fontSize: 32, bold: true, color: '#16a34a', alignment: 'center' },
+                            { text: `Rs. ${payment.amountPaid.toLocaleString()}`, fontSize: 32, bold: true, color: '#16a34a', alignment: 'center' },
                             { text: `(${numberToWords(payment.amountPaid)} Rupees Only)`, fontSize: 10, color: '#4b5563', alignment: 'center', margin: [0, 8, 0, 0], italics: true }
                         ],
                         margin: [20, 20, 20, 20]
@@ -426,19 +426,19 @@ const generatePaymentReceipt = async (payment, lender) => {
                         ],
                         [
                             { text: 'EMI Amount', fontSize: 10, color: '#4b5563', margin: [10, 8, 10, 8] },
-                            { text: `₹ ${loan.monthlyEMI?.toLocaleString() || 'N/A'}`, fontSize: 10, alignment: 'right', margin: [10, 8, 10, 8] }
+                            { text: `Rs. ${loan.monthlyEMI?.toLocaleString() || 'N/A'}`, fontSize: 10, alignment: 'right', margin: [10, 8, 10, 8] }
                         ],
                         [
                             { text: 'Principal Component', fontSize: 10, color: '#4b5563', margin: [10, 8, 10, 8] },
-                            { text: `₹ ${payment.principalComponent?.toLocaleString() || 'N/A'}`, fontSize: 10, alignment: 'right', margin: [10, 8, 10, 8] }
+                            { text: `Rs. ${payment.principalPortion?.toLocaleString() || '0'}`, fontSize: 10, alignment: 'right', margin: [10, 8, 10, 8] }
                         ],
                         [
                             { text: 'Interest Component', fontSize: 10, color: '#4b5563', margin: [10, 8, 10, 8] },
-                            { text: `₹ ${payment.interestComponent?.toLocaleString() || 'N/A'}`, fontSize: 10, alignment: 'right', margin: [10, 8, 10, 8] }
+                            { text: `Rs. ${payment.interestPortion?.toLocaleString() || '0'}`, fontSize: 10, alignment: 'right', margin: [10, 8, 10, 8] }
                         ],
                         [
                             { text: 'Outstanding Balance After Payment', fontSize: 10, bold: true, color: '#111827', fillColor: '#fff7ed', margin: [10, 10, 10, 10] },
-                            { text: `₹ ${payment.balanceAfterPayment?.toLocaleString() || loan.remainingBalance?.toLocaleString() || 'N/A'}`, fontSize: 11, bold: true, color: '#ea580c', fillColor: '#fff7ed', alignment: 'right', margin: [10, 10, 10, 10] }
+                            { text: `Rs. ${payment.balanceAfterPayment?.toLocaleString()}`, fontSize: 11, bold: true, color: '#ea580c', fillColor: '#fff7ed', alignment: 'right', margin: [10, 10, 10, 10] }
                         ]
                     ]
                 },

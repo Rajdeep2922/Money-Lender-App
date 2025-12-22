@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/common/Layout';
+import { GlobalErrorBoundary } from './components/common/GlobalErrorBoundary';
 import Dashboard from './pages/Dashboard';
 import CustomerList from './pages/Customers/CustomerList';
 import CustomerDetails from './pages/Customers/CustomerDetails';
@@ -31,40 +33,43 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          {/* Auth Routes (No Layout) */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/signout" element={<SignOut />} />
+      <Toaster position="top-right" />
+      <GlobalErrorBoundary>
+        <BrowserRouter>
+          <Routes>
+            {/* Auth Routes (No Layout) */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/signout" element={<SignOut />} />
 
-          <Route element={<Layout />}>
-            {/* Dashboard */}
-            <Route path="/" element={<Dashboard />} />
+            <Route element={<Layout />}>
+              {/* Dashboard */}
+              <Route path="/" element={<Dashboard />} />
 
-            {/* Customers */}
-            <Route path="/customers" element={<CustomerList />} />
-            <Route path="/customers/new" element={<AddCustomer />} />
-            <Route path="/customers/:id" element={<CustomerDetails />} />
-            <Route path="/customers/:id/edit" element={<AddCustomer />} />
+              {/* Customers */}
+              <Route path="/customers" element={<CustomerList />} />
+              <Route path="/customers/new" element={<AddCustomer />} />
+              <Route path="/customers/:id" element={<CustomerDetails />} />
+              <Route path="/customers/:id/edit" element={<AddCustomer />} />
 
-            {/* Loans */}
-            <Route path="/loans" element={<LoanList />} />
-            <Route path="/loans/new" element={<CreateLoan />} />
-            <Route path="/loans/:id" element={<LoanDetails />} />
+              {/* Loans */}
+              <Route path="/loans" element={<LoanList />} />
+              <Route path="/loans/new" element={<CreateLoan />} />
+              <Route path="/loans/:id" element={<LoanDetails />} />
 
-            {/* Payments */}
-            <Route path="/payments" element={<PaymentList />} />
-            <Route path="/payments/new" element={<RecordPayment />} />
+              {/* Payments */}
+              <Route path="/payments" element={<PaymentList />} />
+              <Route path="/payments/new" element={<RecordPayment />} />
 
-            {/* Invoices */}
-            <Route path="/invoices" element={<InvoiceList />} />
+              {/* Invoices */}
+              <Route path="/invoices" element={<InvoiceList />} />
 
-            {/* Settings */}
-            <Route path="/settings" element={<Settings />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+              {/* Settings */}
+              <Route path="/settings" element={<Settings />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </GlobalErrorBoundary>
     </QueryClientProvider>
   );
 }

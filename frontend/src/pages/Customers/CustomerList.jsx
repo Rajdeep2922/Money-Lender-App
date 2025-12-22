@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiPlus, FiSearch, FiPhone, FiMail, FiTrash2 } from 'react-icons/fi';
+import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 import { useCustomers, useDeleteCustomer } from '../../hooks/useCustomers';
 import { PageLoader } from '../../components/common/LoadingSpinner';
+import { TableSkeleton } from '../../components/common/Skeletons';
 import { formatPhone, formatDate } from '../../utils/formatters';
 
 const containerVariants = {
@@ -25,7 +28,7 @@ export const CustomerList = () => {
     const { data, isLoading, error, isFetching } = useCustomers({ page, limit: 20, search, status: status || undefined });
 
     // Only show full page loader on initial load, not during search/filter
-    if (isLoading && !data) return <PageLoader />;
+    if (isLoading && !data) return <TableSkeleton columns={4} rows={10} />;
     if (error) return <div className="text-red-500">Error: {error.message}</div>;
 
     const { customers = [], pagination = {} } = data || {};
@@ -120,9 +123,27 @@ export const CustomerList = () => {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            if (window.confirm('Are you sure you want to delete this customer?')) {
-                                                deleteCustomer.mutate(customer._id);
-                                            }
+                                            Swal.fire({
+                                                title: 'Are you sure?',
+                                                text: "You won't be able to revert this!",
+                                                icon: 'warning',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#ef4444',
+                                                cancelButtonColor: '#3b82f6',
+                                                confirmButtonText: 'Yes, delete it!'
+                                            }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    const toastId = toast.loading('Deleting customer...');
+                                                    deleteCustomer.mutate(customer._id, {
+                                                        onSuccess: () => {
+                                                            toast.success('Customer deleted successfully', { id: toastId });
+                                                        },
+                                                        onError: (err) => {
+                                                            toast.error(err.message || 'Failed to delete customer', { id: toastId });
+                                                        }
+                                                    });
+                                                }
+                                            });
                                         }}
                                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                                         title="Delete Customer"

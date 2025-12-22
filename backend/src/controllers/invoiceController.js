@@ -60,8 +60,18 @@ exports.generateMonthlyInvoices = async (req, res, next) => {
             });
 
             if (!existingInvoice) {
-                const invoiceCount = await Invoice.countDocuments();
-                const invoiceNumber = generateDocumentNumber(lender?.invoicePrefix || 'INV', invoiceCount);
+                // Find the last invoice to determine the next number safely
+                const lastInvoice = await Invoice.findOne().sort({ invoiceNumber: -1 });
+                let nextCount = 1;
+
+                if (lastInvoice && lastInvoice.invoiceNumber) {
+                    const parts = lastInvoice.invoiceNumber.split('-');
+                    if (parts.length === 3) {
+                        nextCount = parseInt(parts[2], 10) + 1;
+                    }
+                }
+
+                const invoiceNumber = generateDocumentNumber(lender?.invoicePrefix || 'INV', nextCount - 1); // generateDocumentNumber adds 1
 
                 const invoice = new Invoice({
                     invoiceNumber,

@@ -1,9 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FiFileText, FiDownload, FiRefreshCw, FiAlertCircle, FiCheckCircle, FiClock, FiTrash2 } from 'react-icons/fi';
+import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 import { useInvoices, useGenerateInvoices, useDownloadInvoice, useDeleteInvoice } from '../../hooks/useInvoices';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { PageLoader } from '../../components/common/LoadingSpinner';
+import { TableSkeleton, CardSkeleton } from '../../components/common/Skeletons';
 
 const InvoiceList = () => {
     const { data, isLoading, refetch } = useInvoices();
@@ -12,15 +15,35 @@ const InvoiceList = () => {
     const deleteInvoice = useDeleteInvoice();
 
     const handleGenerate = async () => {
+        const toastId = toast.loading('Generating invoices...');
         try {
             const result = await generateInvoices.mutateAsync();
-            alert(`Succesfully generated ${result.data.count} new invoices for this billing cycle!`);
+            toast.success(`Successfully generated ${result.data.count} new invoices!`, { id: toastId });
         } catch (error) {
-            alert('Generation failed: ' + error.message);
+            const errorMessage = error.response?.data?.message || error.message || 'Generation failed';
+            toast.error(errorMessage, { id: toastId });
         }
     };
 
-    if (isLoading) return <PageLoader />;
+
+
+    // Custom loading state using skeletons
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse"></div>
+                    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+                </div>
+                <div className="md:hidden">
+                    <CardSkeleton count={3} />
+                </div>
+                <div className="hidden md:block">
+                    <TableSkeleton columns={7} rows={5} />
+                </div>
+            </div>
+        );
+    }
 
     const invoices = data?.invoices || [];
 
@@ -108,9 +131,27 @@ const InvoiceList = () => {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        if (window.confirm('Are you sure you want to delete this invoice?')) {
-                                            deleteInvoice.mutate(invoice._id);
-                                        }
+                                        Swal.fire({
+                                            title: 'Are you sure?',
+                                            text: "This invoice will be permanently deleted.",
+                                            icon: 'warning',
+                                            showCancelButton: true,
+                                            confirmButtonColor: '#ef4444',
+                                            cancelButtonColor: '#3b82f6',
+                                            confirmButtonText: 'Yes, delete it!'
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                const toastId = toast.loading('Deleting invoice...');
+                                                deleteInvoice.mutate(invoice._id, {
+                                                    onSuccess: () => {
+                                                        toast.success('Invoice deleted successfully', { id: toastId });
+                                                    },
+                                                    onError: (err) => {
+                                                        toast.error(err.message || 'Failed to delete invoice', { id: toastId });
+                                                    }
+                                                });
+                                            }
+                                        });
                                     }}
                                     className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                     title="Delete Invoice"
@@ -178,9 +219,27 @@ const InvoiceList = () => {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                if (window.confirm('Are you sure you want to delete this invoice?')) {
-                                                    deleteInvoice.mutate(invoice._id);
-                                                }
+                                                Swal.fire({
+                                                    title: 'Are you sure?',
+                                                    text: "This invoice will be permanently deleted.",
+                                                    icon: 'warning',
+                                                    showCancelButton: true,
+                                                    confirmButtonColor: '#ef4444',
+                                                    cancelButtonColor: '#3b82f6',
+                                                    confirmButtonText: 'Yes, delete it!'
+                                                }).then((result) => {
+                                                    if (result.isConfirmed) {
+                                                        const toastId = toast.loading('Deleting invoice...');
+                                                        deleteInvoice.mutate(invoice._id, {
+                                                            onSuccess: () => {
+                                                                toast.success('Invoice deleted successfully', { id: toastId });
+                                                            },
+                                                            onError: (err) => {
+                                                                toast.error(err.message || 'Failed to delete invoice', { id: toastId });
+                                                            }
+                                                        });
+                                                    }
+                                                });
                                             }}
                                             className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors inline-block"
                                             title="Delete Invoice"

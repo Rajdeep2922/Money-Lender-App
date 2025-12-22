@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiPlus, FiSearch, FiCalendar, FiDownload, FiTrash2 } from 'react-icons/fi';
+import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 import { usePayments, useDownloadReceipt, useDeletePayment } from '../../hooks/usePayments';
 import { PageLoader } from '../../components/common/LoadingSpinner';
+import { TableSkeleton } from '../../components/common/Skeletons';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 const containerVariants = {
@@ -32,7 +35,7 @@ export const PaymentList = () => {
         dateTo: dateTo || undefined
     });
 
-    if (isLoading && !data) return <PageLoader />;
+    if (isLoading && !data) return <TableSkeleton columns={7} rows={10} />;
     if (error) return <div className="text-red-500 text-center p-8">Error: {error.message}</div>;
 
     const { payments = [], pagination = {} } = data || {};
@@ -141,9 +144,27 @@ export const PaymentList = () => {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            if (window.confirm('Are you sure you want to delete this payment record? This will revert the loan balance.')) {
-                                                deletePayment.mutate(payment._id);
-                                            }
+                                            Swal.fire({
+                                                title: 'Are you sure?',
+                                                text: "This will revert the loan balance. You cannot undo this.",
+                                                icon: 'warning',
+                                                showCancelButton: true,
+                                                confirmButtonColor: '#ef4444',
+                                                cancelButtonColor: '#3b82f6',
+                                                confirmButtonText: 'Yes, delete payment!'
+                                            }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    const toastId = toast.loading('Deleting payment...');
+                                                    deletePayment.mutate(payment._id, {
+                                                        onSuccess: () => {
+                                                            toast.success('Payment deleted successfully', { id: toastId });
+                                                        },
+                                                        onError: (err) => {
+                                                            toast.error(err.message || 'Failed to delete payment', { id: toastId });
+                                                        }
+                                                    });
+                                                }
+                                            });
                                         }}
                                         className="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors inline-flex items-center gap-1"
                                         title="Delete Payment"
