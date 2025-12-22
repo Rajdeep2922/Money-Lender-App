@@ -58,6 +58,11 @@ const customerSchema = new mongoose.Schema({
         enum: Object.values(CUSTOMER_STATUS),
         default: CUSTOMER_STATUS.ACTIVE,
     },
+    isDeleted: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
     notes: {
         type: String,
         trim: true,

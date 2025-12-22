@@ -5,6 +5,9 @@ const { PAGINATION } = require('../config/constants');
 /**
  * List all customers with pagination and search
  */
+/**
+ * List all customers with pagination and search
+ */
 exports.listCustomers = async (req, res, next) => {
     try {
         const {
@@ -15,7 +18,7 @@ exports.listCustomers = async (req, res, next) => {
             sortBy = '-createdAt'
         } = req.query;
 
-        const filter = {};
+        const filter = { isDeleted: { $ne: true } }; // Filter out deleted customers (handle missing field for legacy)
 
         // Search filter
         if (search) {
@@ -57,7 +60,7 @@ exports.listCustomers = async (req, res, next) => {
  */
 exports.getCustomer = async (req, res, next) => {
     try {
-        const customer = await Customer.findById(req.params.id);
+        const customer = await Customer.findOne({ _id: req.params.id, isDeleted: false });
 
         if (!customer) {
             return next(new AppError('Customer not found', 404));
@@ -95,8 +98,8 @@ exports.createCustomer = async (req, res, next) => {
  */
 exports.updateCustomer = async (req, res, next) => {
     try {
-        const customer = await Customer.findByIdAndUpdate(
-            req.params.id,
+        const customer = await Customer.findOneAndUpdate(
+            { _id: req.params.id, isDeleted: false },
             req.body,
             { new: true, runValidators: true }
         );
@@ -116,13 +119,13 @@ exports.updateCustomer = async (req, res, next) => {
 };
 
 /**
- * Delete customer (soft delete by setting status to inactive)
+ * Delete customer (soft delete by setting isDeleted: true)
  */
 exports.deleteCustomer = async (req, res, next) => {
     try {
         const customer = await Customer.findByIdAndUpdate(
             req.params.id,
-            { status: 'inactive' },
+            { isDeleted: true }, // Mark as deleted
             { new: true }
         );
 
