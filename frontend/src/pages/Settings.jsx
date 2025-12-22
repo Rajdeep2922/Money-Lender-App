@@ -12,6 +12,7 @@ import {
     CheckCircle,
     Trash2
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useLender, useUpdateLender } from '../hooks/useLender';
 import { PageLoader } from '../components/common/LoadingSpinner';
 
@@ -117,7 +118,7 @@ const ProfileSettings = () => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 100 * 1024) {
-                alert('File size too large. Max 100KB.');
+                toast.error('File size too large. Max 100KB.');
                 return;
             }
             const reader = new FileReader();
@@ -131,12 +132,13 @@ const ProfileSettings = () => {
     };
 
     const onSubmit = async (data) => {
+        const toastId = toast.loading('Saving settings...');
         try {
             await updateLender.mutateAsync(data);
-            alert('Settings saved successfully!');
+            toast.success('Settings saved successfully!', { id: toastId });
         } catch (error) {
             console.error('Error saving settings:', error);
-            alert('Failed to save settings');
+            toast.error('Failed to save settings', { id: toastId });
         }
     };
 
@@ -303,7 +305,7 @@ const PreferenceSettings = ({ isDark, setIsDark }) => {
                         <h3 className="font-medium text-gray-900 dark:text-white">Data Export</h3>
                         <p className="text-sm text-gray-500">Download all your data as JSON</p>
                     </div>
-                    <button type="button" className="btn btn-secondary gap-2" onClick={() => alert('Export started...')}>
+                    <button type="button" className="btn btn-secondary gap-2" onClick={() => toast.success('Export started...')}>
                         <Download className="w-4 h-4" />
                         Export Data
                     </button>
@@ -370,7 +372,7 @@ const SecuritySettings = () => {
                     <input type="password" className="input" />
                 </div>
                 <div className="pt-2">
-                    <button type="button" className="btn btn-secondary" onClick={() => alert('Password update simulation')}>
+                    <button type="button" className="btn btn-secondary" onClick={() => toast.success('Password update simulation')}>
                         Update Password
                     </button>
                 </div>

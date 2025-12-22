@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiUsers, FiDollarSign, FiCreditCard, FiTrendingUp, FiArrowRight } from 'react-icons/fi';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useCustomers } from '../hooks/useCustomers';
 import { useLoans } from '../hooks/useLoans';
 import { usePayments } from '../hooks/usePayments';
@@ -70,10 +70,7 @@ export const Dashboard = () => {
         monthlyData = {}
     } = stats || {};
 
-    const portfolioData = [
-        { name: 'Healthy', value: healthyLoans || 0, color: '#10b981' },
-        { name: 'Overdue', value: overdueLoans || 0, color: '#ef4444' }
-    ];
+
 
     // Prepare Chart Data mapping from backend monthly data
     const chartData = (() => {
@@ -143,7 +140,7 @@ export const Dashboard = () => {
                 />
             </div>
 
-            {/* Middle Section: Chart & Quick Actions */}
+            {/* Middle Section: Chart & Recent Loans */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Financial Overview Chart */}
                 <motion.div variants={itemVariants} className="card p-4 sm:p-6 lg:col-span-2">
@@ -203,71 +200,7 @@ export const Dashboard = () => {
                     </div>
                 </motion.div>
 
-                {/* Portfolio Health & Quick Actions */}
-                <div className="flex flex-col gap-6">
-                    {/* Portfolio Health Pie Chart */}
-                    <motion.div variants={itemVariants} className="card p-4 sm:p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                            Portfolio Health
-                        </h2>
-                        <div style={{ width: '100%', height: 200 }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={portfolioData}
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {portfolioData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        contentStyle={{ borderRadius: '8px', border: 'none' }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <div className="flex justify-around mt-4">
-                            <div className="text-center">
-                                <p className="text-sm text-gray-500">Healthy</p>
-                                <p className="text-lg font-bold text-green-600">{healthyLoans}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-sm text-gray-500">Overdue</p>
-                                <p className="text-lg font-bold text-red-600">{overdueLoans}</p>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Quick Actions */}
-                    <motion.div variants={itemVariants} className="card p-4 sm:p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                            Quick Actions
-                        </h2>
-                        <div className="flex flex-col gap-3">
-                            <Link to="/customers/new" className="btn btn-primary w-full justify-start gap-2">
-                                <FiUsers className="w-5 h-5" />
-                                <span>Add New Customer</span>
-                            </Link>
-                            <Link to="/loans/new" className="btn btn-secondary w-full justify-start gap-2 border-teal-200 dark:border-teal-900/50">
-                                <FiDollarSign className="w-5 h-5" />
-                                <span>Create New Loan</span>
-                            </Link>
-                            <Link to="/payments/new" className="btn btn-secondary w-full justify-start gap-2 border-teal-200 dark:border-teal-900/50">
-                                <FiCreditCard className="w-5 h-5" />
-                                <span>Record Payment</span>
-                            </Link>
-                        </div>
-                    </motion.div>
-                </div>
-            </div>
-
-            {/* Bottom Section: Recent Loans & Recent Payments */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Loans */}
+                {/* Recent Loans (Moved here) */}
                 <motion.div variants={itemVariants} className="card">
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -309,9 +242,12 @@ export const Dashboard = () => {
                         )}
                     </div>
                 </motion.div>
+            </div>
 
-                {/* Recent Payments */}
-                <motion.div variants={itemVariants} className="card">
+            {/* Bottom Section: Recent Payments & Quick Actions */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Recent Payments (Expanded) */}
+                <motion.div variants={itemVariants} className="card lg:col-span-2">
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                             Recent Payments
