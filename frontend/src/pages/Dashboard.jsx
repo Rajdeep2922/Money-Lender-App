@@ -284,6 +284,27 @@ export const Dashboard = () => {
                         )}
                     </div>
                 </motion.div>
+
+                {/* Quick Actions (Moved here) */}
+                <motion.div variants={itemVariants} className="card p-4 sm:p-6 h-fit">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        Quick Actions
+                    </h2>
+                    <div className="flex flex-col gap-3">
+                        <Link to="/customers/new" className="btn btn-primary w-full justify-start gap-2">
+                            <FiUsers className="w-5 h-5" />
+                            <span>Add New Customer</span>
+                        </Link>
+                        <Link to="/loans/new" className="btn btn-secondary w-full justify-start gap-2 border-teal-200 dark:border-teal-900/50">
+                            <FiDollarSign className="w-5 h-5" />
+                            <span>Create New Loan</span>
+                        </Link>
+                        <Link to="/payments/new" className="btn btn-secondary w-full justify-start gap-2 border-teal-200 dark:border-teal-900/50">
+                            <FiCreditCard className="w-5 h-5" />
+                            <span>Record Payment</span>
+                        </Link>
+                    </div>
+                </motion.div>
             </div>
         </motion.div>
     );
