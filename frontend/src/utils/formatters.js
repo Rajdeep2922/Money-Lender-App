@@ -2,12 +2,12 @@
  * Format number as Indian Rupee currency
  */
 export const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
+    const formatted = new Intl.NumberFormat('en-IN', {
+        style: 'decimal',
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
     }).format(amount);
+    return `Rs. ${formatted}`;
 };
 
 /**

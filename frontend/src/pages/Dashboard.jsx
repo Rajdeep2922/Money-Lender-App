@@ -176,7 +176,7 @@ export const Dashboard = () => {
                                     tick={{ fontSize: 12, fill: '#6B7280' }}
                                     axisLine={false}
                                     tickLine={false}
-                                    tickFormatter={(value) => `₹${value / 1000}k`}
+                                    tickFormatter={(value) => `Rs. ${value / 1000}k`}
                                 />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
