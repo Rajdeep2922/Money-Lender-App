@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiUsers, FiDollarSign, FiCreditCard, FiTrendingUp, FiArrowRight } from 'react-icons/fi';
+import { FiUsers, FiDollarSign, FiCreditCard, FiTrendingUp, FiArrowRight, FiRefreshCw } from 'react-icons/fi';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useCustomers } from '../hooks/useCustomers';
 import { useLoans } from '../hooks/useLoans';
@@ -42,15 +43,27 @@ const StatCard = ({ title, value, icon: Icon, color, link }) => (
 );
 
 export const Dashboard = () => {
-    const { data: stats, isLoading: loadingStats } = useStats();
-    const { data: lender, isLoading: loadingLender } = useLender();
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const { data: stats, isLoading: loadingStats, refetch: refetchStats } = useStats();
+    const { data: lender, isLoading: loadingLender, refetch: refetchLender } = useLender();
 
     // Fetch specific data for "Recent" sections
-    const { data: recentLoansData, isLoading: loadingRecentLoans } = useLoans({ limit: 5 });
-    const { data: recentPaymentsData, isLoading: loadingRecentPayments } = usePayments({
+    const { data: recentLoansData, isLoading: loadingRecentLoans, refetch: refetchLoans } = useLoans({ limit: 5 });
+    const { data: recentPaymentsData, isLoading: loadingRecentPayments, refetch: refetchPayments } = usePayments({
         limit: 5,
         sortBy: '-paymentDate'
     });
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await Promise.all([
+            refetchStats(),
+            refetchLender(),
+            refetchLoans(),
+            refetchPayments()
+        ]);
+        setTimeout(() => setIsRefreshing(false), 500); // minimum duration for visual feedback
+    };
 
     if (loadingStats || loadingRecentLoans || loadingRecentPayments || loadingLender) {
         return <PageLoader />;
@@ -99,13 +112,23 @@ export const Dashboard = () => {
             animate="visible"
             className="space-y-6"
         >
-            <motion.div variants={itemVariants}>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Welcome back, {ownerName}!
-                </h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">
-                    Here's what's happening with {lender?.businessName || 'your lending business'} today.
-                </p>
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        Welcome back, {ownerName}!
+                    </h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                        Here's what's happening with {lender?.businessName || 'your lending business'} today.
+                    </p>
+                </div>
+                <button
+                    onClick={handleRefresh}
+                    className="btn btn-secondary self-start sm:self-center"
+                    disabled={isRefreshing}
+                >
+                    <FiRefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    Refresh
+                </button>
             </motion.div>
 
             {/* Stats Grid */}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiPlus, FiSearch, FiPhone, FiMail, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiPhone, FiMail, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { useCustomers, useDeleteCustomer } from '../../hooks/useCustomers';
@@ -23,9 +23,16 @@ export const CustomerList = () => {
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('');
     const [page, setPage] = useState(1);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const deleteCustomer = useDeleteCustomer();
 
-    const { data, isLoading, error, isFetching } = useCustomers({ page, limit: 20, search, status: status || undefined });
+    const { data, isLoading, error, isFetching, refetch } = useCustomers({ page, limit: 20, search, status: status || undefined });
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await refetch();
+        setTimeout(() => setIsRefreshing(false), 500);
+    };
 
     // Only show full page loader on initial load, not during search/filter
     if (isLoading && !data) return <TableSkeleton columns={4} rows={10} />;
@@ -49,6 +56,14 @@ export const CustomerList = () => {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <button
+                        onClick={handleRefresh}
+                        className="btn btn-secondary"
+                        disabled={isRefreshing}
+                        title="Refresh List"
+                    >
+                        <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
                     <Link to="/customers/new" className="btn btn-primary">
                         <FiPlus className="w-4 h-4 mr-2" />
                         Add Customer

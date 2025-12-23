@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiUser, FiPhone, FiMail, FiMapPin, FiCreditCard, FiArrowLeft, FiEdit, FiShield } from 'react-icons/fi';
+import { FiUser, FiPhone, FiMail, FiMapPin, FiCreditCard, FiArrowLeft, FiEdit, FiShield, FiRefreshCw } from 'react-icons/fi';
 import { useCustomer } from '../../hooks/useCustomers';
 import { useLoans } from '../../hooks/useLoans';
 import { PageLoader } from '../../components/common/LoadingSpinner';
@@ -9,8 +9,15 @@ import { formatCurrency, formatDate } from '../../utils/formatters';
 
 const CustomerDetails = () => {
     const { id } = useParams();
-    const { data: customer, isLoading: loadingCustomer } = useCustomer(id);
-    const { data: loansData, isLoading: loadingLoans } = useLoans({ customerId: id });
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const { data: customer, isLoading: loadingCustomer, refetch: refetchCustomer } = useCustomer(id);
+    const { data: loansData, isLoading: loadingLoans, refetch: refetchLoans } = useLoans({ customerId: id });
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await Promise.all([refetchCustomer(), refetchLoans()]);
+        setTimeout(() => setIsRefreshing(false), 500);
+    };
 
     if (loadingCustomer || loadingLoans) {
         return <PageLoader />;
@@ -54,10 +61,20 @@ const CustomerDetails = () => {
                         </p>
                     </div>
                 </div>
-                <Link to={`/customers/${id}/edit`} className="btn btn-secondary gap-2 w-full sm:w-auto justify-center">
-                    <FiEdit className="w-4 h-4" />
-                    Edit Profile
-                </Link>
+                <div className="flex gap-2 items-center w-full sm:w-auto">
+                    <button
+                        onClick={handleRefresh}
+                        className="btn btn-secondary"
+                        disabled={isRefreshing}
+                        title="Refresh Details"
+                    >
+                        <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
+                    <Link to={`/customers/${id}/edit`} className="btn btn-secondary gap-2 flex-1 sm:flex-initial justify-center">
+                        <FiEdit className="w-4 h-4" />
+                        Edit Profile
+                    </Link>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -138,9 +155,11 @@ const CustomerDetails = () => {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Active Loans Card */}
                     <div className="card p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                            Active Loans
-                        </h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Active Loans
+                            </h2>
+                        </div>
                         <div className="overflow-x-auto">
                             <table className="table">
                                 <thead>

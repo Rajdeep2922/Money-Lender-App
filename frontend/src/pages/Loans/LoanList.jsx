@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { useLoans, useUpdateLoanStatus, useDeleteLoan } from '../../hooks/useLoans';
@@ -23,9 +23,16 @@ export const LoanList = () => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [status, setStatus] = useState('');
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const deleteLoan = useDeleteLoan();
 
-    const { data, isLoading, error } = useLoans({ page, limit: 20, status: status || undefined, search });
+    const { data, isLoading, error, refetch } = useLoans({ page, limit: 20, status: status || undefined, search });
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await refetch();
+        setTimeout(() => setIsRefreshing(false), 500);
+    };
 
     if (isLoading && !data) return <TableSkeleton columns={8} rows={10} />;
     if (error) return <div className="text-red-500">Error: {error.message}</div>;
@@ -48,6 +55,14 @@ export const LoanList = () => {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <button
+                        onClick={handleRefresh}
+                        className="btn btn-secondary"
+                        disabled={isRefreshing}
+                        title="Refresh List"
+                    >
+                        <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
                     <Link to="/loans/new" className="btn btn-primary">
                         <FiPlus className="w-4 h-4 mr-2" />
                         Create Loan
