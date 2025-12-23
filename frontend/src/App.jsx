@@ -10,6 +10,7 @@ import AddCustomer from './pages/Customers/AddCustomer';
 import LoanList from './pages/Loans/LoanList';
 import LoanDetails from './pages/Loans/LoanDetails';
 import CreateLoan from './pages/Loans/CreateLoan';
+import EditLoan from './pages/Loans/EditLoan';
 import PaymentList from './pages/Payments/PaymentList';
 import RecordPayment from './pages/Payments/RecordPayment';
 import Login from './pages/Auth/Login';
@@ -55,6 +56,7 @@ function App() {
               {/* Loans */}
               <Route path="/loans" element={<LoanList />} />
               <Route path="/loans/new" element={<CreateLoan />} />
+              <Route path="/loans/:id/edit" element={<EditLoan />} />
               <Route path="/loans/:id" element={<LoanDetails />} />
 
               {/* Payments */}

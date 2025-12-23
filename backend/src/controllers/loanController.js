@@ -132,8 +132,20 @@ exports.createLoan = async (req, res, next) => {
         const totalAmountPayable = principal + totalInterestAmount;
 
         // Generate unique loan number
-        const loanCount = await Loan.countDocuments();
-        const loanNumber = generateDocumentNumber(lender.loanPrefix, loanCount);
+        // Generate unique loan number
+        // Find the last created loan to determine the next sequence number
+        const lastLoan = await Loan.findOne({}, { loanNumber: 1 }).sort({ createdAt: -1 });
+        let nextSequence = 0;
+
+        if (lastLoan && lastLoan.loanNumber) {
+            const parts = lastLoan.loanNumber.split('-');
+            const lastSeq = parseInt(parts[parts.length - 1], 10);
+            if (!isNaN(lastSeq)) {
+                nextSequence = lastSeq;
+            }
+        }
+
+        const loanNumber = generateDocumentNumber(lender.loanPrefix, nextSequence);
 
         // Calculate end date
         const endDate = new Date(loanStartDate);

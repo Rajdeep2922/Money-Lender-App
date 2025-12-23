@@ -60,7 +60,7 @@ exports.listCustomers = async (req, res, next) => {
  */
 exports.getCustomer = async (req, res, next) => {
     try {
-        const customer = await Customer.findOne({ _id: req.params.id, isDeleted: false });
+        const customer = await Customer.findOne({ _id: req.params.id, isDeleted: { $ne: true } });
 
         if (!customer) {
             return next(new AppError('Customer not found', 404));
@@ -99,7 +99,7 @@ exports.createCustomer = async (req, res, next) => {
 exports.updateCustomer = async (req, res, next) => {
     try {
         const customer = await Customer.findOneAndUpdate(
-            { _id: req.params.id, isDeleted: false },
+            { _id: req.params.id, isDeleted: { $ne: true } },
             req.body,
             { new: true, runValidators: true }
         );

@@ -9,7 +9,8 @@ import {
     FiDollarSign,
     FiClock,
     FiInfo,
-    FiFileText
+    FiFileText,
+    FiEdit
 } from 'react-icons/fi';
 import {
     useLoan,
@@ -189,6 +190,15 @@ const LoanDetails = () => {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    {loan.status === 'pending_approval' && (
+                        <Link
+                            to={`/loans/${id}/edit`}
+                            className="btn btn-secondary gap-2"
+                        >
+                            <FiEdit className="w-4 h-4" />
+                            Edit
+                        </Link>
+                    )}
                     {/* Approve button removed - handled by toggle */}
                     {loan.status === 'active' && (
                         <button

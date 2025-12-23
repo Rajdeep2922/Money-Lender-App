@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,8 +7,9 @@ import { z } from 'zod';
 import { FiArrowLeft, FiSave, FiPercent } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useCustomers } from '../../hooks/useCustomers';
-import { useCreateLoan } from '../../hooks/useLoans';
+import { useLoan, useUpdateLoan } from '../../hooks/useLoans';
 import { formatCurrency } from '../../utils/formatters';
+import { PageLoader } from '../../components/common/LoadingSpinner';
 
 const loanSchema = z.object({
     customerId: z.string().min(1, 'Customer is required'),
@@ -27,21 +28,37 @@ const calculateEMI = (principal, rate, months) => {
     return Math.round((totalAmount / months) * 100) / 100;
 };
 
-export const CreateLoan = () => {
+const EditLoan = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
 
+    const { data: loan, isLoading: loadingLoan } = useLoan(id);
     const { data: customersData } = useCustomers({ limit: 100 });
-    const createLoan = useCreateLoan();
+    const updateLoan = useUpdateLoan();
 
-    const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm({
+    const { register, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(loanSchema),
         defaultValues: {
-            principal: 100000,
-            monthlyInterestRate: 5,
+            principal: 0,
+            monthlyInterestRate: 0,
             loanDurationMonths: 12,
             startDate: new Date().toISOString().split('T')[0],
         },
     });
+
+    // Populate form when loan data is available
+    useEffect(() => {
+        if (loan) {
+            reset({
+                customerId: loan.customerId?._id || loan.customerId,
+                principal: loan.principal,
+                monthlyInterestRate: loan.monthlyInterestRate,
+                loanDurationMonths: loan.loanDurationMonths,
+                startDate: new Date(loan.startDate).toISOString().split('T')[0],
+                notes: loan.notes || '',
+            });
+        }
+    }, [loan, reset]);
 
     const principal = watch('principal');
     const monthlyInterestRate = watch('monthlyInterestRate');
@@ -56,17 +73,32 @@ export const CreateLoan = () => {
     }, [principal, monthlyInterestRate, loanDurationMonths]);
 
     const onSubmit = async (data) => {
-        const toastId = toast.loading('Creating loan...');
+        const toastId = toast.loading('Updating loan...');
         try {
-            await createLoan.mutateAsync(data);
-            toast.success('Loan created successfully', { id: toastId });
-            navigate('/loans');
+            await updateLoan.mutateAsync({ id, data });
+            toast.success('Loan updated successfully', { id: toastId });
+            navigate(`/loans/${id}`);
         } catch (error) {
-            console.error('Error creating loan:', error);
-            const errorMessage = error.response?.data?.message || error.message || 'Failed to create loan';
+            console.error('Error updating loan:', error);
+            const errorMessage = error.response?.data?.message || error.message || 'Failed to update loan';
             toast.error(errorMessage, { id: toastId });
         }
     };
+
+    if (loadingLoan) return <PageLoader />;
+
+    if (!loan) {
+        return <div className="text-center p-8">Loan not found</div>;
+    }
+
+    if (loan.status !== 'pending_approval') {
+        return (
+            <div className="text-center p-8">
+                <p className="text-red-500 mb-4">Cannot edit loan. Only Pending loans can be edited.</p>
+                <button onClick={() => navigate(-1)} className="btn btn-secondary">Go Back</button>
+            </div>
+        );
+    }
 
     const customers = customersData?.customers || [];
 
@@ -82,8 +114,8 @@ export const CreateLoan = () => {
                     <FiArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Loan</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Issue a new loan to a customer</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Loan</h1>
+                    <p className="text-gray-500 dark:text-gray-400">Modify loan details (Pending Approval)</p>
                 </div>
             </div>
 
@@ -163,7 +195,7 @@ export const CreateLoan = () => {
                     >
                         <div className="flex items-center gap-2 mb-4">
                             <FiPercent className="w-5 h-5 text-teal-600" />
-                            <h3 className="font-semibold text-gray-900 dark:text-white">Loan Summary</h3>
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Updated Loan Summary</h3>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div>
@@ -195,7 +227,7 @@ export const CreateLoan = () => {
                     </button>
                     <button type="submit" disabled={isSubmitting} className="btn btn-primary">
                         <FiSave className="w-4 h-4 mr-2" />
-                        {isSubmitting ? 'Creating...' : 'Create Loan'}
+                        {isSubmitting ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>
             </form>
@@ -203,4 +235,4 @@ export const CreateLoan = () => {
     );
 };
 
-export default CreateLoan;
+export default EditLoan;

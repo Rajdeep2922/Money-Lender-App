@@ -1,31 +1,26 @@
 /**
  * Loan Interest Calculation System
- * Supports: Reducing Balance EMI Method
+ * Supports: Flat Rate Method (Simple Interest)
  */
 
 /**
- * Calculate Monthly EMI using Reducing Balance Method
- * Formula: EMI = P * r * (1 + r)^n / ((1 + r)^n - 1)
+ * Calculate Monthly EMI using Flat Rate Method (Simple Interest)
+ * Formula: EMI = (P + (P * r * n)) / n
  * @param {number} principal - Loan amount
- * @param {number} monthlyRate - Monthly interest rate in percentage (e.g., 5.5)
+ * @param {number} monthlyRate - Monthly interest rate in percentage
  * @param {number} tenure - Loan duration in months
  * @returns {number} Monthly EMI (rounded to 2 decimal places)
  */
 const calculateMonthlyEMI = (principal, monthlyRate, tenure) => {
     const monthlyRateDecimal = monthlyRate / 100;
-
-    if (monthlyRateDecimal === 0) {
-        return Math.round((principal / tenure) * 100) / 100;
-    }
-
-    const numerator = principal * monthlyRateDecimal * Math.pow(1 + monthlyRateDecimal, tenure);
-    const denominator = Math.pow(1 + monthlyRateDecimal, tenure) - 1;
-
-    return Math.round((numerator / denominator) * 100) / 100;
+    const totalInterest = principal * monthlyRateDecimal * tenure;
+    const totalAmount = principal + totalInterest;
+    return Math.round((totalAmount / tenure) * 100) / 100;
 };
 
 /**
- * Generate Amortization Schedule
+ * Generate Amortization Schedule (Flat Rate)
+ * Interest is constant every month based on original principal.
  * @param {number} principal - Loan amount
  * @param {number} monthlyRate - Monthly interest rate in percentage
  * @param {number} tenure - Loan duration in months
@@ -35,12 +30,21 @@ const calculateMonthlyEMI = (principal, monthlyRate, tenure) => {
  */
 const generateAmortizationSchedule = (principal, monthlyRate, tenure, emi, startDate = new Date()) => {
     const monthlyRateDecimal = monthlyRate / 100;
+    const monthlyInterest = Math.round(principal * monthlyRateDecimal * 100) / 100;
     let remainingBalance = principal;
     const schedule = [];
 
     for (let month = 1; month <= tenure; month++) {
-        const interestPayment = Math.round(remainingBalance * monthlyRateDecimal * 100) / 100;
-        const principalPayment = Math.round((emi - interestPayment) * 100) / 100;
+        // In Flat Rate, interest component is fixed (Interest on Principal)
+        // Principal component = EMI - Fixed Interest
+        const interestPayment = monthlyInterest;
+        let principalPayment = Math.round((emi - interestPayment) * 100) / 100;
+
+        // Adjust for last month rounding
+        if (month === tenure) {
+            principalPayment = remainingBalance;
+        }
+
         remainingBalance = Math.round((remainingBalance - principalPayment) * 100) / 100;
 
         // Calculate due date
@@ -56,7 +60,7 @@ const generateAmortizationSchedule = (principal, monthlyRate, tenure, emi, start
             dueDate,
         });
 
-        if (remainingBalance <= 0) break;
+        if (remainingBalance <= 0 && month !== tenure) break;
     }
 
     return schedule;

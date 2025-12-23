@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { FiPlus, FiSearch, FiArrowLeft, FiSave, FiCheckCircle, FiDownload, FiArrowRight } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import { useLoans } from '../../hooks/useLoans';
 import { useRecordPayment, useDownloadReceipt } from '../../hooks/usePayments';
 import { PageLoader } from '../../components/common/LoadingSpinner';
@@ -12,7 +13,7 @@ export const RecordPayment = () => {
     const navigate = useNavigate();
     const [selectedLoan, setSelectedLoan] = useState(null);
     const [recordedPaymentId, setRecordedPaymentId] = useState(null);
-    const { data: loansData, isLoading } = useLoans({ status: 'active' });
+    const { data: loansData, isLoading } = useLoans({ limit: 1000 });
     const recordPayment = useRecordPayment();
     const downloadReceipt = useDownloadReceipt();
 
@@ -25,6 +26,7 @@ export const RecordPayment = () => {
 
     const onSubmit = async (data) => {
         if (!selectedLoan) return;
+        const toastId = toast.loading('Recording payment...');
         try {
             const response = await recordPayment.mutateAsync({
                 loanId: selectedLoan._id,
@@ -34,9 +36,12 @@ export const RecordPayment = () => {
                 referenceId: data.referenceId,
                 notes: data.notes,
             });
-            setRecordedPaymentId(response.payment._id);
+            toast.success('Payment recorded successfully!', { id: toastId });
+            setRecordedPaymentId(response.data.payment._id);
         } catch (error) {
             console.error('Error recording payment:', error);
+            const errorMessage = error.response?.data?.message || error.message || 'Failed to record payment';
+            toast.error(errorMessage, { id: toastId });
         }
     };
 
