@@ -191,7 +191,7 @@ const EditLoan = () => {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="card p-6 bg-gradient-to-br from-teal-50 to-blue-50 dark:from-teal-900/20 dark:to-blue-900/20 border-teal-200 dark:border-teal-800"
+                        className="card p-6 bg-gradient-to-br from-teal-50 to-blue-50 dark:from-teal-900/20 dark:to-teal-800/20 border-teal-200 dark:border-teal-800"
                     >
                         <div className="flex items-center gap-2 mb-4">
                             <FiPercent className="w-5 h-5 text-teal-600" />

@@ -249,7 +249,7 @@ const StatusToggle = ({ loan }) => {
                 value={loan.status}
                 onChange={handleChange}
                 className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-semibold border-none focus:ring-2 focus:ring-offset-1 focus:outline-none transition-colors ${loan.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
-                    loan.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                    loan.status === 'approved' ? 'bg-teal-50 text-teal-700' :
                         loan.status === 'active' ? 'bg-green-100 text-green-800' :
                             'bg-gray-100 text-gray-800'
                     }`}
@@ -261,7 +261,7 @@ const StatusToggle = ({ loan }) => {
             {/* Custom Arrow */}
             <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
                 <svg className={`w-3 h-3 ${loan.status === 'pending_approval' ? 'text-yellow-800' :
-                    loan.status === 'approved' ? 'text-blue-800' :
+                    loan.status === 'approved' ? 'text-teal-700' :
                         loan.status === 'active' ? 'text-green-800' :
                             'text-gray-600'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

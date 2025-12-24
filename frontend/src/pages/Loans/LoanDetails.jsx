@@ -241,7 +241,7 @@ const LoanDetails = () => {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="card p-4 border-l-4 border-l-blue-500">
+                <div className="card p-4 border-l-4 border-l-teal-400">
                     <p className="text-sm text-gray-500">Principal Amount</p>
                     <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(loan.principal)}</p>
                 </div>

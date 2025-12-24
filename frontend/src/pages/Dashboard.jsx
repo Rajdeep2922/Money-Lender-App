@@ -28,16 +28,16 @@ const StatCard = ({ title, value, icon: Icon, color, link }) => (
     <motion.div variants={itemVariants} className="h-full">
         <Link
             to={link}
-            className="card p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow group h-full justify-between sm:justify-start text-left w-full"
+            className="card card-stat p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-glow-primary hover:-translate-y-1 transition-all duration-300 group h-full justify-between sm:justify-start text-left w-full"
         >
-            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${color} flex items-center justify-center shrink-0 mb-1 sm:mb-0`}>
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${color} flex items-center justify-center shrink-0 mb-1 sm:mb-0 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                 <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="flex-1 w-full min-w-0 flex flex-col items-start justify-end">
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-1 text-left">{title}</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-1 text-left font-medium">{title}</p>
                 <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-200 truncate mt-0.5 sm:mt-0 text-left">{value}</p>
             </div>
-            <FiArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform hidden sm:block ml-auto" />
+            <FiArrowRight className="w-5 h-5 text-gray-400 group-hover:translate-x-2 group-hover:text-teal-500 transition-all duration-300 hidden sm:block ml-auto" />
         </Link>
     </motion.div>
 );
@@ -158,7 +158,7 @@ export const Dashboard = () => {
                     title="Total Customers"
                     value={totalCustomers}
                     icon={FiUsers}
-                    color="bg-blue-600"
+                    color="bg-teal-500"
                     link="/customers"
                 />
             </div>
