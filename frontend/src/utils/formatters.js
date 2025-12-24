@@ -1,10 +1,29 @@
 /**
- * Format number as Indian Rupee currency
+ * Get currency config from localStorage
+ */
+const getCurrencyConfig = () => {
+    const currency = typeof window !== 'undefined'
+        ? localStorage.getItem('currency') || 'INR'
+        : 'INR';
+
+    const configs = {
+        INR: { locale: 'en-IN', currency: 'INR' },
+        USD: { locale: 'en-US', currency: 'USD' },
+        EUR: { locale: 'de-DE', currency: 'EUR' },
+        GBP: { locale: 'en-GB', currency: 'GBP' },
+    };
+
+    return configs[currency] || configs.INR;
+};
+
+/**
+ * Format number as currency based on user preference
  */
 export const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
+    const config = getCurrencyConfig();
+    return new Intl.NumberFormat(config.locale, {
         style: 'currency',
-        currency: 'INR',
+        currency: config.currency,
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
     }).format(amount);

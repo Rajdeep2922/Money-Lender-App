@@ -269,6 +269,50 @@ const ProfileSettings = () => {
 };
 
 const PreferenceSettings = ({ isDark, setIsDark }) => {
+    const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'INR');
+    const [dateFormat, setDateFormat] = useState(() => localStorage.getItem('dateFormat') || 'DD/MM/YYYY');
+    const [darkMode, setDarkMode] = useState(() => {
+        const saved = localStorage.getItem('darkMode');
+        if (saved !== null) return saved === 'true';
+        return document.documentElement.classList.contains('dark');
+    });
+
+    const toggleDarkMode = (enabled) => {
+        setDarkMode(enabled);
+        localStorage.setItem('darkMode', enabled);
+        if (enabled) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        toast.success(enabled ? 'Dark mode enabled' : 'Light mode enabled');
+    };
+
+    const handleCurrencyChange = (e) => {
+        const value = e.target.value;
+        setCurrency(value);
+        localStorage.setItem('currency', value);
+        toast.success(`Currency set to ${value}`);
+    };
+
+    const handleDateFormatChange = (e) => {
+        const value = e.target.value;
+        setDateFormat(value);
+        localStorage.setItem('dateFormat', value);
+        toast.success(`Date format set to ${value}`);
+    };
+
+    const handleExportData = async () => {
+        const toastId = toast.loading('Exporting data...');
+        try {
+            // Simulate export - in real app, call an API
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            toast.success('Data exported successfully! Check your downloads.', { id: toastId });
+        } catch (error) {
+            toast.error('Export failed', { id: toastId });
+        }
+    };
+
     return (
         <div className="space-y-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
@@ -276,36 +320,67 @@ const PreferenceSettings = ({ isDark, setIsDark }) => {
             </h2>
 
             <div className="space-y-4">
+                {/* Dark Mode Toggle */}
+                <div className="flex items-center justify-between py-3">
+                    <div>
+                        <h3 className="font-medium text-gray-900 dark:text-white">Dark Mode</h3>
+                        <p className="text-sm text-gray-500">Toggle between light and dark theme</p>
+                    </div>
+                    <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                        <input
+                            type="checkbox"
+                            id="darkModeToggle"
+                            checked={darkMode}
+                            onChange={(e) => toggleDarkMode(e.target.checked)}
+                            className="peer absolute w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        <div className="block w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer-checked:bg-teal-600 transition-colors"></div>
+                        <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-6"></div>
+                    </div>
+                </div>
+
+                {/* Currency Selection */}
                 <div className="flex items-center justify-between py-3">
                     <div>
                         <h3 className="font-medium text-gray-900 dark:text-white">Default Currency</h3>
                         <p className="text-sm text-gray-500">Currency symbol to display across the app</p>
                     </div>
-                    <select className="input w-32">
+                    <select
+                        className="input w-32"
+                        value={currency}
+                        onChange={handleCurrencyChange}
+                    >
                         <option value="INR">INR (₹)</option>
                         <option value="USD">USD ($)</option>
                         <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
                     </select>
                 </div>
 
+                {/* Date Format Selection */}
                 <div className="flex items-center justify-between py-3">
                     <div>
                         <h3 className="font-medium text-gray-900 dark:text-white">Date Format</h3>
                         <p className="text-sm text-gray-500">How dates should be displayed</p>
                     </div>
-                    <select className="input w-40">
+                    <select
+                        className="input w-40"
+                        value={dateFormat}
+                        onChange={handleDateFormatChange}
+                    >
                         <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                         <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                         <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                     </select>
                 </div>
 
+                {/* Data Export */}
                 <div className="flex items-center justify-between py-3 border-t border-gray-100 dark:border-gray-700 pt-4">
                     <div>
                         <h3 className="font-medium text-gray-900 dark:text-white">Data Export</h3>
                         <p className="text-sm text-gray-500">Download all your data as JSON</p>
                     </div>
-                    <button type="button" className="btn btn-secondary gap-2" onClick={() => toast.success('Export started...')}>
+                    <button type="button" className="btn btn-secondary gap-2" onClick={handleExportData}>
                         <Download className="w-4 h-4" />
                         Export Data
                     </button>
