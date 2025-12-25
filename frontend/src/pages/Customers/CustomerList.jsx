@@ -9,12 +9,21 @@ import { PageLoader } from '../../components/common/LoadingSpinner';
 import { TableSkeleton } from '../../components/common/Skeletons';
 import { formatPhone, formatDate } from '../../utils/formatters';
 
-const containerVariants = {
+// Mobile detection for reduced animations
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+const containerVariants = isMobile ? {
+    hidden: { opacity: 1 },
+    visible: { opacity: 1 },
+} : {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
-const itemVariants = {
+const itemVariants = isMobile ? {
+    hidden: { opacity: 1 },
+    visible: { opacity: 1 },
+} : {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0 },
 };

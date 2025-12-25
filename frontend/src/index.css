@@ -43,9 +43,29 @@ body {
   min-height: 100vh;
 }
 
-/* Mobile Optimizations */
+/* Mobile Optimizations - Performance */
 @media (max-width: 640px) {
 
+  /* Disable heavy animations on mobile for performance */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.1s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.15s !important;
+  }
+
+  /* Hardware acceleration for smooth scrolling */
+  .card,
+  .btn,
+  [class*="motion"] {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: auto;
+  }
+
+  /* Optimize touch targets */
   input,
   select,
   textarea,
@@ -69,6 +89,41 @@ body {
     min-height: auto;
     min-width: auto;
     display: inline;
+  }
+
+  /* Reduce shadow complexity on mobile */
+  .card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .card:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+    transform: none !important;
+  }
+
+  /* Disable glow effects on mobile */
+  .hover-glow:hover,
+  .card-hover:hover,
+  .hover-lift:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+    transform: none !important;
+  }
+
+  /* Simplify gradients */
+  .btn-primary {
+    background: var(--color-primary) !important;
+  }
+
+  /* Faster scroll */
+  html,
+  body {
+    scroll-behavior: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Reduce repaints */
+  .table-container {
+    contain: layout style;
   }
 }
 

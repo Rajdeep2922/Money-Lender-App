@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiUsers, FiDollarSign, FiCreditCard, FiTrendingUp, FiArrowRight, FiRefreshCw } from 'react-icons/fi';
@@ -11,7 +11,13 @@ import { useLender } from '../hooks/useLender';
 import { formatCurrency } from '../utils/formatters';
 import { PageLoader } from '../components/common/LoadingSpinner';
 
-const containerVariants = {
+// Check if mobile for reduced animations
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+const containerVariants = isMobile ? {
+    hidden: { opacity: 1 },
+    visible: { opacity: 1 },
+} : {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
@@ -19,7 +25,10 @@ const containerVariants = {
     },
 };
 
-const itemVariants = {
+const itemVariants = isMobile ? {
+    hidden: { opacity: 1 },
+    visible: { opacity: 1 },
+} : {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
 };
