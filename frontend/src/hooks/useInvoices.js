@@ -13,7 +13,9 @@ export const useInvoices = (params = {}) => {
         queryFn: async () => {
             const { data } = await api.get('/invoices', { params });
             return data;
-        }
+        },
+        staleTime: 0, // Always fetch fresh data
+        refetchOnWindowFocus: true,
     });
 };
 

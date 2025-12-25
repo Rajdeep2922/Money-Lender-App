@@ -40,6 +40,11 @@ const loanSchema = new mongoose.Schema({
         min: [1, 'Duration must be at least 1 month'],
         max: [360, 'Duration cannot exceed 360 months'],
     },
+    interestType: {
+        type: String,
+        enum: ['simple', 'compound'],
+        default: 'simple',
+    },
     startDate: {
         type: Date,
         required: [true, 'Start date is required'],

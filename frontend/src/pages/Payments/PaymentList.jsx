@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiPlus, FiSearch, FiCalendar, FiDownload, FiTrash2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import Swal from 'sweetalert2';
 import { usePayments, useDownloadReceipt, useDeletePayment } from '../../hooks/usePayments';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import { TableSkeleton } from '../../components/common/Skeletons';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
 const containerVariants = {
@@ -24,6 +24,7 @@ export const PaymentList = () => {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [page, setPage] = useState(1);
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, payment: null });
     const downloadReceipt = useDownloadReceipt();
     const deletePayment = useDeletePayment();
 
@@ -34,6 +35,18 @@ export const PaymentList = () => {
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined
     });
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.payment) return;
+        const toastId = toast.loading('Deleting payment...');
+        try {
+            await deletePayment.mutateAsync(deleteModal.payment._id);
+            toast.success('Payment deleted successfully', { id: toastId });
+            setDeleteModal({ isOpen: false, payment: null });
+        } catch (err) {
+            toast.error(err.message || 'Failed to delete payment', { id: toastId });
+        }
+    };
 
     if (isLoading && !data) return <TableSkeleton columns={7} rows={10} />;
     if (error) return <div className="text-red-500 text-center p-8">Error: {error.message}</div>;
@@ -143,29 +156,7 @@ export const PaymentList = () => {
                                         <span className="text-xs font-medium">Receipt</span>
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            Swal.fire({
-                                                title: 'Are you sure?',
-                                                text: "This will revert the loan balance. You cannot undo this.",
-                                                icon: 'warning',
-                                                showCancelButton: true,
-                                                confirmButtonColor: '#ef4444',
-                                                cancelButtonColor: '#3b82f6',
-                                                confirmButtonText: 'Yes, delete payment!'
-                                            }).then((result) => {
-                                                if (result.isConfirmed) {
-                                                    const toastId = toast.loading('Deleting payment...');
-                                                    deletePayment.mutate(payment._id, {
-                                                        onSuccess: () => {
-                                                            toast.success('Payment deleted successfully', { id: toastId });
-                                                        },
-                                                        onError: (err) => {
-                                                            toast.error(err.message || 'Failed to delete payment', { id: toastId });
-                                                        }
-                                                    });
-                                                }
-                                            });
-                                        }}
+                                        onClick={() => setDeleteModal({ isOpen: true, payment })}
                                         className="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors inline-flex items-center gap-1"
                                         title="Delete Payment"
                                     >
@@ -212,6 +203,20 @@ export const PaymentList = () => {
                     </button>
                 </motion.div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, payment: null })}
+                onConfirm={handleDeleteConfirm}
+                title="Delete Payment"
+                message="This will revert the loan balance. Are you sure you want to delete this payment? This action cannot be undone."
+                confirmText="Delete Payment"
+                cancelText="Cancel"
+                type="warning"
+                confirmStyle="danger"
+                loading={deletePayment.isPending}
+            />
         </motion.div>
     );
 };

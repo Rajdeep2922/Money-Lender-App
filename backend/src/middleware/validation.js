@@ -57,6 +57,8 @@ const loanSchema = Joi.object({
     monthlyInterestRate: Joi.number().min(0).max(100).required(),
     loanDurationMonths: Joi.number().integer().min(1).max(360).required(),
     startDate: Joi.date().default(new Date()),
+    interestType: Joi.string().valid('simple', 'compound').default('simple'),
+    manualEMI: Joi.number().min(0).optional(),
     notes: Joi.string().trim().allow(''),
 });
 
@@ -89,11 +91,14 @@ const lenderSchema = Joi.object({
         ifscCode: Joi.string().trim().allow(''),
         bankName: Joi.string().trim().allow(''),
     }),
+    logo: Joi.string().allow('', null),
+    companyStamp: Joi.string().allow('', null),
     termsAndConditions: Joi.string().allow(''),
     invoicePrefix: Joi.string().uppercase().default('INV'),
     contractPrefix: Joi.string().uppercase().default('CONT'),
     loanPrefix: Joi.string().uppercase().default('LN'),
 });
+
 
 module.exports = {
     validate,

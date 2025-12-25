@@ -1,31 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiFileText, FiDownload, FiRefreshCw, FiAlertCircle, FiCheckCircle, FiClock, FiTrash2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import Swal from 'sweetalert2';
-import { useInvoices, useGenerateInvoices, useDownloadInvoice, useDeleteInvoice } from '../../hooks/useInvoices';
+import { useQueryClient } from '@tanstack/react-query';
+import { useInvoices, useGenerateInvoices, useDownloadInvoice, useDeleteInvoice, invoiceKeys } from '../../hooks/useInvoices';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import { TableSkeleton, CardSkeleton } from '../../components/common/Skeletons';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 
 const InvoiceList = () => {
-    const { data, isLoading, refetch } = useInvoices();
+    const queryClient = useQueryClient();
+    const { data, isLoading, isFetching } = useInvoices();
     const generateInvoices = useGenerateInvoices();
     const downloadInvoice = useDownloadInvoice();
     const deleteInvoice = useDeleteInvoice();
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, invoice: null });
 
     const handleGenerate = async () => {
         const toastId = toast.loading('Generating invoices...');
         try {
             const result = await generateInvoices.mutateAsync();
             toast.success(`Successfully generated ${result.data.count} new invoices!`, { id: toastId });
+            // Reset cache completely and force fresh fetch
+            queryClient.removeQueries({ queryKey: invoiceKeys.all });
+            queryClient.refetchQueries({ queryKey: invoiceKeys.all, type: 'all' });
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message || 'Generation failed';
             toast.error(errorMessage, { id: toastId });
         }
     };
 
-
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.invoice) return;
+        const toastId = toast.loading('Deleting invoice...');
+        try {
+            await deleteInvoice.mutateAsync(deleteModal.invoice._id);
+            toast.success('Invoice deleted successfully', { id: toastId });
+            setDeleteModal({ isOpen: false, invoice: null });
+        } catch (err) {
+            toast.error(err.message || 'Failed to delete invoice', { id: toastId });
+        }
+    };
 
     // Custom loading state using skeletons
     if (isLoading) {
@@ -130,29 +146,7 @@ const InvoiceList = () => {
                                     <FiDownload className="w-5 h-5" />
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        Swal.fire({
-                                            title: 'Are you sure?',
-                                            text: "This invoice will be permanently deleted.",
-                                            icon: 'warning',
-                                            showCancelButton: true,
-                                            confirmButtonColor: '#ef4444',
-                                            cancelButtonColor: '#3b82f6',
-                                            confirmButtonText: 'Yes, delete it!'
-                                        }).then((result) => {
-                                            if (result.isConfirmed) {
-                                                const toastId = toast.loading('Deleting invoice...');
-                                                deleteInvoice.mutate(invoice._id, {
-                                                    onSuccess: () => {
-                                                        toast.success('Invoice deleted successfully', { id: toastId });
-                                                    },
-                                                    onError: (err) => {
-                                                        toast.error(err.message || 'Failed to delete invoice', { id: toastId });
-                                                    }
-                                                });
-                                            }
-                                        });
-                                    }}
+                                    onClick={() => setDeleteModal({ isOpen: true, invoice })}
                                     className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                     title="Delete Invoice"
                                 >
@@ -218,29 +212,7 @@ const InvoiceList = () => {
                                             <FiDownload className="w-5 h-5" />
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                Swal.fire({
-                                                    title: 'Are you sure?',
-                                                    text: "This invoice will be permanently deleted.",
-                                                    icon: 'warning',
-                                                    showCancelButton: true,
-                                                    confirmButtonColor: '#ef4444',
-                                                    cancelButtonColor: '#3b82f6',
-                                                    confirmButtonText: 'Yes, delete it!'
-                                                }).then((result) => {
-                                                    if (result.isConfirmed) {
-                                                        const toastId = toast.loading('Deleting invoice...');
-                                                        deleteInvoice.mutate(invoice._id, {
-                                                            onSuccess: () => {
-                                                                toast.success('Invoice deleted successfully', { id: toastId });
-                                                            },
-                                                            onError: (err) => {
-                                                                toast.error(err.message || 'Failed to delete invoice', { id: toastId });
-                                                            }
-                                                        });
-                                                    }
-                                                });
-                                            }}
+                                            onClick={() => setDeleteModal({ isOpen: true, invoice })}
                                             className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors inline-block"
                                             title="Delete Invoice"
                                         >
@@ -267,6 +239,20 @@ const InvoiceList = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, invoice: null })}
+                onConfirm={handleDeleteConfirm}
+                title="Delete Invoice"
+                message={`Are you sure you want to delete invoice ${deleteModal.invoice?.invoiceNumber}? This action cannot be undone.`}
+                confirmText="Delete Invoice"
+                cancelText="Cancel"
+                type="danger"
+                confirmStyle="danger"
+                loading={deleteInvoice.isPending}
+            />
         </motion.div>
     );
 };

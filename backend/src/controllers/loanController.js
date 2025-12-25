@@ -7,7 +7,9 @@ const { PAGINATION, LOAN_STATUS } = require('../config/constants');
 const {
     calculateMonthlyEMI,
     generateAmortizationSchedule,
-    calculateTotalInterest
+    calculateTotalInterest,
+    calculateCompoundEMI,
+    generateCompoundAmortizationSchedule,
 } = require('../utils/calculators');
 const { generateDocumentNumber } = require('../utils/formatters');
 const {
@@ -99,11 +101,11 @@ exports.getLoan = async (req, res, next) => {
 };
 
 /**
- * Create new loan with auto-calculated EMI
+ * Create new loan with auto-calculated or manual EMI
  */
 exports.createLoan = async (req, res, next) => {
     try {
-        const { customerId, principal, monthlyInterestRate, loanDurationMonths, startDate, notes } = req.body;
+        const { customerId, principal, monthlyInterestRate, loanDurationMonths, startDate, notes, interestType = 'simple', manualEMI } = req.body;
 
         // Verify customer exists
         const customer = await Customer.findById(customerId);
@@ -114,22 +116,29 @@ exports.createLoan = async (req, res, next) => {
         // Get lender for prefix
         const lender = await Lender.getLender();
 
-        // Calculate EMI
-        const monthlyEMI = calculateMonthlyEMI(principal, monthlyInterestRate, loanDurationMonths);
+        console.log('createLoan received:', { manualEMI, interestType, monthlyInterestRate, principal, loanDurationMonths });
 
-        // Generate amortization schedule
+        // Use manual EMI if provided, otherwise calculate
+        let monthlyEMI;
+        if (manualEMI && manualEMI > 0) {
+            monthlyEMI = manualEMI;
+            console.log('Using manual EMI:', monthlyEMI);
+        } else {
+            monthlyEMI = interestType === 'compound'
+                ? calculateCompoundEMI(principal, monthlyInterestRate, loanDurationMonths)
+                : calculateMonthlyEMI(principal, monthlyInterestRate, loanDurationMonths);
+            console.log('Calculated EMI:', monthlyEMI);
+        }
+
+        // Generate amortization schedule using the EMI (manual or calculated)
         const loanStartDate = new Date(startDate || Date.now());
-        const amortizationSchedule = generateAmortizationSchedule(
-            principal,
-            monthlyInterestRate,
-            loanDurationMonths,
-            monthlyEMI,
-            loanStartDate
-        );
+        const amortizationSchedule = interestType === 'compound'
+            ? generateCompoundAmortizationSchedule(principal, monthlyInterestRate, loanDurationMonths, monthlyEMI, loanStartDate)
+            : generateAmortizationSchedule(principal, monthlyInterestRate, loanDurationMonths, monthlyEMI, loanStartDate);
 
-        // Calculate totals
-        const totalInterestAmount = amortizationSchedule.reduce((sum, p) => sum + p.interest, 0);
-        const totalAmountPayable = principal + totalInterestAmount;
+        // Calculate totals based on actual EMI
+        const totalAmountPayable = monthlyEMI * loanDurationMonths;
+        const totalInterestAmount = totalAmountPayable - principal;
 
         // Generate unique loan number
         // Generate unique loan number
@@ -157,6 +166,7 @@ exports.createLoan = async (req, res, next) => {
             principal,
             monthlyInterestRate,
             loanDurationMonths,
+            interestType,
             startDate: loanStartDate,
             endDate,
             monthlyEMI,
@@ -281,7 +291,47 @@ exports.updateLoan = async (req, res, next) => {
             return next(new AppError('Cannot update approved or active loans', 400));
         }
 
-        Object.assign(loan, req.body);
+        const { customerId, principal, monthlyInterestRate, loanDurationMonths, startDate, notes, interestType = 'simple', manualEMI } = req.body;
+
+        // Use manual EMI if provided, otherwise recalculate
+        let monthlyEMI;
+        if (manualEMI && manualEMI > 0) {
+            monthlyEMI = manualEMI;
+        } else {
+            monthlyEMI = interestType === 'compound'
+                ? calculateCompoundEMI(principal, monthlyInterestRate, loanDurationMonths)
+                : calculateMonthlyEMI(principal, monthlyInterestRate, loanDurationMonths);
+        }
+
+        // Regenerate amortization schedule using the EMI
+        const loanStartDate = new Date(startDate || loan.startDate);
+        const amortizationSchedule = interestType === 'compound'
+            ? generateCompoundAmortizationSchedule(principal, monthlyInterestRate, loanDurationMonths, monthlyEMI, loanStartDate)
+            : generateAmortizationSchedule(principal, monthlyInterestRate, loanDurationMonths, monthlyEMI, loanStartDate);
+
+        // Calculate totals based on actual EMI
+        const totalAmountPayable = monthlyEMI * loanDurationMonths;
+        const totalInterestAmount = totalAmountPayable - principal;
+
+        // Calculate end date
+        const endDate = new Date(loanStartDate);
+        endDate.setMonth(endDate.getMonth() + loanDurationMonths);
+
+        // Update loan
+        loan.customerId = customerId || loan.customerId;
+        loan.principal = principal;
+        loan.monthlyInterestRate = monthlyInterestRate;
+        loan.loanDurationMonths = loanDurationMonths;
+        loan.interestType = interestType;
+        loan.startDate = loanStartDate;
+        loan.endDate = endDate;
+        loan.monthlyEMI = monthlyEMI;
+        loan.totalAmountPayable = totalAmountPayable;
+        loan.totalInterestAmount = totalInterestAmount;
+        loan.remainingBalance = totalAmountPayable;
+        loan.amortizationSchedule = amortizationSchedule;
+        loan.notes = notes;
+
         await loan.save();
 
         res.json({

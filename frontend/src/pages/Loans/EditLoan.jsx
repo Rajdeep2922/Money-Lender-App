@@ -17,15 +17,24 @@ const loanSchema = z.object({
     monthlyInterestRate: z.number().min(0.1, 'Rate must be > 0').max(50, 'Rate must be < 50%'),
     loanDurationMonths: z.number().int().min(1, 'Min 1 month').max(360, 'Max 360 months'),
     startDate: z.string().min(1, 'Start date is required'),
+    interestType: z.enum(['simple', 'compound']),
     notes: z.string().optional(),
 });
 
-// Calculate EMI using reducing balance method
-// Calculate EMI using Flat Rate method
-const calculateEMI = (principal, rate, months) => {
+// Calculate EMI using Flat Rate method (Simple Interest)
+const calculateSimpleEMI = (principal, rate, months) => {
     const monthlyInterest = principal * (rate / 100) * months;
     const totalAmount = principal + monthlyInterest;
     return Math.round((totalAmount / months) * 100) / 100;
+};
+
+// Calculate EMI using Reducing Balance method (Compound Interest)
+const calculateCompoundEMI = (principal, rate, months) => {
+    const r = rate / 100;
+    if (r === 0) return Math.round((principal / months) * 100) / 100;
+    const factor = Math.pow(1 + r, months);
+    const emi = (principal * r * factor) / (factor - 1);
+    return Math.round(emi * 100) / 100;
 };
 
 const EditLoan = () => {
@@ -43,6 +52,7 @@ const EditLoan = () => {
             monthlyInterestRate: 0,
             loanDurationMonths: 12,
             startDate: new Date().toISOString().split('T')[0],
+            interestType: 'simple',
         },
     });
 
@@ -55,6 +65,7 @@ const EditLoan = () => {
                 monthlyInterestRate: loan.monthlyInterestRate,
                 loanDurationMonths: loan.loanDurationMonths,
                 startDate: new Date(loan.startDate).toISOString().split('T')[0],
+                interestType: loan.interestType || 'simple',
                 notes: loan.notes || '',
             });
         }
@@ -63,14 +74,17 @@ const EditLoan = () => {
     const principal = watch('principal');
     const monthlyInterestRate = watch('monthlyInterestRate');
     const loanDurationMonths = watch('loanDurationMonths');
+    const interestType = watch('interestType');
 
     const calculations = useMemo(() => {
         if (!principal || !monthlyInterestRate || !loanDurationMonths) return null;
-        const emi = calculateEMI(principal, monthlyInterestRate, loanDurationMonths);
+        const emi = interestType === 'compound'
+            ? calculateCompoundEMI(principal, monthlyInterestRate, loanDurationMonths)
+            : calculateSimpleEMI(principal, monthlyInterestRate, loanDurationMonths);
         const totalPayable = emi * loanDurationMonths;
         const totalInterest = totalPayable - principal;
         return { emi, totalPayable, totalInterest };
-    }, [principal, monthlyInterestRate, loanDurationMonths]);
+    }, [principal, monthlyInterestRate, loanDurationMonths, interestType]);
 
     const onSubmit = async (data) => {
         const toastId = toast.loading('Updating loan...');
@@ -183,6 +197,33 @@ const EditLoan = () => {
                     <div className="form-group">
                         <label className="label">Notes</label>
                         <textarea {...register('notes')} rows={2} className="input" placeholder="Purpose of loan, special conditions..." />
+                    </div>
+
+                    {/* Interest Type Toggle */}
+                    <div className="form-group">
+                        <label className="label">Interest Calculation Method *</label>
+                        <div className="flex gap-4 mt-2">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    value="simple"
+                                    {...register('interestType')}
+                                    className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
+                                />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Simple Interest</span>
+                                <span className="text-xs text-gray-500">(Flat Rate)</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    value="compound"
+                                    {...register('interestType')}
+                                    className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
+                                />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Compound Interest</span>
+                                <span className="text-xs text-gray-500">(Reducing Balance)</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 

@@ -125,7 +125,7 @@ const ProfileSettings = () => {
             reader.onloadend = () => {
                 const base64String = reader.result;
                 setStampPreview(base64String);
-                setValue('companyStamp', base64String);
+                setValue('companyStamp', base64String, { shouldDirty: true });
             };
             reader.readAsDataURL(file);
         }
@@ -134,7 +134,13 @@ const ProfileSettings = () => {
     const onSubmit = async (data) => {
         const toastId = toast.loading('Saving settings...');
         try {
-            await updateLender.mutateAsync(data);
+            // Ensure companyStamp is included
+            const submitData = {
+                ...data,
+                companyStamp: stampPreview || data.companyStamp || ''
+            };
+            console.log('Submitting with companyStamp:', submitData.companyStamp ? 'present' : 'undefined');
+            await updateLender.mutateAsync(submitData);
             toast.success('Settings saved successfully!', { id: toastId });
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -143,6 +149,7 @@ const ProfileSettings = () => {
     };
 
     return (
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
                 Business Information

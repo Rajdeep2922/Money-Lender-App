@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiPlus, FiSearch, FiPhone, FiMail, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import Swal from 'sweetalert2';
 import { useCustomers, useDeleteCustomer } from '../../hooks/useCustomers';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import { TableSkeleton } from '../../components/common/Skeletons';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { formatPhone, formatDate } from '../../utils/formatters';
 
 // Mobile detection for reduced animations
@@ -33,6 +33,7 @@ export const CustomerList = () => {
     const [status, setStatus] = useState('');
     const [page, setPage] = useState(1);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, customer: null });
     const deleteCustomer = useDeleteCustomer();
 
     const { data, isLoading, error, isFetching, refetch } = useCustomers({ page, limit: 20, search, status: status || undefined });
@@ -41,6 +42,18 @@ export const CustomerList = () => {
         setIsRefreshing(true);
         await refetch();
         setTimeout(() => setIsRefreshing(false), 500);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.customer) return;
+        const toastId = toast.loading('Deleting customer...');
+        try {
+            await deleteCustomer.mutateAsync(deleteModal.customer._id);
+            toast.success('Customer deleted successfully', { id: toastId });
+            setDeleteModal({ isOpen: false, customer: null });
+        } catch (err) {
+            toast.error(err.message || 'Failed to delete customer', { id: toastId });
+        }
     };
 
     // Only show full page loader on initial load, not during search/filter
@@ -147,27 +160,7 @@ export const CustomerList = () => {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             e.preventDefault();
-                                            Swal.fire({
-                                                title: 'Are you sure?',
-                                                text: "You won't be able to revert this!",
-                                                icon: 'warning',
-                                                showCancelButton: true,
-                                                confirmButtonColor: '#ef4444',
-                                                cancelButtonColor: '#3b82f6',
-                                                confirmButtonText: 'Yes, delete it!'
-                                            }).then((result) => {
-                                                if (result.isConfirmed) {
-                                                    const toastId = toast.loading('Deleting customer...');
-                                                    deleteCustomer.mutate(customer._id, {
-                                                        onSuccess: () => {
-                                                            toast.success('Customer deleted successfully', { id: toastId });
-                                                        },
-                                                        onError: (err) => {
-                                                            toast.error(err.message || 'Failed to delete customer', { id: toastId });
-                                                        }
-                                                    });
-                                                }
-                                            });
+                                            setDeleteModal({ isOpen: true, customer });
                                         }}
                                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                                         title="Delete Customer"
@@ -203,6 +196,20 @@ export const CustomerList = () => {
                     </button>
                 </motion.div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, customer: null })}
+                onConfirm={handleDeleteConfirm}
+                title="Delete Customer"
+                message={`Are you sure you want to delete ${deleteModal.customer?.firstName} ${deleteModal.customer?.lastName}? This action cannot be undone.`}
+                confirmText="Delete Customer"
+                cancelText="Cancel"
+                type="danger"
+                confirmStyle="danger"
+                loading={deleteCustomer.isPending}
+            />
         </motion.div>
     );
 };

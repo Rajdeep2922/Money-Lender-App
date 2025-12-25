@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiPlus, FiSearch, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import Swal from 'sweetalert2';
 import { useLoans, useUpdateLoanStatus, useDeleteLoan } from '../../hooks/useLoans';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import { TableSkeleton } from '../../components/common/Skeletons';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { formatCurrency, formatDate, formatStatus, getStatusColor } from '../../utils/formatters';
 
 // Mobile detection for reduced animations
@@ -33,6 +33,7 @@ export const LoanList = () => {
     const [page, setPage] = useState(1);
     const [status, setStatus] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, loan: null });
     const deleteLoan = useDeleteLoan();
 
     const { data, isLoading, error, refetch } = useLoans({ page, limit: 20, status: status || undefined, search });
@@ -41,6 +42,18 @@ export const LoanList = () => {
         setIsRefreshing(true);
         await refetch();
         setTimeout(() => setIsRefreshing(false), 500);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.loan) return;
+        const toastId = toast.loading('Deleting loan...');
+        try {
+            await deleteLoan.mutateAsync(deleteModal.loan._id);
+            toast.success('Loan deleted successfully', { id: toastId });
+            setDeleteModal({ isOpen: false, loan: null });
+        } catch (err) {
+            toast.error(err.message || 'Failed to delete loan', { id: toastId });
+        }
     };
 
     if (isLoading && !data) return <TableSkeleton columns={8} rows={10} />;
@@ -139,29 +152,7 @@ export const LoanList = () => {
                                 </td>
                                 <td>
                                     <button
-                                        onClick={() => {
-                                            Swal.fire({
-                                                title: 'Are you sure?',
-                                                text: "This action cannot be undone. All related data will be removed.",
-                                                icon: 'warning',
-                                                showCancelButton: true,
-                                                confirmButtonColor: '#ef4444',
-                                                cancelButtonColor: '#3b82f6',
-                                                confirmButtonText: 'Yes, delete loan!'
-                                            }).then((result) => {
-                                                if (result.isConfirmed) {
-                                                    const toastId = toast.loading('Deleting loan...');
-                                                    deleteLoan.mutate(loan._id, {
-                                                        onSuccess: () => {
-                                                            toast.success('Loan deleted successfully', { id: toastId });
-                                                        },
-                                                        onError: (err) => {
-                                                            toast.error(err.message || 'Failed to delete loan', { id: toastId });
-                                                        }
-                                                    });
-                                                }
-                                            });
-                                        }}
+                                        onClick={() => setDeleteModal({ isOpen: true, loan })}
                                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                                         title="Delete Loan"
                                     >
@@ -205,12 +196,27 @@ export const LoanList = () => {
                     </motion.div>
                 )
             }
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, loan: null })}
+                onConfirm={handleDeleteConfirm}
+                title="Delete Loan"
+                message={`Are you sure you want to delete loan ${deleteModal.loan?.loanNumber}? This action cannot be undone and all related data will be removed.`}
+                confirmText="Delete Loan"
+                cancelText="Cancel"
+                type="danger"
+                confirmStyle="danger"
+                loading={deleteLoan.isPending}
+            />
         </motion.div >
     );
 };
 
 const StatusToggle = ({ loan }) => {
     const updateLoanStatus = useUpdateLoanStatus();
+    const [statusModal, setStatusModal] = useState({ isOpen: false, newStatus: '' });
 
     const handleChange = async (e) => {
         const newStatus = e.target.value;
@@ -220,27 +226,30 @@ const StatusToggle = ({ loan }) => {
 
         // Prevent reverting if payments exist
         if (newStatus === 'pending_approval' && loan.paymentsReceived > 0) {
-            alert('Cannot revert to Pending: Payments have already been recorded.');
+            toast.error('Cannot revert to Pending: Payments have already been recorded.');
             return;
         }
 
-        Swal.fire({
-            title: 'Confirm Status Change',
-            text: `Change status to ${newStatus.replace('_', ' ').toUpperCase()}?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#10b981',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Yes, update it!'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                try {
-                    await updateLoanStatus.mutateAsync({ id: loan._id, status: newStatus });
-                } catch (error) {
-                    toast.error(`Failed to update status: ${error.message}`);
-                }
-            }
-        });
+        setStatusModal({ isOpen: true, newStatus });
+    };
+
+    const handleConfirm = async () => {
+        try {
+            await updateLoanStatus.mutateAsync({ id: loan._id, status: statusModal.newStatus });
+            toast.success('Status updated successfully');
+            setStatusModal({ isOpen: false, newStatus: '' });
+        } catch (error) {
+            toast.error(`Failed to update status: ${error.message}`);
+        }
+    };
+
+    const getStatusLabel = (status) => {
+        const labels = {
+            pending_approval: 'Pending',
+            approved: 'Approved',
+            active: 'Active',
+        };
+        return labels[status] || status.replace('_', ' ').toUpperCase();
     };
 
     // If status is not one of the manual manageable ones, just show badge
@@ -253,31 +262,47 @@ const StatusToggle = ({ loan }) => {
     }
 
     return (
-        <div className="relative inline-block">
-            <select
-                value={loan.status}
-                onChange={handleChange}
-                className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-semibold border-none focus:ring-2 focus:ring-offset-1 focus:outline-none transition-colors ${loan.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
-                    loan.status === 'approved' ? 'bg-teal-50 text-teal-700' :
-                        loan.status === 'active' ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
-                    }`}
-            >
-                <option value="pending_approval">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="active">Active</option>
-            </select>
-            {/* Custom Arrow */}
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg className={`w-3 h-3 ${loan.status === 'pending_approval' ? 'text-yellow-800' :
-                    loan.status === 'approved' ? 'text-teal-700' :
-                        loan.status === 'active' ? 'text-green-800' :
-                            'text-gray-600'
-                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
+        <>
+            <div className="relative inline-block">
+                <select
+                    value={loan.status}
+                    onChange={handleChange}
+                    className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-semibold border-none focus:ring-2 focus:ring-offset-1 focus:outline-none transition-colors ${loan.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
+                        loan.status === 'approved' ? 'bg-teal-50 text-teal-700' :
+                            loan.status === 'active' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                        }`}
+                >
+                    <option value="pending_approval">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="active">Active</option>
+                </select>
+                {/* Custom Arrow */}
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <svg className={`w-3 h-3 ${loan.status === 'pending_approval' ? 'text-yellow-800' :
+                        loan.status === 'approved' ? 'text-teal-700' :
+                            loan.status === 'active' ? 'text-green-800' :
+                                'text-gray-600'
+                        }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
             </div>
-        </div>
+
+            {/* Status Change Confirmation Modal */}
+            <ConfirmModal
+                isOpen={statusModal.isOpen}
+                onClose={() => setStatusModal({ isOpen: false, newStatus: '' })}
+                onConfirm={handleConfirm}
+                title="Change Status"
+                message={`Are you sure you want to change the status to "${getStatusLabel(statusModal.newStatus)}"?`}
+                confirmText="Update Status"
+                cancelText="Cancel"
+                type="question"
+                confirmStyle="primary"
+                loading={updateLoanStatus.isPending}
+            />
+        </>
     );
 };
 

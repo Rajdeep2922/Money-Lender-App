@@ -114,6 +114,65 @@ const calculatePrepaymentAmount = (balance, monthlyRate, daysInMonth = 30) => {
     return Math.round((balance + interestDue) * 100) / 100;
 };
 
+/**
+ * Calculate Monthly EMI using Compound Interest (Reducing Balance Method)
+ * Formula: EMI = P × r × (1+r)^n / ((1+r)^n - 1)
+ * @param {number} principal - Loan amount
+ * @param {number} monthlyRate - Monthly interest rate in percentage
+ * @param {number} tenure - Loan duration in months
+ * @returns {number} Monthly EMI (rounded to 2 decimal places)
+ */
+const calculateCompoundEMI = (principal, monthlyRate, tenure) => {
+    const r = monthlyRate / 100;
+    if (r === 0) return Math.round((principal / tenure) * 100) / 100;
+    const factor = Math.pow(1 + r, tenure);
+    const emi = (principal * r * factor) / (factor - 1);
+    return Math.round(emi * 100) / 100;
+};
+
+/**
+ * Generate Amortization Schedule for Compound Interest (Reducing Balance)
+ * @param {number} principal - Loan amount
+ * @param {number} monthlyRate - Monthly interest rate in percentage
+ * @param {number} tenure - Loan duration in months
+ * @param {number} emi - Monthly EMI
+ * @param {Date} startDate - Loan start date
+ * @returns {Array} Array of payment schedule objects
+ */
+const generateCompoundAmortizationSchedule = (principal, monthlyRate, tenure, emi, startDate = new Date()) => {
+    const r = monthlyRate / 100;
+    let balance = principal;
+    const schedule = [];
+
+    for (let month = 1; month <= tenure; month++) {
+        const interestPayment = Math.round(balance * r * 100) / 100;
+        let principalPayment = Math.round((emi - interestPayment) * 100) / 100;
+
+        // Adjust for last month rounding
+        if (month === tenure) {
+            principalPayment = balance;
+        }
+
+        balance = Math.round((balance - principalPayment) * 100) / 100;
+
+        const dueDate = new Date(startDate);
+        dueDate.setMonth(dueDate.getMonth() + month);
+
+        schedule.push({
+            month,
+            emi,
+            principal: principalPayment,
+            interest: interestPayment,
+            balance: Math.max(0, balance),
+            dueDate,
+        });
+
+        if (balance <= 0 && month !== tenure) break;
+    }
+
+    return schedule;
+};
+
 module.exports = {
     calculateMonthlyEMI,
     generateAmortizationSchedule,
@@ -121,4 +180,6 @@ module.exports = {
     calculateRemainingBalance,
     calculateInterestForPeriod,
     calculatePrepaymentAmount,
+    calculateCompoundEMI,
+    generateCompoundAmortizationSchedule,
 };

@@ -20,174 +20,163 @@ const generateLoanAgreement = async (loan, lender) => {
     const customer = loan.customerId;
     const termsAndConditions = lender?.termsAndConditions || '1. The borrower shall pay the EMI on time.\n2. Late payments will incur penalties.';
 
+    // Debug: Check if lender has companyStamp
+    console.log('PDF Generation - Lender has companyStamp:', !!lender?.companyStamp);
+
     const docDefinition = {
         pageSize: 'A4',
-        pageMargins: [40, 60, 40, 60],
+        pageMargins: [40, 60, 40, 45],
         header: {
             margin: [40, 20, 40, 0],
             columns: [
-                { text: businessName.toUpperCase(), style: 'headerBusinessName' },
-                { text: 'LOAN AGREEMENT', style: 'headerDocTitle', alignment: 'right' }
+                { text: businessName.toUpperCase(), fontSize: 12, bold: true, color: '#0d9488' },
+                { text: 'LOAN AGREEMENT', fontSize: 12, bold: true, color: '#111827', alignment: 'right' }
             ]
         },
         content: [
             // Decorative Line
             {
-                canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 3, color: '#0d9488' }],
-                margin: [0, 0, 0, 20]
+                canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 2, color: '#0d9488' }],
+                margin: [0, 0, 0, 15]
             },
 
-            // Parties Section
+            // Parties Section - Two Column Layout
             {
-                style: 'boxContainer',
-                table: {
-                    widths: ['*'],
-                    body: [[
-                        {
-                            stack: [
-                                { text: 'AGREEMENT BETWEEN', style: 'sectionLabel' },
-                                {
-                                    columns: [
-                                        {
-                                            width: '*',
-                                            stack: [
-                                                { text: 'LENDER', style: 'subLabel' },
-                                                { text: businessName, style: 'partyName' },
-                                                { text: lender?.address || '', style: 'partyAddress' }
-                                            ]
-                                        },
-                                        {
-                                            width: '*',
-                                            stack: [
-                                                { text: 'BORROWER', style: 'subLabel' },
-                                                { text: `${customer.firstName} ${customer.lastName}`, style: 'partyName' },
-                                                { text: `Phone: ${customer.phone}`, style: 'partyAddress' },
-                                                { text: customer.address ? `${customer.address.street || ''}, ${customer.address.city || ''}` : '', style: 'partyAddress' }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                { text: `Date of Agreement: ${new Date().toLocaleDateString()}`, style: 'dateLabel', margin: [0, 10, 0, 0] }
-                            ]
-                        }
-                    ]]
-                },
-                layout: 'noBorders'
+                columns: [
+                    {
+                        width: '48%',
+                        stack: [
+                            { text: 'LENDER', fontSize: 8, bold: true, color: '#9ca3af', margin: [0, 0, 0, 3] },
+                            { text: businessName, fontSize: 11, bold: true, color: '#111827', margin: [0, 0, 0, 2] },
+                            { text: lender?.address || 'N/A', fontSize: 9, color: '#4b5563' }
+                        ]
+                    },
+                    {
+                        width: '4%',
+                        text: ''
+                    },
+                    {
+                        width: '48%',
+                        stack: [
+                            { text: 'BORROWER', fontSize: 8, bold: true, color: '#9ca3af', margin: [0, 0, 0, 3] },
+                            { text: `${customer.firstName} ${customer.lastName}`, fontSize: 11, bold: true, color: '#111827', margin: [0, 0, 0, 2] },
+                            { text: `Phone: ${customer.phone}`, fontSize: 9, color: '#4b5563' }
+                        ]
+                    }
+                ],
+                margin: [0, 0, 0, 8]
             },
+
+            // Date
+            { text: `Agreement Date: ${new Date().toLocaleDateString()}`, fontSize: 9, italics: true, color: '#6b7280', alignment: 'right', margin: [0, 0, 0, 15] },
 
             // Loan Details Section
-            { text: 'KEY LOAN TERMS', style: 'sectionHeader', margin: [0, 20, 0, 10] },
+            { text: 'KEY LOAN TERMS', fontSize: 10, bold: true, color: '#111827', margin: [0, 0, 0, 8] },
             {
                 table: {
                     widths: ['*', '*'],
                     body: [
                         [
-                            { text: 'Loan Account Number', style: 'tableLabel' },
-                            { text: loan.loanNumber, style: 'tableValue', bold: true }
+                            { text: 'Loan Number', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
+                            { text: loan.loanNumber, fontSize: 9, bold: true, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
                         ],
                         [
-                            { text: 'Principal Amount', style: 'tableLabel' },
-                            { text: `Rs. ${loan.principal.toLocaleString()}`, style: 'tableValue' }
+                            { text: 'Principal Amount', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
+                            { text: `Rs. ${loan.principal.toLocaleString()}`, fontSize: 9, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
                         ],
                         [
-                            { text: 'Interest Rate', style: 'tableLabel' },
-                            { text: `${loan.monthlyInterestRate}% per month`, style: 'tableValue' }
+                            { text: 'Interest Rate', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
+                            { text: `${loan.monthlyInterestRate}% / month (${loan.interestType === 'compound' ? 'Compound' : 'Simple'})`, fontSize: 9, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
                         ],
                         [
-                            { text: 'Tenure', style: 'tableLabel' },
-                            { text: `${loan.loanDurationMonths} Months`, style: 'tableValue' }
+                            { text: 'Tenure', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
+                            { text: `${loan.loanDurationMonths} Months`, fontSize: 9, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
                         ],
                         [
-                            { text: 'Monthly EMI', style: 'tableLabel' },
-                            { text: `Rs. ${loan.monthlyEMI.toLocaleString()}`, style: 'tableValue', bold: true, color: '#0d9488' }
+                            { text: 'Monthly EMI', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
+                            { text: `Rs. ${loan.monthlyEMI.toLocaleString()}`, fontSize: 9, bold: true, color: '#0d9488', alignment: 'right', margin: [0, 6, 5, 6] }
                         ],
                         [
-                            { text: 'Repayment Start Date', style: 'tableLabel' },
-                            { text: new Date(loan.startDate).toLocaleDateString(), style: 'tableValue' }
+                            { text: 'Start Date', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
+                            { text: new Date(loan.startDate).toLocaleDateString(), fontSize: 9, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
+                        ],
+                        [
+                            { text: 'Total Payable', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
+                            { text: `Rs. ${loan.totalAmountPayable?.toLocaleString() || 'N/A'}`, fontSize: 9, bold: true, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
                         ],
                     ]
                 },
                 layout: {
                     fillColor: (i) => (i % 2 === 0) ? '#f9fafb' : null,
-                    hLineWidth: (i, node) => (i === 0 || i === node.table.body.length) ? 1 : 0.5,
+                    hLineWidth: () => 0.5,
                     vLineWidth: () => 0,
                     hLineColor: () => '#e5e7eb'
                 }
             },
 
             // Terms and Conditions
-            { text: 'TERMS AND CONDITIONS', style: 'sectionHeader', margin: [0, 25, 0, 10] },
+            { text: 'TERMS AND CONDITIONS', fontSize: 10, bold: true, color: '#111827', margin: [0, 15, 0, 8] },
             {
                 text: termsAndConditions,
-                style: 'bodyText',
+                fontSize: 9,
+                lineHeight: 1.4,
+                color: '#374151',
                 alignment: 'justify'
             },
 
             // Signatures
             {
-                margin: [0, 50, 0, 0],
-                table: {
-                    widths: ['*', '*'],
-                    body: [
-                        [
-                            {
-                                stack: [
-                                    { text: 'AUTHORIZED SIGNATORY', style: 'signatureTitle' },
-                                    lender?.companyStamp ? {
-                                        image: lender.companyStamp,
-                                        width: 100,
-                                        margin: [0, 10, 0, 10]
-                                    } : { text: '\n\n\n\n' },
-                                    { text: businessName, bold: true },
-                                    { text: `PAN: ${lender?.panNumber || 'N/A'}`, fontSize: 8, color: '#6b7280' }
-                                ]
-                            },
-                            {
-                                stack: [
-                                    { text: 'BORROWER SIGNATURE', style: 'signatureTitle' },
-                                    customer.signature ? {
-                                        image: customer.signature,
-                                        width: 100,
-                                        margin: [0, 10, 0, 10]
-                                    } : { text: '\n\n\n\n' },
-                                    { text: `${customer.firstName} ${customer.lastName}`, bold: true },
-                                    { text: `Aadhaar: ${customer.aadhaarNumber || 'N/A'}`, fontSize: 8, color: '#6b7280' }
-                                ]
-                            }
+                margin: [0, 25, 0, 0],
+                columns: [
+                    {
+                        width: '45%',
+                        stack: [
+                            { text: 'LENDER SIGNATURE', fontSize: 8, bold: true, color: '#6b7280', decoration: 'underline', margin: [0, 0, 0, 5] },
+                            lender?.companyStamp ? {
+                                image: lender.companyStamp,
+                                width: 60,
+                                margin: [0, 5, 0, 5]
+                            } : { text: '\n\n', margin: [0, 15, 0, 15] },
+                            { text: '________________________', fontSize: 9, color: '#9ca3af' },
+                            { text: businessName, fontSize: 9, bold: true, margin: [0, 5, 0, 0] },
+                            { text: `PAN: ${lender?.panNumber || 'N/A'}`, fontSize: 7, color: '#6b7280' }
                         ]
-                    ]
-                },
-                layout: 'noBorders'
+                    },
+                    {
+                        width: '10%',
+                        text: ''
+                    },
+                    {
+                        width: '45%',
+                        stack: [
+                            { text: 'BORROWER SIGNATURE', fontSize: 8, bold: true, color: '#6b7280', decoration: 'underline', margin: [0, 0, 0, 5] },
+                            customer.signature ? {
+                                image: customer.signature,
+                                width: 60,
+                                margin: [0, 5, 0, 5]
+                            } : { text: '\n\n', margin: [0, 15, 0, 15] },
+                            { text: '________________________', fontSize: 9, color: '#9ca3af' },
+                            { text: `${customer.firstName} ${customer.lastName}`, fontSize: 9, bold: true, margin: [0, 5, 0, 0] },
+                            { text: `Aadhaar: ${customer.aadhaarNumber || 'N/A'}`, fontSize: 7, color: '#6b7280' }
+                        ]
+                    }
+                ]
             }
+
         ],
-        footer: (currentPage, pageCount) => ({
+        footer: {
             columns: [
-                { text: `Generated on ${new Date().toLocaleDateString()}`, style: 'footerText' },
-                { text: `Page ${currentPage} of ${pageCount}`, style: 'footerText', alignment: 'right' }
+                { text: `Generated: ${new Date().toLocaleDateString()}`, fontSize: 7, color: '#9ca3af' },
+                { text: 'Page 1 of 1', fontSize: 7, color: '#9ca3af', alignment: 'right' }
             ],
-            margin: [40, 20, 40, 0]
-        }),
-        styles: {
-            headerBusinessName: { fontSize: 12, bold: true, color: '#0d9488' },
-            headerDocTitle: { fontSize: 12, bold: true, color: '#111827' },
-            sectionLabel: { fontSize: 10, bold: true, color: '#6b7280', margin: [0, 0, 0, 10] },
-            subLabel: { fontSize: 8, bold: true, color: '#9ca3af', margin: [0, 0, 0, 2] },
-            partyName: { fontSize: 12, bold: true, color: '#111827' },
-            partyAddress: { fontSize: 9, color: '#4b5563' },
-            dateLabel: { fontSize: 9, italics: true, color: '#6b7280', alignment: 'right' },
-            sectionHeader: { fontSize: 11, bold: true, color: '#111827', characterSpacing: 0.5 },
-            tableLabel: { fontSize: 10, color: '#4b5563', margin: [5, 8, 0, 8] },
-            tableValue: { fontSize: 10, color: '#111827', alignment: 'right', margin: [0, 8, 5, 8] },
-            bodyText: { fontSize: 10, lineHeight: 1.4, color: '#374151' },
-            signatureTitle: { fontSize: 9, bold: true, color: '#6b7280', decoration: 'underline' },
-            footerText: { fontSize: 8, color: '#9ca3af' },
-            boxContainer: { margin: [0, 0, 0, 20], color: '#f3f4f6' }
+            margin: [40, 10, 40, 0]
         },
         defaultStyle: { font: 'Roboto' }
     };
 
     return printer.createPdfKitDocument(docDefinition);
 };
+
 
 /**
  * Generate Loan Statement PDF

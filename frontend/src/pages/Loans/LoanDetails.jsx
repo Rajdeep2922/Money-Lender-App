@@ -181,6 +181,10 @@ const LoanDetails = () => {
                                 {formatStatus(loan.status)}
                             </span>
                             <span className="text-sm text-gray-500">•</span>
+                            <span className={`badge ${loan.interestType === 'compound' ? 'badge-info' : 'badge-secondary'}`}>
+                                {loan.interestType === 'compound' ? 'Compound Interest' : 'Simple Interest'}
+                            </span>
+                            <span className="text-sm text-gray-500">•</span>
                             <Link to={`/customers/${loan.customerId?._id}`} className="text-sm text-teal-600 hover:text-teal-700">
                                 {loan.customerId?.firstName} {loan.customerId?.lastName}
                             </Link>
