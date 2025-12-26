@@ -170,32 +170,38 @@ const Navbar = () => {
                                 to="/"
                                 icon={Home}
                                 label="Dashboard"
+                                isActive={isActiveLink('/')}
                                 onClick={() => setIsMobileMenuOpen(false)}
                             />
                             <MobileNavItem
                                 to="/customers"
                                 icon={Users}
                                 label="Customers"
+                                isActive={location.pathname.startsWith('/customers')}
                                 onClick={() => setIsMobileMenuOpen(false)}
                             />
                             <MobileNavItem
                                 to="/loans"
                                 icon={Banknote}
                                 label="Loans"
+                                isActive={location.pathname.startsWith('/loans')}
                                 onClick={() => setIsMobileMenuOpen(false)}
                             />
                             <MobileNavItem
                                 to="/payments"
                                 icon={CreditCard}
                                 label="Payments"
+                                isActive={location.pathname.startsWith('/payments')}
                                 onClick={() => setIsMobileMenuOpen(false)}
                             />
                             <MobileNavItem
                                 to="/invoices"
                                 icon={FileText}
                                 label="Invoices"
+                                isActive={location.pathname.startsWith('/invoices')}
                                 onClick={() => setIsMobileMenuOpen(false)}
                             />
+
 
                             {/* User Info */}
                             <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
@@ -260,18 +266,21 @@ const NavItem = memo(({ to, icon: Icon, label, isActive }) => (
 ));
 
 // Mobile Navigation Item Component - No framer-motion
-const MobileNavItem = memo(({ to, icon: Icon, label, onClick, isPrimary = false }) => (
+const MobileNavItem = memo(({ to, icon: Icon, label, onClick, isPrimary = false, isActive = false }) => (
     <Link
         to={to}
         onClick={onClick}
         className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 active:scale-95 ${isPrimary
             ? 'bg-gradient-to-r from-teal-600 to-emerald-500 text-white'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+            : isActive
+                ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border-l-2 border-teal-500'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
     >
-        <Icon className="h-4 w-4" />
+        <Icon className={`h-4 w-4 ${isActive ? 'text-teal-600 dark:text-teal-400' : ''}`} />
         <span>{label}</span>
     </Link>
 ));
+
 
 export default memo(Navbar);

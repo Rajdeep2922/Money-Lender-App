@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiAlertTriangle, FiHelpCircle, FiTrash2, FiCheck } from 'react-icons/fi';
 
@@ -7,6 +8,7 @@ const iconMap = {
     danger: { icon: FiTrash2, color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/30' },
     question: { icon: FiHelpCircle, color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30' },
     success: { icon: FiCheck, color: 'text-green-500', bg: 'bg-green-100 dark:bg-green-900/30' },
+    info: { icon: FiHelpCircle, color: 'text-teal-500', bg: 'bg-teal-100 dark:bg-teal-900/30' },
 };
 
 const buttonStyles = {
@@ -26,7 +28,7 @@ const buttonStyles = {
  * @param {string} props.message - Modal message/description
  * @param {string} props.confirmText - Text for confirm button
  * @param {string} props.cancelText - Text for cancel button
- * @param {string} props.type - 'warning' | 'danger' | 'question' | 'success'
+ * @param {string} props.type - 'warning' | 'danger' | 'question' | 'success' | 'info'
  * @param {string} props.confirmStyle - 'danger' | 'warning' | 'primary' | 'success'
  * @param {boolean} props.loading - Show loading state on confirm button
  */
@@ -49,10 +51,12 @@ export const ConfirmModal = ({
         onConfirm();
     };
 
-    return (
+    // Use portal to render at document root for proper fixed positioning on mobile
+    const modalContent = (
         <AnimatePresence>
             {isOpen && (
                 <Fragment>
+
                     {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -136,6 +140,11 @@ export const ConfirmModal = ({
             )}
         </AnimatePresence>
     );
+
+    // Render modal in a portal at document body for proper mobile positioning
+    return typeof document !== 'undefined'
+        ? createPortal(modalContent, document.body)
+        : modalContent;
 };
 
 export default ConfirmModal;

@@ -28,7 +28,9 @@ import {
     useDownloadReceipt
 } from '../../hooks/usePayments';
 import { PageLoader } from '../../components/common/LoadingSpinner';
+import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { formatCurrency, formatDate, formatStatus, getStatusColor } from '../../utils/formatters';
+import toast from 'react-hot-toast';
 
 const LoanDetails = () => {
     const { id } = useParams();
@@ -45,6 +47,9 @@ const LoanDetails = () => {
     const downloadReceipt = useDownloadReceipt();
 
     const [activeTab, setActiveTab] = useState('overview');
+    const [approveModal, setApproveModal] = useState(false);
+    const [paymentModal, setPaymentModal] = useState({ isOpen: false, emiItem: null });
+
 
     if (loadingLoan || loadingSchedule || loadingPayments) {
         return <PageLoader />;
@@ -87,8 +92,17 @@ const LoanDetails = () => {
     };
 
     const handleApprove = () => {
-        if (window.confirm('Are you sure you want to approve this loan?')) {
-            approveLoan.mutate(id);
+        setApproveModal(true);
+    };
+
+    const handleApproveConfirm = async () => {
+        const toastId = toast.loading('Approving loan...');
+        try {
+            await approveLoan.mutateAsync(id);
+            toast.success('Loan approved successfully!', { id: toastId });
+            setApproveModal(false);
+        } catch (error) {
+            toast.error(error.message || 'Failed to approve loan', { id: toastId });
         }
     };
 
@@ -101,6 +115,7 @@ const LoanDetails = () => {
         );
 
         if (confirmed) {
+            const toastId = toast.loading('Processing foreclosure...');
             try {
                 await forecloseLoan.mutateAsync({
                     id,
@@ -110,17 +125,21 @@ const LoanDetails = () => {
                         notes: `Early settlement foreclosure${parseFloat(fee) > 0 ? ` with fee of ${fee}` : ''}`
                     }
                 });
+                toast.success('Loan foreclosed successfully!', { id: toastId });
             } catch (error) {
-                alert('Foreclosure failed: ' + error.message);
+                toast.error('Foreclosure failed: ' + error.message, { id: toastId });
             }
         }
     };
 
-    const handleMarkPaid = async (emiItem) => {
-        if (!window.confirm(`Mark EMI for ${formatCurrency(emiItem.emi)} as PAID ? `)) {
-            return;
-        }
+    const handleMarkPaid = (emiItem) => {
+        setPaymentModal({ isOpen: true, emiItem });
+    };
 
+    const handleMarkPaidConfirm = async () => {
+        if (!paymentModal.emiItem) return;
+        const emiItem = paymentModal.emiItem;
+        const toastId = toast.loading('Recording payment...');
         try {
             await recordPayment.mutateAsync({
                 loanId: id,
@@ -130,9 +149,12 @@ const LoanDetails = () => {
                 notes: `EMI Payment for ${formatDate(emiItem.date)}`,
                 referenceId: `EMI - ${loan.loanNumber} -${emiItem.index + 1} `,
             });
+            toast.success('Payment recorded successfully!', { id: toastId });
+            setPaymentModal({ isOpen: false, emiItem: null });
         } catch (error) {
-            console.error('Error marking as paid:', error);
+            toast.error('Failed to record payment: ' + error.message, { id: toastId });
         }
+
     };
 
     const handleMarkUnpaid = async () => {
@@ -158,312 +180,338 @@ const LoanDetails = () => {
     };
 
     return (
-        <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={containerVariants}
-            className="space-y-6"
-        >
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <Link to="/loans" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                        <FiArrowLeft className="w-5 h-5 text-gray-500" />
-                    </Link>
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                {loan.loanNumber}
-                            </h1>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className={`badge ${getStatusColor(loan.status)} `}>
-                                {formatStatus(loan.status)}
-                            </span>
-                            <span className="text-sm text-gray-500">•</span>
-                            <span className={`badge ${loan.interestType === 'compound' ? 'badge-info' : 'badge-secondary'}`}>
-                                {loan.interestType === 'compound' ? 'Compound Interest' : 'Simple Interest'}
-                            </span>
-                            <span className="text-sm text-gray-500">•</span>
-                            <Link to={`/customers/${loan.customerId?._id}`} className="text-sm text-teal-600 hover:text-teal-700">
-                                {loan.customerId?.firstName} {loan.customerId?.lastName}
-                            </Link>
-                            <span className="text-sm text-gray-500">•</span>
-                            <span className="text-sm text-gray-500">{loan.customerId?.phone}</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    {loan.status === 'pending_approval' && (
-                        <Link
-                            to={`/loans/${id}/edit`}
-                            className="btn btn-secondary gap-2"
-                        >
-                            <FiEdit className="w-4 h-4" />
-                            Edit
+        <>
+            <motion.div
+                initial="hidden"
+                animate="visible"
+
+                variants={containerVariants}
+                className="space-y-6"
+            >
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <Link to="/loans" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                            <FiArrowLeft className="w-5 h-5 text-gray-500" />
                         </Link>
-                    )}
-                    {/* Approve button removed - handled by toggle */}
-                    {loan.status === 'active' && (
-                        <button
-                            className="btn btn-ghost text-error border border-error/20 hover:bg-error/10 gap-2"
-                            onClick={handleForeclose}
-                            disabled={forecloseLoan.isPending}
-                        >
-                            <FiClock className="w-4 h-4" />
-                            {forecloseLoan.isPending ? 'Settle...' : 'Foreclose'}
-                        </button>
-                    )}
-                    {loan.status === 'closed' && (
-                        <button
-                            className="btn btn-primary gap-2"
-                            onClick={() => downloadNOC.mutate(id)}
-                            disabled={downloadNOC.isPending}
-                        >
-                            <FiCheckCircle className="w-4 h-4" />
-                            {downloadNOC.isPending ? 'Generating...' : 'Download NOC'}
-                        </button>
-                    )}
-                    <button
-                        className="btn btn-secondary gap-2"
-                        onClick={() => downloadAgreement.mutate(id)}
-                        disabled={downloadAgreement.isPending}
-                    >
-                        <FiDownload className="w-4 h-4" />
-                        {downloadAgreement.isPending ? 'Generating...' : 'Agreement'}
-                    </button>
-                    <button
-                        className="btn btn-secondary gap-2"
-                        onClick={() => downloadStatement.mutate(id)}
-                        disabled={downloadStatement.isPending}
-                    >
-                        <FiFileText className="w-4 h-4" />
-                        {downloadStatement.isPending ? 'Generating...' : 'Statement'}
-                    </button>
-                </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="card p-4 border-l-4 border-l-teal-400">
-                    <p className="text-sm text-gray-500">Principal Amount</p>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(loan.principal)}</p>
-                </div>
-                <div className="card p-4 border-l-4 border-l-teal-500">
-                    <p className="text-sm text-gray-500">Remaining Balance</p>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(loan.remainingBalance)}</p>
-                </div>
-                <div className="card p-4 border-l-4 border-l-purple-500">
-                    <p className="text-sm text-gray-500">EMI Progress</p>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xl font-bold text-gray-900 dark:text-white">
-                            {paymentsReceivedCount} / {totalEmis}
-                        </span>
-                        <span className="text-sm text-gray-500">Paid</span>
-                    </div>
-                    {/* Progress Bar */}
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2 dark:bg-gray-700">
-                        <div
-                            className="bg-purple-600 h-1.5 rounded-full"
-                            style={{ width: `${(paymentsReceivedCount / totalEmis) * 100}% ` }}
-                        ></div>
-                    </div>
-                </div>
-                <div className={`card p-4 border-l-4 ${isOverdue ? 'border-l-red-500' : 'border-l-yellow-500'}`}>
-                    <p className="text-sm text-gray-500">Next Payment</p>
-                    {nextDueEMI ? (
-                        <>
-                            <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">
-                                {formatDate(nextDueEMI.dueDate)}
-                            </p>
-                            <p className={`text-xs font-semibold mt-1 ${isOverdue ? 'text-red-500' : 'text-yellow-600'}`}>
-                                {isOverdue ? 'OVERDUE' : 'Upcoming'}
-                            </p>
-                        </>
-                    ) : (
-                        <p className="text-sm font-medium text-green-600 mt-1">All Paid!</p>
-                    )}
-                </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="border-b border-gray-200 dark:border-gray-700">
-                <nav className="-mb-px flex space-x-8">
-                    {['overview', 'schedule', 'payments'].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`${activeTab === tab
-                                ? 'border-teal-500 text-teal-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                } whitespace - nowrap py - 4 px - 1 border - b - 2 font - medium text - sm capitalize`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </nav>
-            </div>
-
-            {/* Tab Content */}
-            <div className="card p-6 min-h-[400px]">
-                {activeTab === 'overview' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Loan Details</h3>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="text-gray-500">Interest Rate</div>
-                                <div className="font-medium">{loan.monthlyInterestRate}% / month</div>
-
-                                <div className="text-gray-500">Duration</div>
-                                <div className="font-medium">{loan.loanDurationMonths} months</div>
-
-                                <div className="text-gray-500">Start Date</div>
-                                <div className="font-medium">{formatDate(loan.startDate)}</div>
-
-                                <div className="text-gray-500">Total Payable</div>
-                                <div className="font-medium">{formatCurrency(loan.totalAmountPayable)}</div>
-
-                                <div className="text-gray-500">Total Interest</div>
-                                <div className="font-medium text-green-600">{formatCurrency(loan.totalInterestAmount)}</div>
-
-                                <div className="text-gray-500">EMI Amount</div>
-                                <div className="font-medium">{formatCurrency(loan.monthlyEMI)}</div>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {loan.loanNumber}
+                                </h1>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className={`badge ${getStatusColor(loan.status)} `}>
+                                    {formatStatus(loan.status)}
+                                </span>
+                                <span className="text-sm text-gray-500">•</span>
+                                <span className={`badge ${loan.interestType === 'compound' ? 'badge-info' : 'badge-secondary'}`}>
+                                    {loan.interestType === 'compound' ? 'Compound Interest' : 'Simple Interest'}
+                                </span>
+                                <span className="text-sm text-gray-500">•</span>
+                                <Link to={`/customers/${loan.customerId?._id}`} className="text-sm text-teal-600 hover:text-teal-700">
+                                    {loan.customerId?.firstName} {loan.customerId?.lastName}
+                                </Link>
+                                <span className="text-sm text-gray-500">•</span>
+                                <span className="text-sm text-gray-500">{loan.customerId?.phone}</span>
                             </div>
                         </div>
+                    </div>
+                    <div className="flex gap-2">
+                        {loan.status === 'pending_approval' && (
+                            <Link
+                                to={`/loans/${id}/edit`}
+                                className="btn btn-secondary gap-2"
+                            >
+                                <FiEdit className="w-4 h-4" />
+                                Edit
+                            </Link>
+                        )}
+                        {/* Approve button removed - handled by toggle */}
+                        {loan.status === 'active' && (
+                            <button
+                                className="btn btn-ghost text-error border border-error/20 hover:bg-error/10 gap-2"
+                                onClick={handleForeclose}
+                                disabled={forecloseLoan.isPending}
+                            >
+                                <FiClock className="w-4 h-4" />
+                                {forecloseLoan.isPending ? 'Settle...' : 'Foreclose'}
+                            </button>
+                        )}
+                        {loan.status === 'closed' && (
+                            <button
+                                className="btn btn-primary gap-2"
+                                onClick={() => downloadNOC.mutate(id)}
+                                disabled={downloadNOC.isPending}
+                            >
+                                <FiCheckCircle className="w-4 h-4" />
+                                {downloadNOC.isPending ? 'Generating...' : 'Download NOC'}
+                            </button>
+                        )}
+                        <button
+                            className="btn btn-secondary gap-2"
+                            onClick={() => downloadAgreement.mutate(id)}
+                            disabled={downloadAgreement.isPending}
+                        >
+                            <FiDownload className="w-4 h-4" />
+                            {downloadAgreement.isPending ? 'Generating...' : 'Agreement'}
+                        </button>
+                        <button
+                            className="btn btn-secondary gap-2"
+                            onClick={() => downloadStatement.mutate(id)}
+                            disabled={downloadStatement.isPending}
+                        >
+                            <FiFileText className="w-4 h-4" />
+                            {downloadStatement.isPending ? 'Generating...' : 'Statement'}
+                        </button>
+                    </div>
+                </div>
 
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Customer Info</h3>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="text-gray-500">Name</div>
-                                <div className="font-medium">{loan.customerId?.firstName} {loan.customerId?.lastName}</div>
+                {/* Quick Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="card p-4 border-l-4 border-l-teal-400">
+                        <p className="text-sm text-gray-500">Principal Amount</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(loan.principal)}</p>
+                    </div>
+                    <div className="card p-4 border-l-4 border-l-teal-500">
+                        <p className="text-sm text-gray-500">Remaining Balance</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(loan.remainingBalance)}</p>
+                    </div>
+                    <div className="card p-4 border-l-4 border-l-purple-500">
+                        <p className="text-sm text-gray-500">EMI Progress</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xl font-bold text-gray-900 dark:text-white">
+                                {paymentsReceivedCount} / {totalEmis}
+                            </span>
+                            <span className="text-sm text-gray-500">Paid</span>
+                        </div>
+                        {/* Progress Bar */}
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2 dark:bg-gray-700">
+                            <div
+                                className="bg-purple-600 h-1.5 rounded-full"
+                                style={{ width: `${(paymentsReceivedCount / totalEmis) * 100}% ` }}
+                            ></div>
+                        </div>
+                    </div>
+                    <div className={`card p-4 border-l-4 ${isOverdue ? 'border-l-red-500' : 'border-l-yellow-500'}`}>
+                        <p className="text-sm text-gray-500">Next Payment</p>
+                        {nextDueEMI ? (
+                            <>
+                                <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                                    {formatDate(nextDueEMI.dueDate)}
+                                </p>
+                                <p className={`text-xs font-semibold mt-1 ${isOverdue ? 'text-red-500' : 'text-yellow-600'}`}>
+                                    {isOverdue ? 'OVERDUE' : 'Upcoming'}
+                                </p>
+                            </>
+                        ) : (
+                            <p className="text-sm font-medium text-green-600 mt-1">All Paid!</p>
+                        )}
+                    </div>
+                </div>
 
-                                <div className="text-gray-500">Email</div>
-                                <div className="font-medium">{loan.customerId?.email}</div>
+                {/* Tabs */}
+                <div className="border-b border-gray-200 dark:border-gray-700">
+                    <nav className="-mb-px flex space-x-8">
+                        {['overview', 'schedule', 'payments'].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`${activeTab === tab
+                                    ? 'border-teal-500 text-teal-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace - nowrap py - 4 px - 1 border - b - 2 font - medium text - sm capitalize`}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </nav>
+                </div>
 
-                                <div className="text-gray-500">Phone</div>
-                                <div className="font-medium">{loan.customerId?.phone}</div>
+                {/* Tab Content */}
+                <div className="card p-6 min-h-[400px]">
+                    {activeTab === 'overview' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Loan Details</h3>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="text-gray-500">Interest Rate</div>
+                                    <div className="font-medium">{loan.monthlyInterestRate}% / month</div>
 
-                                <div className="text-gray-500">Address</div>
-                                <div className="font-medium">
-                                    {loan.customerId?.address?.city}, {loan.customerId?.address?.state}
+                                    <div className="text-gray-500">Duration</div>
+                                    <div className="font-medium">{loan.loanDurationMonths} months</div>
+
+                                    <div className="text-gray-500">Start Date</div>
+                                    <div className="font-medium">{formatDate(loan.startDate)}</div>
+
+                                    <div className="text-gray-500">Total Payable</div>
+                                    <div className="font-medium">{formatCurrency(loan.totalAmountPayable)}</div>
+
+                                    <div className="text-gray-500">Total Interest</div>
+                                    <div className="font-medium text-green-600">{formatCurrency(loan.totalInterestAmount)}</div>
+
+                                    <div className="text-gray-500">EMI Amount</div>
+                                    <div className="font-medium">{formatCurrency(loan.monthlyEMI)}</div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Customer Info</h3>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="text-gray-500">Name</div>
+                                    <div className="font-medium">{loan.customerId?.firstName} {loan.customerId?.lastName}</div>
+
+                                    <div className="text-gray-500">Email</div>
+                                    <div className="font-medium">{loan.customerId?.email}</div>
+
+                                    <div className="text-gray-500">Phone</div>
+                                    <div className="font-medium">{loan.customerId?.phone}</div>
+
+                                    <div className="text-gray-500">Address</div>
+                                    <div className="font-medium">
+                                        {loan.customerId?.address?.city}, {loan.customerId?.address?.state}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {activeTab === 'schedule' && (
-                    <div className="overflow-x-auto">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Due Date</th>
-                                    <th>Status</th>
-                                    <th>EMI</th>
-                                    <th>Principal</th>
-                                    <th>Interest</th>
-                                    <th>Balance</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {schedule?.map((item, index) => {
-                                    const status = getEmiStatus(index, item.dueDate);
-                                    const isNextDue = index === paymentsReceivedCount;
-                                    const isLastPaid = index === paymentsReceivedCount - 1;
+                    {activeTab === 'schedule' && (
+                        <div className="overflow-x-auto">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                        <th>EMI</th>
+                                        <th>Principal</th>
+                                        <th>Interest</th>
+                                        <th>Balance</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {schedule?.map((item, index) => {
+                                        const status = getEmiStatus(index, item.dueDate);
+                                        const isNextDue = index === paymentsReceivedCount;
+                                        const isLastPaid = index === paymentsReceivedCount - 1;
 
-                                    return (
-                                        <tr key={item.month} className={status === 'due' ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}>
-                                            <td>{item.month}</td>
-                                            <td className="font-medium">{formatDate(item.dueDate)}</td>
-                                            <td>{getEmiStatusBadge(status)}</td>
-                                            <td>{formatCurrency(item.emi)}</td>
-                                            <td className="text-gray-500">{formatCurrency(item.principal)}</td>
-                                            <td className="text-gray-500">{formatCurrency(item.interest)}</td>
-                                            <td className="text-gray-500">{formatCurrency(item.balance)}</td>
-                                            <td>
-                                                {(status === 'due' || (status === 'overdue' && isNextDue)) && (
-                                                    <button
-                                                        onClick={() => handleMarkPaid(item)}
-                                                        disabled={recordPayment.isPending || deletePayment.isPending}
-                                                        className="btn btn-primary btn-xs"
-                                                    >
-                                                        {recordPayment.isPending ? 'Processing...' : 'Mark Paid'}
-                                                    </button>
-                                                )}
-                                                {status === 'paid' && isLastPaid && (
-                                                    <button
-                                                        onClick={handleMarkUnpaid}
-                                                        disabled={recordPayment.isPending || deletePayment.isPending}
-                                                        className="btn btn-ghost btn-xs text-error hover:bg-error/10 ml-2 border border-error/50"
-                                                        title="Undo last payment"
-                                                    >
-                                                        {deletePayment.isPending ? 'Wait...' : 'Mark Unpaid'}
-                                                    </button>
-                                                )}
-                                                {status === 'paid' && !isLastPaid && (
-                                                    <span className="text-green-600 text-sm flex items-center gap-1">
-                                                        <FiCheckCircle /> Paid
-                                                    </span>
-                                                )}
+                                        return (
+                                            <tr key={item.month} className={status === 'due' ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}>
+                                                <td>{item.month}</td>
+                                                <td className="font-medium">{formatDate(item.dueDate)}</td>
+                                                <td>{getEmiStatusBadge(status)}</td>
+                                                <td>{formatCurrency(item.emi)}</td>
+                                                <td className="text-gray-500">{formatCurrency(item.principal)}</td>
+                                                <td className="text-gray-500">{formatCurrency(item.interest)}</td>
+                                                <td className="text-gray-500">{formatCurrency(item.balance)}</td>
+                                                <td>
+                                                    {(status === 'due' || (status === 'overdue' && isNextDue)) && (
+                                                        <button
+                                                            onClick={() => handleMarkPaid(item)}
+                                                            disabled={recordPayment.isPending || deletePayment.isPending}
+                                                            className="btn btn-primary btn-xs"
+                                                        >
+                                                            {recordPayment.isPending ? 'Processing...' : 'Mark Paid'}
+                                                        </button>
+                                                    )}
+                                                    {status === 'paid' && isLastPaid && (
+                                                        <button
+                                                            onClick={handleMarkUnpaid}
+                                                            disabled={recordPayment.isPending || deletePayment.isPending}
+                                                            className="btn btn-ghost btn-xs text-error hover:bg-error/10 ml-2 border border-error/50"
+                                                            title="Undo last payment"
+                                                        >
+                                                            {deletePayment.isPending ? 'Wait...' : 'Mark Unpaid'}
+                                                        </button>
+                                                    )}
+                                                    {status === 'paid' && !isLastPaid && (
+                                                        <span className="text-green-600 text-sm flex items-center gap-1">
+                                                            <FiCheckCircle /> Paid
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {activeTab === 'payments' && (
+                        <div className="overflow-x-auto">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Reference</th>
+                                        <th>Notes</th>
+                                        <th className="text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {payments?.map((payment) => (
+                                        <tr key={payment._id}>
+                                            <td>{formatDate(payment.paymentDate)}</td>
+                                            <td className="font-medium text-green-600">{formatCurrency(payment.amountPaid)}</td>
+                                            <td className="capitalize">{payment.paymentMethod?.replace('_', ' ')}</td>
+                                            <td>{payment.referenceId || '-'}</td>
+                                            <td>{payment.notes || '-'}</td>
+                                            <td className="text-right">
+                                                <button
+                                                    onClick={() => downloadReceipt.mutate(payment._id)}
+                                                    disabled={downloadReceipt.isPending}
+                                                    className="text-teal-600 hover:text-teal-700 p-1 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors inline-flex items-center gap-1"
+                                                    title="Download Receipt"
+                                                >
+                                                    <FiDownload className="w-4 h-4" />
+                                                    <span className="text-xs font-medium">Receipt</span>
+                                                </button>
                                             </td>
                                         </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                    ))}
+                                    {!payments?.length && (
+                                        <tr>
+                                            <td colSpan="5" className="text-center py-8 text-gray-500">
+                                                No payments recorded yet.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </motion.div>
 
-                {activeTab === 'payments' && (
-                    <div className="overflow-x-auto">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Reference</th>
-                                    <th>Notes</th>
-                                    <th className="text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {payments?.map((payment) => (
-                                    <tr key={payment._id}>
-                                        <td>{formatDate(payment.paymentDate)}</td>
-                                        <td className="font-medium text-green-600">{formatCurrency(payment.amountPaid)}</td>
-                                        <td className="capitalize">{payment.paymentMethod?.replace('_', ' ')}</td>
-                                        <td>{payment.referenceId || '-'}</td>
-                                        <td>{payment.notes || '-'}</td>
-                                        <td className="text-right">
-                                            <button
-                                                onClick={() => downloadReceipt.mutate(payment._id)}
-                                                disabled={downloadReceipt.isPending}
-                                                className="text-teal-600 hover:text-teal-700 p-1 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors inline-flex items-center gap-1"
-                                                title="Download Receipt"
-                                            >
-                                                <FiDownload className="w-4 h-4" />
-                                                <span className="text-xs font-medium">Receipt</span>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {!payments?.length && (
-                                    <tr>
-                                        <td colSpan="5" className="text-center py-8 text-gray-500">
-                                            No payments recorded yet.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
-        </motion.div>
+            {/* Approve Loan Modal */}
+            <ConfirmModal
+                isOpen={approveModal}
+                onClose={() => setApproveModal(false)}
+                onConfirm={handleApproveConfirm}
+                title="Approve Loan"
+                message="Are you sure you want to approve this loan? This will change the status to Active."
+                confirmText="Approve"
+                type="info"
+            />
+
+            {/* Mark as Paid Modal */}
+            <ConfirmModal
+                isOpen={paymentModal.isOpen}
+                onClose={() => setPaymentModal({ isOpen: false, emiItem: null })}
+                onConfirm={handleMarkPaidConfirm}
+                title="Record Payment"
+                message={paymentModal.emiItem ? `Mark EMI of ${formatCurrency(paymentModal.emiItem.emi)} as PAID?` : ''}
+                confirmText="Mark as Paid"
+                type="info"
+            />
+        </>
     );
 };
+
 
 export default LoanDetails;
