@@ -88,7 +88,8 @@ const ProfileSettings = () => {
     const updateLender = useUpdateLender();
     const [stampPreview, setStampPreview] = useState(null);
 
-    const { register, handleSubmit, setValue, reset } = useForm();
+    const { register, handleSubmit, setValue, reset, getValues } = useForm();
+
 
     React.useEffect(() => {
         if (lender) {
@@ -254,12 +255,31 @@ const ProfileSettings = () => {
                             {stampPreview && (
                                 <button
                                     type="button"
-                                    onClick={() => { setStampPreview(null); setValue('companyStamp', ''); }}
-                                    className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
+                                    onClick={async (e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setStampPreview(null);
+                                        setValue('companyStamp', '', { shouldDirty: true });
+                                        // Auto-save the removal with all current form data
+                                        const toastId = toast.loading('Removing stamp...');
+                                        try {
+                                            const currentData = getValues();
+                                            await updateLender.mutateAsync({
+                                                ...currentData,
+                                                companyStamp: ''
+                                            });
+                                            toast.success('Stamp removed successfully!', { id: toastId });
+                                        } catch (error) {
+                                            toast.error('Failed to remove stamp', { id: toastId });
+                                        }
+                                    }}
+                                    className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1 hover:underline"
                                 >
-                                    <Trash2 className="w-3 h-3" /> Remove
+                                    <Trash2 className="w-3 h-3" /> Remove Stamp
                                 </button>
                             )}
+
+
                         </div>
                     </div>
                 </div>
