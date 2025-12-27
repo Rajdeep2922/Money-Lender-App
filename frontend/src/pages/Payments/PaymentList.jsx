@@ -9,15 +9,30 @@ import { TableSkeleton } from '../../components/common/Skeletons';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
+// Smooth staggered animations for both mobile and desktop
 const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.06,
+            delayChildren: 0.05
+        }
+    },
 };
 
 const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 },
+    hidden: { opacity: 0, y: 15 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.25,
+            ease: [0.25, 0.46, 0.45, 0.94]
+        }
+    },
 };
+
 
 export const PaymentList = () => {
     const [search, setSearch] = useState('');

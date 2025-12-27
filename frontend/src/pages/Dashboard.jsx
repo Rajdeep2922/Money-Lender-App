@@ -11,27 +11,30 @@ import { useLender } from '../hooks/useLender';
 import { formatCurrency } from '../utils/formatters';
 import { PageLoader } from '../components/common/LoadingSpinner';
 
-// Check if mobile for reduced animations
-const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-const containerVariants = isMobile ? {
-    hidden: { opacity: 1 },
-    visible: { opacity: 1 },
-} : {
+// Smooth staggered animations for both mobile and desktop
+const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
-        transition: { staggerChildren: 0.1 },
+        transition: {
+            staggerChildren: 0.08,
+            delayChildren: 0.1
+        },
     },
 };
 
-const itemVariants = isMobile ? {
-    hidden: { opacity: 1 },
-    visible: { opacity: 1 },
-} : {
+const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.3,
+            ease: [0.25, 0.46, 0.45, 0.94]
+        }
+    },
 };
+
 
 const StatCard = ({ title, value, icon: Icon, color, link }) => (
     <motion.div variants={itemVariants} className="h-full">

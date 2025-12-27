@@ -9,24 +9,30 @@ import { TableSkeleton } from '../../components/common/Skeletons';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { formatPhone, formatDate } from '../../utils/formatters';
 
-// Mobile detection for reduced animations
-const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-const containerVariants = isMobile ? {
-    hidden: { opacity: 1 },
-    visible: { opacity: 1 },
-} : {
+// Smooth staggered animations for both mobile and desktop
+const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.06,
+            delayChildren: 0.05
+        }
+    },
 };
 
-const itemVariants = isMobile ? {
-    hidden: { opacity: 1 },
-    visible: { opacity: 1 },
-} : {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 },
+const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.25,
+            ease: [0.25, 0.46, 0.45, 0.94]
+        }
+    },
 };
+
 
 export const CustomerList = () => {
     const [search, setSearch] = useState('');

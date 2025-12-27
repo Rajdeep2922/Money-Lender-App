@@ -158,91 +158,100 @@ const Navbar = () => {
                 </div>
             </div>
 
-            {/* Mobile Menu - Using CSS transitions for stability */}
-            <div
-                className={`md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 ease-out ${isMobileMenuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-                    }`}
-            >
-                <div className="px-4 py-4 space-y-2">
-                    {user && (
-                        <>
-                            <MobileNavItem
-                                to="/"
-                                icon={Home}
-                                label="Dashboard"
-                                isActive={isActiveLink('/')}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            />
-                            <MobileNavItem
-                                to="/customers"
-                                icon={Users}
-                                label="Customers"
-                                isActive={location.pathname.startsWith('/customers')}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            />
-                            <MobileNavItem
-                                to="/loans"
-                                icon={Banknote}
-                                label="Loans"
-                                isActive={location.pathname.startsWith('/loans')}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            />
-                            <MobileNavItem
-                                to="/payments"
-                                icon={CreditCard}
-                                label="Payments"
-                                isActive={location.pathname.startsWith('/payments')}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            />
-                            <MobileNavItem
-                                to="/invoices"
-                                icon={FileText}
-                                label="Invoices"
-                                isActive={location.pathname.startsWith('/invoices')}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            />
+            {/* Mobile Menu - Smooth slide animation */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, scaleY: 0.8, originY: 0 }}
+                        animate={{ opacity: 1, scaleY: 1, originY: 0 }}
+                        exit={{ opacity: 0, scaleY: 0.8, originY: 0 }}
+                        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                        className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 origin-top"
+                    >
 
+                        <div className="px-4 py-4 space-y-2">
+                            {user && (
+                                <>
+                                    <MobileNavItem
+                                        to="/"
+                                        icon={Home}
+                                        label="Dashboard"
+                                        isActive={isActiveLink('/')}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    />
+                                    <MobileNavItem
+                                        to="/customers"
+                                        icon={Users}
+                                        label="Customers"
+                                        isActive={location.pathname.startsWith('/customers')}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    />
+                                    <MobileNavItem
+                                        to="/loans"
+                                        icon={Banknote}
+                                        label="Loans"
+                                        isActive={location.pathname.startsWith('/loans')}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    />
+                                    <MobileNavItem
+                                        to="/payments"
+                                        icon={CreditCard}
+                                        label="Payments"
+                                        isActive={location.pathname.startsWith('/payments')}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    />
+                                    <MobileNavItem
+                                        to="/invoices"
+                                        icon={FileText}
+                                        label="Invoices"
+                                        isActive={location.pathname.startsWith('/invoices')}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    />
 
-                            {/* User Info */}
-                            <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-                                <Link to="/settings" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <div className="flex items-center space-x-3 px-3 py-2 hover:bg-teal-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                                        <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm">
-                                            {lender?.companyStamp ? (
-                                                <img src={lender.companyStamp} alt="Logo" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="text-sm font-bold text-white">
-                                                    {user.username?.charAt(0).toUpperCase()}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                {user.username}
-                                            </span>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                View Settings
-                                            </span>
-                                        </div>
+                                    {/* User Info */}
+                                    <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+                                        <Link to="/settings" onClick={() => setIsMobileMenuOpen(false)}>
+                                            <div className="flex items-center space-x-3 px-3 py-2 hover:bg-teal-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                                <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm">
+                                                    {lender?.companyStamp ? (
+                                                        <img src={lender.companyStamp} alt="Logo" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-sm font-bold text-white">
+                                                            {user.username?.charAt(0).toUpperCase()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        {user.username}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                        View Settings
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                        <Button
+                                            variant="danger"
+                                            onClick={() => {
+                                                logout();
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                            className="w-full justify-start mt-2"
+                                            icon={LogOut}
+                                        >
+                                            Logout
+                                        </Button>
                                     </div>
-                                </Link>
-                                <Button
-                                    variant="danger"
-                                    onClick={() => {
-                                        logout();
-                                        setIsMobileMenuOpen(false);
-                                    }}
-                                    className="w-full justify-start mt-2"
-                                    icon={LogOut}
-                                >
-                                    Logout
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
+                                </>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </nav>
+
+
     );
 };
 
