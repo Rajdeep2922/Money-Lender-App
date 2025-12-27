@@ -16,7 +16,8 @@ exports.getDashboardStats = async (req, res, next) => {
             activeLoans,
             overdueLoansCount
         ] = await Promise.all([
-            Customer.countDocuments(),
+            // Exclude soft-deleted customers from count
+            Customer.countDocuments({ isDeleted: { $ne: true } }),
             Loan.aggregate([
                 {
                     $group: {

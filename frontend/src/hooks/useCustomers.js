@@ -78,6 +78,8 @@ export const useDeleteCustomer = () => {
         mutationFn: customerAPI.delete,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+            // Also invalidate stats so Dashboard customer count updates
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
         },
     });
 };

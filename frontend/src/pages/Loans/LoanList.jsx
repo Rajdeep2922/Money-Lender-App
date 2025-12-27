@@ -267,27 +267,36 @@ const StatusToggle = ({ loan }) => {
                 <select
                     value={loan.status}
                     onChange={handleChange}
-                    className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-semibold border-none focus:ring-2 focus:ring-offset-1 focus:outline-none transition-colors ${loan.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
-                        loan.status === 'approved' ? 'bg-teal-50 text-teal-700' :
-                            loan.status === 'active' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800'
+                    className={`appearance-none cursor-pointer pl-3 pr-7 py-1.5 rounded-lg text-xs font-semibold 
+                        border shadow-sm focus:ring-2 focus:ring-offset-1 focus:outline-none transition-all duration-200
+                        hover:shadow-md
+                        ${loan.status === 'pending_approval'
+                            ? 'bg-amber-50 text-amber-700 border-amber-200 focus:ring-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700'
+                            : loan.status === 'approved'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200 focus:ring-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700'
+                                : loan.status === 'active'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 focus:ring-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700'
+                                    : 'bg-gray-100 text-gray-700 border-gray-200 focus:ring-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
                         }`}
                 >
-                    <option value="pending_approval">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="active">Active</option>
+                    <option value="pending_approval" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">⏳ Pending</option>
+                    <option value="approved" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">✅ Approved</option>
+                    <option value="active" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">🟢 Active</option>
                 </select>
                 {/* Custom Arrow */}
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className={`w-3 h-3 ${loan.status === 'pending_approval' ? 'text-yellow-800' :
-                        loan.status === 'approved' ? 'text-teal-700' :
-                            loan.status === 'active' ? 'text-green-800' :
-                                'text-gray-600'
+                    <svg className={`w-3.5 h-3.5 transition-colors ${loan.status === 'pending_approval' ? 'text-amber-600 dark:text-amber-400' :
+                        loan.status === 'approved' ? 'text-blue-600 dark:text-blue-400' :
+                            loan.status === 'active' ? 'text-emerald-600 dark:text-emerald-400' :
+                                'text-gray-500 dark:text-gray-400'
                         }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                     </svg>
                 </div>
             </div>
+
+
+
 
             {/* Status Change Confirmation Modal */}
             <ConfirmModal
