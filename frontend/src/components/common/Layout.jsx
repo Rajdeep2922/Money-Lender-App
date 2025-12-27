@@ -2,29 +2,16 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Navbar from './Navbar';
 
-// Page transition variants - slide up from bottom on mobile
+// Simple fade transition - no movement to prevent jitter
 const pageVariants = {
-    initial: {
-        opacity: 0,
-        y: 30,
-        scale: 0.98
-    },
+    initial: { opacity: 0 },
     animate: {
         opacity: 1,
-        y: 0,
-        scale: 1,
-        transition: {
-            duration: 0.3,
-            ease: [0.25, 0.46, 0.45, 0.94]
-        }
+        transition: { duration: 0.15, ease: 'easeOut' }
     },
     exit: {
         opacity: 0,
-        y: -20,
-        transition: {
-            duration: 0.2,
-            ease: 'easeIn'
-        }
+        transition: { duration: 0.1, ease: 'easeIn' }
     },
 };
 
