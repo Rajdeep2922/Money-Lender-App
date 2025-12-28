@@ -70,6 +70,9 @@ const customerSchema = new mongoose.Schema({
     signature: {
         type: String, // Store as Base64 string
     },
+    photo: {
+        type: String, // Store passport photo as Base64 string
+    },
 }, {
     timestamps: true,
 });

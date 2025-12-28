@@ -402,7 +402,7 @@ exports.cancelLoan = async (req, res, next) => {
 exports.downloadAgreement = async (req, res, next) => {
     try {
         const loan = await Loan.findById(req.params.id)
-            .populate('customerId', 'firstName lastName email phone address aadhaarNumber panNumber signature');
+            .populate('customerId', 'firstName lastName email phone address aadhaarNumber panNumber signature photo');
 
         if (!loan) {
             return next(new AppError('Loan not found', 404));
@@ -427,7 +427,7 @@ exports.downloadAgreement = async (req, res, next) => {
 exports.downloadStatement = async (req, res, next) => {
     try {
         const loan = await Loan.findById(req.params.id)
-            .populate('customerId', 'firstName lastName email phone address aadhaarNumber panNumber');
+            .populate('customerId', 'firstName lastName email phone address aadhaarNumber panNumber photo');
 
         if (!loan) {
             return next(new AppError('Loan not found', 404));

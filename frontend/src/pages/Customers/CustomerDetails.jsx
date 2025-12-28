@@ -81,8 +81,12 @@ const CustomerDetails = () => {
                 {/* Profile Card */}
                 <div className="card p-4 sm:p-6 lg:col-span-1 space-y-6">
                     <div className="flex items-center gap-4 pb-6 border-b border-gray-100 dark:border-gray-700">
-                        <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-teal-600 dark:text-teal-400">
-                            <FiUser className="w-8 h-8" />
+                        <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-teal-600 dark:text-teal-400 overflow-hidden">
+                            {customer.photo ? (
+                                <img src={customer.photo} alt={customer.firstName} className="w-full h-full object-cover" />
+                            ) : (
+                                <FiUser className="w-8 h-8" />
+                            )}
                         </div>
                         <div>
                             <span className={`badge ${customer.status === 'active' ? 'badge-success' : 'badge-error'}`}>

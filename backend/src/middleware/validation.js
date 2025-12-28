@@ -48,6 +48,7 @@ const customerSchema = Joi.object({
     }),
     notes: Joi.string().trim().allow(''),
     signature: Joi.string().allow(''),
+    photo: Joi.string().allow(''),
 });
 
 // Loan validation schema

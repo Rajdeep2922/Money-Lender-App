@@ -22,6 +22,7 @@ const customerSchema = z.object({
     panNumber: z.string().optional(),
     notes: z.string().optional(),
     signature: z.string().optional(),
+    photo: z.string().optional(),
 });
 
 export const AddCustomer = () => {
@@ -39,12 +40,14 @@ export const AddCustomer = () => {
         defaultValues: {
             address: { country: 'India' },
             signature: '',
+            photo: '',
         },
     });
 
     const signatureValue = watch('signature');
+    const photoValue = watch('photo');
 
-    const handleFileChange = (e) => {
+    const handleFileChange = (e, field) => {
         const file = e.target.files[0];
         if (file) {
             // Check size (max 100KB)
@@ -55,7 +58,7 @@ export const AddCustomer = () => {
 
             const reader = new FileReader();
             reader.onloadend = () => {
-                setValue('signature', reader.result);
+                setValue(field, reader.result);
             };
             reader.readAsDataURL(file);
         }
@@ -81,6 +84,7 @@ export const AddCustomer = () => {
                 panNumber: customer.panNumber || '',
                 notes: customer.notes || '',
                 signature: customer.signature || '',
+                photo: customer.photo || '',
             });
         }
     }, [isEditMode, customer, reset]);
@@ -194,6 +198,56 @@ export const AddCustomer = () => {
                     <textarea {...register('notes')} rows={3} className="input" />
                 </div>
 
+                {/* Passport Photo Section */}
+                <div>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        Passport Size Photo
+                    </h2>
+                    <div className="space-y-4">
+                        <div className="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleFileChange(e, 'photo')}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                title="Upload Passport Photo"
+                            />
+                            <div className="flex flex-col items-center justify-center text-center">
+                                <FiImage className="w-8 h-8 text-gray-400 mb-2" />
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Click to upload photo
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Supports PNG, JPG (Max 100KB)
+                                </p>
+                            </div>
+                        </div>
+
+                        {photoValue && (
+                            <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800">
+                                <div className="flex items-center gap-3">
+                                    <img src={photoValue} alt="Passport Photo" className="h-16 w-16 object-cover bg-white rounded-full border border-gray-200" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                            Passport Photo
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            Successfully uploaded
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setValue('photo', '')}
+                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                                >
+                                    <FiTrash2 className="w-5 h-5" />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* Signature Section */}
                 <div>
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -204,7 +258,7 @@ export const AddCustomer = () => {
                             <input
                                 type="file"
                                 accept="image/*,application/pdf"
-                                onChange={handleFileChange}
+                                onChange={(e) => handleFileChange(e, 'signature')}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                 title="Upload signature (PDF or Image)"
                             />
