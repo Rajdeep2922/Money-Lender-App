@@ -1,24 +1,28 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/common/Layout';
 import { GlobalErrorBoundary } from './components/common/GlobalErrorBoundary';
-import Dashboard from './pages/Dashboard';
-import CustomerList from './pages/Customers/CustomerList';
-import CustomerDetails from './pages/Customers/CustomerDetails';
-import AddCustomer from './pages/Customers/AddCustomer';
-import LoanList from './pages/Loans/LoanList';
-import LoanDetails from './pages/Loans/LoanDetails';
-import CreateLoan from './pages/Loans/CreateLoan';
-import EditLoan from './pages/Loans/EditLoan';
-import PaymentList from './pages/Payments/PaymentList';
-import RecordPayment from './pages/Payments/RecordPayment';
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import SignOut from './pages/Auth/SignOut';
-import Settings from './pages/Settings';
-import InvoiceList from './pages/Invoices/InvoiceList';
+import { PageLoader } from './components/common/LoadingSpinner';
 import useAuthStore from './store/authStore';
+
+// Lazy Load Pages
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const CustomerList = lazy(() => import('./pages/Customers/CustomerList'));
+const CustomerDetails = lazy(() => import('./pages/Customers/CustomerDetails'));
+const AddCustomer = lazy(() => import('./pages/Customers/AddCustomer'));
+const LoanList = lazy(() => import('./pages/Loans/LoanList'));
+const LoanDetails = lazy(() => import('./pages/Loans/LoanDetails'));
+const CreateLoan = lazy(() => import('./pages/Loans/CreateLoan'));
+const EditLoan = lazy(() => import('./pages/Loans/EditLoan'));
+const PaymentList = lazy(() => import('./pages/Payments/PaymentList'));
+const RecordPayment = lazy(() => import('./pages/Payments/RecordPayment'));
+const Login = lazy(() => import('./pages/Auth/Login'));
+const Register = lazy(() => import('./pages/Auth/Register'));
+const SignOut = lazy(() => import('./pages/Auth/SignOut'));
+const Settings = lazy(() => import('./pages/Settings'));
+const InvoiceList = lazy(() => import('./pages/Invoices/InvoiceList'));
 
 // Create React Query client with optimized defaults
 const queryClient = new QueryClient({
@@ -54,49 +58,55 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+import { HelmetProvider } from 'react-helmet-async';
+
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Toaster position="top-right" />
-      <GlobalErrorBoundary>
-        <BrowserRouter>
-          <Routes>
-            {/* Auth Routes (No Layout) - Public only */}
-            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-            <Route path="/signout" element={<SignOut />} />
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <Toaster position="top-right" />
+        <GlobalErrorBoundary>
+          <BrowserRouter>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* Auth Routes (No Layout) - Public only */}
+                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+                <Route path="/signout" element={<SignOut />} />
 
-            {/* Protected Routes with Layout */}
-            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              {/* Dashboard */}
-              <Route path="/" element={<Dashboard />} />
+                {/* Protected Routes with Layout */}
+                <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  {/* Dashboard */}
+                  <Route path="/" element={<Dashboard />} />
 
-              {/* Customers */}
-              <Route path="/customers" element={<CustomerList />} />
-              <Route path="/customers/new" element={<AddCustomer />} />
-              <Route path="/customers/:id" element={<CustomerDetails />} />
-              <Route path="/customers/:id/edit" element={<AddCustomer />} />
+                  {/* Customers */}
+                  <Route path="/customers" element={<CustomerList />} />
+                  <Route path="/customers/new" element={<AddCustomer />} />
+                  <Route path="/customers/:id" element={<CustomerDetails />} />
+                  <Route path="/customers/:id/edit" element={<AddCustomer />} />
 
-              {/* Loans */}
-              <Route path="/loans" element={<LoanList />} />
-              <Route path="/loans/new" element={<CreateLoan />} />
-              <Route path="/loans/:id/edit" element={<EditLoan />} />
-              <Route path="/loans/:id" element={<LoanDetails />} />
+                  {/* Loans */}
+                  <Route path="/loans" element={<LoanList />} />
+                  <Route path="/loans/new" element={<CreateLoan />} />
+                  <Route path="/loans/:id/edit" element={<EditLoan />} />
+                  <Route path="/loans/:id" element={<LoanDetails />} />
 
-              {/* Payments */}
-              <Route path="/payments" element={<PaymentList />} />
-              <Route path="/payments/new" element={<RecordPayment />} />
+                  {/* Payments */}
+                  <Route path="/payments" element={<PaymentList />} />
+                  <Route path="/payments/new" element={<RecordPayment />} />
 
-              {/* Invoices */}
-              <Route path="/invoices" element={<InvoiceList />} />
+                  {/* Invoices */}
+                  <Route path="/invoices" element={<InvoiceList />} />
 
-              {/* Settings */}
-              <Route path="/settings" element={<Settings />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </GlobalErrorBoundary>
-    </QueryClientProvider>
+                  {/* Settings */}
+                  <Route path="/settings" element={<Settings />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </GlobalErrorBoundary>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 

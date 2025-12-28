@@ -13,4 +13,17 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['framer-motion', 'react-icons', 'lucide-react', 'sweetalert2', 'react-hot-toast'],
+          'vendor-charts': ['recharts'],
+          'vendor-utils': ['axios', 'zod', 'zustand', '@tanstack/react-query'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 })
