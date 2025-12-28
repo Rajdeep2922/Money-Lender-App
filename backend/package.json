@@ -29,6 +29,7 @@
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.0.3",
+    "node-cache": "^5.1.2",
     "node-cron": "^4.2.1",
     "pdfmake": "^0.2.9"
   },

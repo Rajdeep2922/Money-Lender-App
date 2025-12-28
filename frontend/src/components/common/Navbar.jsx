@@ -73,11 +73,11 @@ const Navbar = () => {
                         whileTap={{ scale: 0.95 }}
                         className="flex items-center space-x-2"
                     >
-                        <Link to="/" className="flex items-center space-x-2 group">
-                            <div className="p-2 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                                <Wallet className="h-6 w-6 text-white" />
+                        <Link to="/" className="flex items-center space-x-3 group">
+                            <div className="relative w-11 h-11 bg-gradient-to-br from-teal-500 via-teal-600 to-emerald-600 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300 flex items-center justify-center ring-2 ring-white/20">
+                                <span className="text-white font-extrabold text-lg" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '-0.02em' }}>SR</span>
                             </div>
-                            <span className="text-xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
+                            <span className="text-xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent hidden sm:block">
                                 {businessName}
                             </span>
                         </Link>
