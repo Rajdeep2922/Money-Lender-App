@@ -113,7 +113,8 @@ exports.getPayment = async (req, res, next) => {
  */
 exports.recordPayment = async (req, res, next) => {
     try {
-        const { loanId, amountPaid, paymentMethod, paymentDate, referenceId, notes } = req.body;
+        console.log('Recording Payment Body:', JSON.stringify(req.body, null, 2));
+        const { loanId, amountPaid, paymentMethod, paymentDate, referenceId, notes, bankDetails = {} } = req.body;
 
         // Find loan
         const loan = await Loan.findById(loanId).populate('customerId');
@@ -162,7 +163,9 @@ exports.recordPayment = async (req, res, next) => {
             referenceId,
             balanceAfterPayment: newRemainingBalance,
             notes,
+            bankDetails,
         });
+
 
         await payment.save();
 
@@ -386,7 +389,12 @@ exports.downloadReceipt = async (req, res, next) => {
             return next(new AppError('Lender details not configured', 400));
         }
 
+        console.log('Generating receipt for payment:', payment._id);
+        console.log('Payment Method:', payment.paymentMethod);
+        console.log('Bank Details:', JSON.stringify(payment.bankDetails, null, 2));
+
         const pdfDoc = await generatePaymentReceipt(payment, lender);
+
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Receipt-${payment._id.toString().slice(-6)}.pdf`);

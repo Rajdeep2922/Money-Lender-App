@@ -15,8 +15,10 @@ const { generateDocumentNumber } = require('../utils/formatters');
 const {
     generateLoanAgreement,
     generateLoanStatement,
-    generateLoanClosureNOC
+    generateLoanClosureNOC,
+    generateSettlementCertificate
 } = require('../utils/pdfGenerator');
+
 
 /**
  * List all loans with pagination and filtering
@@ -230,10 +232,32 @@ exports.getAmortizationSchedule = async (req, res, next) => {
             return next(new AppError('Loan not found', 404));
         }
 
+        // Generate schedule dynamically based on interest type
+        let schedule;
+        const startDate = loan.disbursementDate || loan.createdAt;
+
+        if (loan.interestType === 'compound') {
+            schedule = generateCompoundAmortizationSchedule(
+                loan.principal,
+                loan.monthlyInterestRate,
+                loan.loanDurationMonths,
+                loan.monthlyEMI,
+                startDate
+            );
+        } else {
+            schedule = generateAmortizationSchedule(
+                loan.principal,
+                loan.monthlyInterestRate,
+                loan.loanDurationMonths,
+                loan.monthlyEMI,
+                startDate
+            );
+        }
+
         res.json({
             success: true,
             loanNumber: loan.loanNumber,
-            schedule: loan.amortizationSchedule,
+            schedule,
             summary: {
                 principal: loan.principal,
                 totalInterest: loan.totalInterestAmount,
@@ -247,6 +271,7 @@ exports.getAmortizationSchedule = async (req, res, next) => {
         next(error);
     }
 };
+
 
 /**
  * Get current balance for a loan
@@ -427,7 +452,7 @@ exports.downloadStatement = async (req, res, next) => {
  */
 exports.forecloseLoan = async (req, res, next) => {
     try {
-        const { foreclosureFee = 0, notes, paymentMethod = 'cash' } = req.body;
+        const { settlementAmount, discount = 0, notes, paymentMethod = 'cash', bankDetails = {} } = req.body;
         const loan = await Loan.findById(req.params.id);
 
         if (!loan) {
@@ -438,36 +463,55 @@ exports.forecloseLoan = async (req, res, next) => {
             return next(new AppError('Only active loans can be foreclosed', 400));
         }
 
-        // Record final settlement payment
-        const settlementAmount = loan.remainingBalance + Number(foreclosureFee);
+        // Calculate final settlement
+        const originalBalance = loan.remainingBalance;
+        const finalAmount = settlementAmount || (originalBalance - Number(discount));
 
+        // Record final settlement payment with all required fields
         const payment = new Payment({
             loanId: loan._id,
             customerId: loan.customerId,
-            amountPaid: settlementAmount,
+            paymentNumber: loan.paymentsReceived + 1,
+            amountPaid: finalAmount,
+            principalPortion: originalBalance, // Full principal paid off
+            interestPortion: 0, // No additional interest for settlement
+            balanceAfterPayment: 0, // Loan is fully closed
             paymentDate: new Date(),
             paymentMethod,
-            notes: `Foreclosure Settlement. Fee: ${foreclosureFee}. ${notes || ''}`,
-            isForeclosure: true
+            notes: notes || 'Early Settlement / Loan Closure',
+            referenceId: `SETTLEMENT-${loan.loanNumber}`,
+            bankDetails: bankDetails
         });
 
         await payment.save();
 
-        // Close loan
+
+
+        // Store settlement details and close loan
         loan.status = LOAN_STATUS.CLOSED;
+        loan.settlementBalance = originalBalance;
+        loan.settlementAmount = finalAmount;
+        loan.settlementDiscount = Number(discount) || 0;
+        loan.settlementPaymentMethod = paymentMethod;
+        loan.settlementNotes = notes || 'Early Settlement / Loan Closure';
+        loan.settlementDate = new Date();
+        loan.settlementBankDetails = bankDetails;
         loan.remainingBalance = 0;
-        loan.notes = `${loan.notes || ''}\n[FORECLOSED ${new Date().toLocaleDateString()}]`;
+        loan.notes = `${loan.notes || ''}\n[SETTLED ${new Date().toLocaleDateString()}]`;
         await loan.save();
+
 
         res.json({
             success: true,
-            message: 'Loan foreclosed and settled successfully',
-            settlementAmount
+            message: 'Loan settled and closed successfully',
+            settlementAmount: finalAmount,
+            loanId: loan._id
         });
     } catch (error) {
         next(error);
     }
 };
+
 
 /**
  * Download No Objection Certificate (NOC)
@@ -562,6 +606,48 @@ exports.deleteLoan = async (req, res, next) => {
             success: true,
             message: 'Loan deleted successfully',
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Download Settlement Certificate PDF
+ */
+exports.downloadSettlementCertificate = async (req, res, next) => {
+    try {
+        const loan = await Loan.findById(req.params.id)
+            .populate('customerId')
+            .populate('lenderId');
+
+        if (!loan) {
+            return next(new AppError('Loan not found', 404));
+        }
+
+        if (loan.status !== 'closed') {
+            return next(new AppError('Settlement certificate is only available for closed loans', 400));
+        }
+
+        const lender = loan.lenderId || await Lender.findOne();
+
+        // Get settlement data from loan or construct from history
+        const settlementData = {
+            originalBalance: loan.settlementBalance || loan.remainingBalance || 0,
+            settlementAmount: loan.settlementAmount || 0,
+            discount: loan.settlementDiscount || 0,
+            paymentMethod: loan.settlementPaymentMethod || 'cash',
+            notes: loan.settlementNotes || 'Early settlement',
+            bankDetails: loan.settlementBankDetails || {}
+        };
+
+
+        const pdfDoc = await generateSettlementCertificate(loan, lender, settlementData);
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Settlement-${loan.loanNumber}.pdf`);
+
+        pdfDoc.pipe(res);
+        pdfDoc.end();
     } catch (error) {
         next(error);
     }

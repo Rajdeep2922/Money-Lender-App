@@ -70,7 +70,17 @@ const paymentSchema = Joi.object({
     paymentDate: Joi.date().default(new Date()),
     referenceId: Joi.string().trim().allow(''),
     notes: Joi.string().trim().allow(''),
+    bankDetails: Joi.object({
+        accountHolderName: Joi.string().trim().allow(''),
+        bankName: Joi.string().trim().allow(''),
+        accountNumber: Joi.string().trim().allow(''),
+        ifscCode: Joi.string().trim().allow(''),
+        branch: Joi.string().trim().allow(''),
+        upiId: Joi.string().trim().allow(''),
+        transactionId: Joi.string().trim().allow(''),
+    }).optional(),
 });
+
 
 // Lender validation schema
 const lenderSchema = Joi.object({

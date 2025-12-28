@@ -17,12 +17,15 @@ export const RecordPayment = () => {
     const recordPayment = useRecordPayment();
     const downloadReceipt = useDownloadReceipt();
 
-    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({
         defaultValues: {
             paymentMethod: 'bank_transfer',
             paymentDate: new Date().toISOString().split('T')[0],
         },
     });
+
+    const paymentMethod = watch('paymentMethod');
+
 
     const onSubmit = async (data) => {
         if (!selectedLoan) return;
@@ -35,6 +38,15 @@ export const RecordPayment = () => {
                 paymentDate: data.paymentDate,
                 referenceId: data.referenceId,
                 notes: data.notes,
+                bankDetails: {
+                    accountHolderName: data.accountHolderName || '',
+                    bankName: data.bankName || '',
+                    accountNumber: data.accountNumber || '',
+                    ifscCode: data.ifscCode || '',
+                    branch: data.branch || '',
+                    upiId: data.upiId || '',
+                    transactionId: data.transactionId || '',
+                }
             });
             toast.success('Payment recorded successfully!', { id: toastId });
             setRecordedPaymentId(response.data.payment._id);
@@ -44,6 +56,7 @@ export const RecordPayment = () => {
             toast.error(errorMessage, { id: toastId });
         }
     };
+
 
     if (isLoading) return <PageLoader />;
 
@@ -202,6 +215,62 @@ export const RecordPayment = () => {
                                 <input {...register('referenceId')} className="input" placeholder="e.g. TXN-123456" />
                             </div>
                         </div>
+
+                        {/* Bank Details - Only show for bank transfer, UPI, or cheque */}
+                        {['bank_transfer', 'upi', 'cheque'].includes(paymentMethod) && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 space-y-3">
+                                <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                                    {paymentMethod === 'upi' ? '📱 UPI Details' : '🏦 Bank Details'}
+                                </h3>
+
+                                {paymentMethod === 'upi' ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="form-group">
+                                            <label className="label text-xs">UPI ID</label>
+                                            <input {...register('upiId')} className="input" placeholder="example@upi" />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label text-xs">Transaction ID</label>
+                                            <input {...register('transactionId')} className="input" placeholder="UPI transaction ID" />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="form-group">
+                                                <label className="label text-xs">Account Holder Name</label>
+                                                <input {...register('accountHolderName')} className="input" placeholder="Account holder name" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="label text-xs">Bank Name</label>
+                                                <input {...register('bankName')} className="input" placeholder="Bank name" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="form-group">
+                                                <label className="label text-xs">Account Number</label>
+                                                <input {...register('accountNumber')} className="input" placeholder="Account number" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="label text-xs">IFSC Code</label>
+                                                <input {...register('ifscCode')} className="input" placeholder="IFSC code" style={{ textTransform: 'uppercase' }} />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="form-group">
+                                                <label className="label text-xs">Branch</label>
+                                                <input {...register('branch')} className="input" placeholder="Branch name" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="label text-xs">{paymentMethod === 'cheque' ? 'Cheque Number' : 'Transaction ID'}</label>
+                                                <input {...register('transactionId')} className="input" placeholder={paymentMethod === 'cheque' ? 'Cheque number' : 'Transaction ID'} />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
 
                         <div className="form-group">
                             <label className="label">Notes</label>

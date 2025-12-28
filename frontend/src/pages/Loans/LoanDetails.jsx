@@ -49,6 +49,23 @@ const LoanDetails = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [approveModal, setApproveModal] = useState(false);
     const [paymentModal, setPaymentModal] = useState({ isOpen: false, emiItem: null });
+    const [unpaidModal, setUnpaidModal] = useState({ isOpen: false, payment: null });
+    const [forecloseModal, setForecloseModal] = useState({
+        isOpen: false,
+        paymentMethod: 'cash',
+        discount: '0',
+        notes: '',
+        bankDetails: {
+            accountHolderName: '',
+            bankName: '',
+            accountNumber: '',
+            ifscCode: '',
+            branch: '',
+            upiId: '',
+            transactionId: ''
+        }
+    });
+
 
 
     if (loadingLoan || loadingSchedule || loadingPayments) {
@@ -106,31 +123,79 @@ const LoanDetails = () => {
         }
     };
 
-    const handleForeclose = async () => {
-        const fee = window.prompt('Enter foreclosure fee (if any)', '0');
-        if (fee === null) return; // Cancelled
+    const handleForeclose = () => {
+        setForecloseModal({
+            isOpen: true,
+            paymentMethod: 'cash',
+            discount: '0',
+            notes: '',
+            bankDetails: {
+                accountHolderName: '',
+                bankName: '',
+                accountNumber: '',
+                ifscCode: '',
+                branch: '',
+                upiId: '',
+                transactionId: ''
+            }
+        });
+    };
 
-        const confirmed = window.confirm(
-            `This will fully settle the loan with a remaining balance of ${formatCurrency(loan.remainingBalance)} ${parseFloat(fee) > 0 ? `plus a fee of ${formatCurrency(parseFloat(fee))}` : ''}. This action is permanent. Do you want to proceed?`
-        );
+    const handleForecloseConfirm = async () => {
+        const toastId = toast.loading('Processing early settlement...');
+        const discountAmount = parseFloat(forecloseModal.discount) || 0;
+        const finalAmount = Math.max(0, loan.remainingBalance - discountAmount);
 
-        if (confirmed) {
-            const toastId = toast.loading('Processing foreclosure...');
+        try {
+            await forecloseLoan.mutateAsync({
+                id,
+                data: {
+                    settlementAmount: finalAmount,
+                    discount: discountAmount,
+                    paymentMethod: forecloseModal.paymentMethod,
+                    notes: forecloseModal.notes || 'Early settlement / Loan closure',
+                    bankDetails: forecloseModal.bankDetails
+                }
+            });
+            toast.success('Loan closed successfully! Downloading certificate...', { id: toastId });
+            setForecloseModal({
+                isOpen: false,
+                paymentMethod: 'cash',
+                discount: '0',
+                notes: '',
+                bankDetails: { accountHolderName: '', bankName: '', accountNumber: '', ifscCode: '', branch: '', upiId: '', transactionId: '' }
+            });
+
+            // Auto-download settlement certificate PDF
             try {
-                await forecloseLoan.mutateAsync({
-                    id,
-                    data: {
-                        foreclosureFee: parseFloat(fee) || 0,
-                        paymentMethod: 'bank_transfer',
-                        notes: `Early settlement foreclosure${parseFloat(fee) > 0 ? ` with fee of ${fee}` : ''}`
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/loans/${id}/settlement-certificate`, {
+                    headers: {
+                        'Authorization': `Bearer ${JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token || ''}`
                     }
                 });
-                toast.success('Loan foreclosed successfully!', { id: toastId });
-            } catch (error) {
-                toast.error('Foreclosure failed: ' + error.message, { id: toastId });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Settlement-${loan.loanNumber}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                    toast.success('Settlement certificate downloaded!');
+                }
+            } catch (pdfError) {
+                console.error('PDF download error:', pdfError);
+                toast.error('Settlement complete, but PDF download failed. You can download it later from the loan page.');
             }
+        } catch (error) {
+            toast.error('Settlement failed: ' + error.message, { id: toastId });
         }
     };
+
+
+
 
     const handleMarkPaid = (emiItem) => {
         setPaymentModal({ isOpen: true, emiItem });
@@ -146,8 +211,8 @@ const LoanDetails = () => {
                 amountPaid: emiItem.emi,
                 paymentMethod: 'cash',
                 paymentDate: new Date().toISOString(),
-                notes: `EMI Payment for ${formatDate(emiItem.date)}`,
-                referenceId: `EMI - ${loan.loanNumber} -${emiItem.index + 1} `,
+                notes: `EMI Payment for EMI #${emiItem.month}`,
+                referenceId: `EMI-${loan.loanNumber}-${emiItem.month}`,
             });
             toast.success('Payment recorded successfully!', { id: toastId });
             setPaymentModal({ isOpen: false, emiItem: null });
@@ -157,20 +222,23 @@ const LoanDetails = () => {
 
     };
 
-    const handleMarkUnpaid = async () => {
+
+    const handleMarkUnpaid = () => {
         // Can only revert the most recent payment
         const lastPayment = payments && payments[0]; // Assuming sorted by date desc
-
         if (!lastPayment) return;
+        setUnpaidModal({ isOpen: true, payment: lastPayment });
+    };
 
-        if (!window.confirm(`Are you sure you want to undo the last payment of ${formatCurrency(lastPayment.amountPaid)}?`)) {
-            return;
-        }
-
+    const handleUnpaidConfirm = async () => {
+        if (!unpaidModal.payment) return;
+        const toastId = toast.loading('Deleting payment...');
         try {
-            await deletePayment.mutateAsync(lastPayment._id);
+            await deletePayment.mutateAsync(unpaidModal.payment._id);
+            toast.success('Payment undone successfully!', { id: toastId });
+            setUnpaidModal({ isOpen: false, payment: null });
         } catch (error) {
-            alert('Failed to delete payment: ' + error.message);
+            toast.error('Failed to delete payment: ' + error.message, { id: toastId });
         }
     };
 
@@ -312,21 +380,29 @@ const LoanDetails = () => {
 
                 {/* Tabs */}
                 <div className="border-b border-gray-200 dark:border-gray-700">
-                    <nav className="-mb-px flex space-x-8">
+                    <nav className="-mb-px flex space-x-4 sm:space-x-8">
                         {['overview', 'schedule', 'payments'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`${activeTab === tab
-                                    ? 'border-teal-500 text-teal-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    } whitespace - nowrap py - 4 px - 1 border - b - 2 font - medium text - sm capitalize`}
+                                className={`
+                                    relative whitespace-nowrap py-3 px-3 sm:px-4 text-sm font-medium capitalize transition-all duration-200
+                                    ${activeTab === tab
+                                        ? 'text-teal-600 dark:text-teal-400'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                    }
+                                `}
                             >
                                 {tab}
+                                {/* Active indicator */}
+                                {activeTab === tab && (
+                                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full" />
+                                )}
                             </button>
                         ))}
                     </nav>
                 </div>
+
 
                 {/* Tab Content */}
                 <div className="card p-6 min-h-[400px]">
@@ -509,7 +585,255 @@ const LoanDetails = () => {
                 confirmText="Mark as Paid"
                 type="info"
             />
+
+            {/* Mark as Unpaid Modal */}
+            <ConfirmModal
+                isOpen={unpaidModal.isOpen}
+                onClose={() => setUnpaidModal({ isOpen: false, payment: null })}
+                onConfirm={handleUnpaidConfirm}
+                title="Undo Payment"
+                message={unpaidModal.payment ? `Are you sure you want to undo the last payment of ${formatCurrency(unpaidModal.payment.amountPaid)}?` : ''}
+                confirmText="Undo Payment"
+                type="danger"
+            />
+
+            {/* Early Settlement Modal */}
+            {forecloseModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="card p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                    >
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                            Early Settlement / Close Loan
+                        </h3>
+
+                        {/* Balance Breakdown */}
+                        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 mb-4 space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400">Remaining Principal</span>
+                                <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(loan.remainingBalance)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400">Interest Type</span>
+                                <span className="font-medium capitalize text-gray-900 dark:text-white">{loan.interestType || 'Simple'}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400">EMIs Paid</span>
+                                <span className="font-medium text-gray-900 dark:text-white">{loan.paymentsReceived} / {loan.loanDurationMonths}</span>
+                            </div>
+                            {parseFloat(forecloseModal.discount) > 0 && (
+                                <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                                    <span>Settlement Discount</span>
+                                    <span>- {formatCurrency(parseFloat(forecloseModal.discount))}</span>
+                                </div>
+                            )}
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-2 flex justify-between">
+                                <span className="font-semibold text-gray-900 dark:text-white">Final Settlement</span>
+                                <span className="font-bold text-lg text-teal-600 dark:text-teal-400">
+                                    {formatCurrency(Math.max(0, loan.remainingBalance - (parseFloat(forecloseModal.discount) || 0)))}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Payment Method */}
+                        <div className="form-group mb-4">
+                            <label className="label">Payment Method</label>
+                            <select
+                                className="input"
+                                value={forecloseModal.paymentMethod}
+                                onChange={(e) => setForecloseModal({ ...forecloseModal, paymentMethod: e.target.value })}
+                            >
+                                <option value="cash">💵 Cash</option>
+                                <option value="bank_transfer">🏦 Bank Transfer</option>
+                                <option value="upi">📱 UPI</option>
+                                <option value="cheque">📄 Cheque</option>
+                                <option value="other">📋 Other</option>
+                            </select>
+                        </div>
+
+                        {/* Bank Details - Only show for bank transfer, UPI, or cheque */}
+                        {['bank_transfer', 'upi', 'cheque'].includes(forecloseModal.paymentMethod) && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4 space-y-3">
+                                <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                                    {forecloseModal.paymentMethod === 'upi' ? '📱 UPI Details' : '🏦 Bank Details'}
+                                </h4>
+
+                                {forecloseModal.paymentMethod === 'upi' ? (
+                                    <>
+                                        <div className="form-group">
+                                            <label className="label text-xs">UPI ID</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={forecloseModal.bankDetails.upiId}
+                                                onChange={(e) => setForecloseModal({
+                                                    ...forecloseModal,
+                                                    bankDetails: { ...forecloseModal.bankDetails, upiId: e.target.value }
+                                                })}
+                                                placeholder="example@upi"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label text-xs">Transaction ID</label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={forecloseModal.bankDetails.transactionId}
+                                                onChange={(e) => setForecloseModal({
+                                                    ...forecloseModal,
+                                                    bankDetails: { ...forecloseModal.bankDetails, transactionId: e.target.value }
+                                                })}
+                                                placeholder="Enter UPI transaction ID"
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="form-group">
+                                                <label className="label text-xs">Account Holder Name</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={forecloseModal.bankDetails.accountHolderName}
+                                                    onChange={(e) => setForecloseModal({
+                                                        ...forecloseModal,
+                                                        bankDetails: { ...forecloseModal.bankDetails, accountHolderName: e.target.value }
+                                                    })}
+                                                    placeholder="Account holder name"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="label text-xs">Bank Name</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={forecloseModal.bankDetails.bankName}
+                                                    onChange={(e) => setForecloseModal({
+                                                        ...forecloseModal,
+                                                        bankDetails: { ...forecloseModal.bankDetails, bankName: e.target.value }
+                                                    })}
+                                                    placeholder="Bank name"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="form-group">
+                                                <label className="label text-xs">Account Number</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={forecloseModal.bankDetails.accountNumber}
+                                                    onChange={(e) => setForecloseModal({
+                                                        ...forecloseModal,
+                                                        bankDetails: { ...forecloseModal.bankDetails, accountNumber: e.target.value }
+                                                    })}
+                                                    placeholder="Account number"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="label text-xs">IFSC Code</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={forecloseModal.bankDetails.ifscCode}
+                                                    onChange={(e) => setForecloseModal({
+                                                        ...forecloseModal,
+                                                        bankDetails: { ...forecloseModal.bankDetails, ifscCode: e.target.value.toUpperCase() }
+                                                    })}
+                                                    placeholder="IFSC code"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="form-group">
+                                                <label className="label text-xs">Branch</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={forecloseModal.bankDetails.branch}
+                                                    onChange={(e) => setForecloseModal({
+                                                        ...forecloseModal,
+                                                        bankDetails: { ...forecloseModal.bankDetails, branch: e.target.value }
+                                                    })}
+                                                    placeholder="Branch name"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="label text-xs">Transaction/Cheque No.</label>
+                                                <input
+                                                    type="text"
+                                                    className="input"
+                                                    value={forecloseModal.bankDetails.transactionId}
+                                                    onChange={(e) => setForecloseModal({
+                                                        ...forecloseModal,
+                                                        bankDetails: { ...forecloseModal.bankDetails, transactionId: e.target.value }
+                                                    })}
+                                                    placeholder={forecloseModal.paymentMethod === 'cheque' ? "Cheque number" : "Transaction ID"}
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Settlement Discount */}
+                        <div className="form-group mb-4">
+                            <label className="label">Settlement Discount (optional)</label>
+                            <input
+                                type="number"
+                                className="input"
+                                min="0"
+                                max={loan.remainingBalance}
+                                step="0.01"
+                                value={forecloseModal.discount}
+                                onChange={(e) => setForecloseModal({ ...forecloseModal, discount: e.target.value })}
+                                placeholder="Enter discount amount"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Reduce the final settlement by this amount</p>
+                        </div>
+
+                        {/* Notes */}
+                        <div className="form-group mb-4">
+                            <label className="label">Notes / Remarks</label>
+                            <textarea
+                                className="input min-h-[80px] resize-none"
+                                value={forecloseModal.notes}
+                                onChange={(e) => setForecloseModal({ ...forecloseModal, notes: e.target.value })}
+                                placeholder="Add any notes about this settlement..."
+                            />
+                        </div>
+
+
+                        <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
+                            ⚠️ This action will permanently close the loan. It cannot be undone.
+                        </p>
+
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                className="btn btn-secondary"
+                                onClick={() => setForecloseModal({ isOpen: false, paymentMethod: 'cash', discount: '0', notes: '' })}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={handleForecloseConfirm}
+                                disabled={forecloseLoan.isPending}
+                            >
+                                {forecloseLoan.isPending ? 'Processing...' : 'Confirm Settlement'}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
         </>
+
     );
 };
 

@@ -79,8 +79,10 @@ export const loanAPI = {
     downloadAgreement: (id) => api.get(`/loans/${id}/agreement`, { responseType: 'blob' }),
     downloadStatement: (id) => api.get(`/loans/${id}/statement`, { responseType: 'blob' }),
     downloadNOC: (id) => api.get(`/loans/${id}/noc`, { responseType: 'blob' }),
+    downloadSettlementCertificate: (id) => api.get(`/loans/${id}/settlement-certificate`, { responseType: 'blob' }),
     delete: (id) => api.delete(`/loans/${id}`),
 };
+
 
 // Invoice API
 export const invoiceAPI = {

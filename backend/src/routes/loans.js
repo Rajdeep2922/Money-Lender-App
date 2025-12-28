@@ -17,6 +17,10 @@ router.post('/:id/approve', loanController.approveLoan);
 router.post('/:id/cancel', loanController.cancelLoan);
 router.post('/:id/foreclose', loanController.forecloseLoan);
 
+// Schedule and Balance
+router.get('/:id/amortization', loanController.getAmortizationSchedule);
+router.get('/:id/balance', loanController.getCurrentBalance);
+
 // Update loan (before approval)
 router.put('/:id', loanController.updateLoan);
 
@@ -27,6 +31,9 @@ router.patch('/:id/status', loanController.updateLoanStatus);
 router.get('/:id/agreement', loanController.downloadAgreement);
 router.get('/:id/statement', loanController.downloadStatement);
 router.get('/:id/noc', loanController.downloadNOC);
+router.get('/:id/settlement-certificate', loanController.downloadSettlementCertificate);
+
+
 
 // Delete loan
 router.delete('/:id', loanController.deleteLoan);

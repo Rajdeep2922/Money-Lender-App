@@ -53,7 +53,18 @@ const paymentSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
+    // Bank details for bank transfers
+    bankDetails: {
+        accountHolderName: { type: String, trim: true },
+        bankName: { type: String, trim: true },
+        accountNumber: { type: String, trim: true },
+        ifscCode: { type: String, trim: true },
+        branch: { type: String, trim: true },
+        upiId: { type: String, trim: true },
+        transactionId: { type: String, trim: true },
+    },
 }, {
+
     timestamps: true,
 });
 

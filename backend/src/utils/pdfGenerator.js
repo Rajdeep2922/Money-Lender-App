@@ -307,7 +307,7 @@ const generatePaymentReceipt = async (payment, lender) => {
 
     const docDefinition = {
         pageSize: 'A4',
-        pageMargins: [40, 40, 40, 60],
+        pageMargins: [40, 30, 40, 30], // Reduced top/bottom margins
         content: [
             // Header
             {
@@ -315,17 +315,17 @@ const generatePaymentReceipt = async (payment, lender) => {
                     {
                         width: '*',
                         stack: [
-                            { text: businessName.toUpperCase(), fontSize: 22, bold: true, color: '#0d9488' },
-                            { text: lender?.address || '', fontSize: 9, color: '#6b7280', margin: [0, 3, 0, 0] },
+                            { text: businessName.toUpperCase(), fontSize: 20, bold: true, color: '#0d9488' },
+                            { text: lender?.address || '', fontSize: 9, color: '#6b7280', margin: [0, 2, 0, 0] },
                             { text: `Phone: ${lender?.phone || 'N/A'} | Email: ${lender?.email || 'N/A'}`, fontSize: 9, color: '#6b7280' }
                         ]
                     },
                     {
                         width: 'auto',
                         stack: [
-                            { text: 'PAYMENT', fontSize: 24, bold: true, color: '#16a34a', alignment: 'right' },
-                            { text: 'RECEIPT', fontSize: 24, bold: true, color: '#111827', alignment: 'right' },
-                            { text: 'RECEIVED', fontSize: 10, bold: true, color: '#16a34a', alignment: 'right', margin: [0, 5, 0, 0] }
+                            { text: 'PAYMENT', fontSize: 20, bold: true, color: '#16a34a', alignment: 'right' },
+                            { text: 'RECEIPT', fontSize: 20, bold: true, color: '#111827', alignment: 'right' },
+                            { text: 'RECEIVED', fontSize: 9, bold: true, color: '#16a34a', alignment: 'right', margin: [0, 3, 0, 0] }
                         ]
                     }
                 ]
@@ -336,7 +336,7 @@ const generatePaymentReceipt = async (payment, lender) => {
                 canvas: [
                     { type: 'rect', x: 0, y: 10, w: 515, h: 3, color: '#16a34a' }
                 ],
-                margin: [0, 10, 0, 25]
+                margin: [0, 5, 0, 15]
             },
 
             // Receipt Info & Customer Details
@@ -345,10 +345,10 @@ const generatePaymentReceipt = async (payment, lender) => {
                     {
                         width: '*',
                         stack: [
-                            { text: 'RECEIVED FROM', fontSize: 10, bold: true, color: '#16a34a', margin: [0, 0, 0, 8] },
-                            { text: `${customer.firstName} ${customer.lastName}`, fontSize: 14, bold: true, color: '#111827' },
-                            { text: customer.phone || '', fontSize: 10, color: '#4b5563', margin: [0, 3, 0, 0] },
-                            { text: customer.email || '', fontSize: 10, color: '#4b5563' }
+                            { text: 'RECEIVED FROM', fontSize: 9, bold: true, color: '#16a34a', margin: [0, 0, 0, 5] },
+                            { text: `${customer.firstName} ${customer.lastName}`, fontSize: 12, bold: true, color: '#111827' },
+                            { text: customer.phone || '', fontSize: 9, color: '#4b5563', margin: [0, 2, 0, 0] },
+                            { text: customer.email || '', fontSize: 9, color: '#4b5563' }
                         ]
                     },
                     {
@@ -357,38 +357,38 @@ const generatePaymentReceipt = async (payment, lender) => {
                             widths: ['*', 'auto'],
                             body: [
                                 [
-                                    { text: 'Receipt No:', fontSize: 10, color: '#6b7280', border: [false, false, false, false] },
-                                    { text: payment.referenceId || `RCP-${payment._id.toString().substr(-6).toUpperCase()}`, fontSize: 10, bold: true, alignment: 'right', border: [false, false, false, false] }
+                                    { text: 'Receipt No:', fontSize: 9, color: '#6b7280', border: [false, false, false, false] },
+                                    { text: payment.referenceId || `RCP-${payment._id.toString().substr(-6).toUpperCase()}`, fontSize: 9, bold: true, alignment: 'right', border: [false, false, false, false] }
                                 ],
                                 [
-                                    { text: 'Payment Date:', fontSize: 10, color: '#6b7280', border: [false, false, false, false] },
-                                    { text: paymentDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }), fontSize: 10, bold: true, alignment: 'right', border: [false, false, false, false] }
+                                    { text: 'Payment Date:', fontSize: 9, color: '#6b7280', border: [false, false, false, false] },
+                                    { text: paymentDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }), fontSize: 9, bold: true, alignment: 'right', border: [false, false, false, false] }
                                 ],
                                 [
-                                    { text: 'Loan Account:', fontSize: 10, color: '#6b7280', border: [false, false, false, false] },
-                                    { text: loan.loanNumber, fontSize: 10, bold: true, color: '#0d9488', alignment: 'right', border: [false, false, false, false] }
+                                    { text: 'Loan Account:', fontSize: 9, color: '#6b7280', border: [false, false, false, false] },
+                                    { text: loan.loanNumber, fontSize: 9, bold: true, color: '#0d9488', alignment: 'right', border: [false, false, false, false] }
                                 ]
                             ]
                         },
                         layout: 'noBorders'
                     }
                 ],
-                margin: [0, 0, 0, 25]
+                margin: [0, 0, 0, 15]
             },
 
             // Amount Received Box
             {
-                margin: [0, 0, 0, 25],
+                margin: [0, 0, 0, 15],
                 table: {
                     widths: ['*'],
                     body: [[{
                         fillColor: '#f0fdf4',
                         stack: [
-                            { text: 'AMOUNT RECEIVED', fontSize: 12, bold: true, color: '#166534', alignment: 'center', margin: [0, 0, 0, 8] },
-                            { text: `Rs. ${payment.amountPaid.toLocaleString()}`, fontSize: 32, bold: true, color: '#16a34a', alignment: 'center' },
-                            { text: `(${numberToWords(payment.amountPaid)} Rupees Only)`, fontSize: 10, color: '#4b5563', alignment: 'center', margin: [0, 8, 0, 0], italics: true }
+                            { text: 'AMOUNT RECEIVED', fontSize: 10, bold: true, color: '#166534', alignment: 'center', margin: [0, 0, 0, 5] },
+                            { text: `Rs. ${payment.amountPaid.toLocaleString()}`, fontSize: 24, bold: true, color: '#16a34a', alignment: 'center' },
+                            { text: `(${numberToWords(payment.amountPaid)} Rupees Only)`, fontSize: 9, color: '#4b5563', alignment: 'center', margin: [0, 5, 0, 0], italics: true }
                         ],
-                        margin: [20, 20, 20, 20]
+                        margin: [10, 10, 10, 10]
                     }]]
                 },
                 layout: {
@@ -406,28 +406,28 @@ const generatePaymentReceipt = async (payment, lender) => {
                     widths: ['*', 'auto'],
                     body: [
                         [
-                            { text: 'PAYMENT DETAILS', bold: true, fillColor: '#f3f4f6', color: '#374151', margin: [10, 10, 10, 10], colSpan: 2 },
+                            { text: 'PAYMENT DETAILS', bold: true, fillColor: '#f3f4f6', color: '#374151', margin: [8, 8, 8, 8], colSpan: 2 },
                             {}
                         ],
                         [
-                            { text: 'Payment Method', fontSize: 10, color: '#4b5563', margin: [10, 8, 10, 8] },
-                            { text: (payment.paymentMethod || 'Cash').replace('_', ' ').toUpperCase(), fontSize: 10, bold: true, alignment: 'right', margin: [10, 8, 10, 8] }
+                            { text: 'Payment Method', fontSize: 9, color: '#4b5563', margin: [8, 6, 8, 6] },
+                            { text: (payment.paymentMethod || 'Cash').replace('_', ' ').toUpperCase(), fontSize: 9, bold: true, alignment: 'right', margin: [8, 6, 8, 6] }
                         ],
                         [
-                            { text: 'EMI Amount', fontSize: 10, color: '#4b5563', margin: [10, 8, 10, 8] },
-                            { text: `Rs. ${loan.monthlyEMI?.toLocaleString() || 'N/A'}`, fontSize: 10, alignment: 'right', margin: [10, 8, 10, 8] }
+                            { text: 'EMI Amount', fontSize: 9, color: '#4b5563', margin: [8, 6, 8, 6] },
+                            { text: `Rs. ${loan.monthlyEMI?.toLocaleString() || 'N/A'}`, fontSize: 9, alignment: 'right', margin: [8, 6, 8, 6] }
                         ],
                         [
-                            { text: 'Principal Component', fontSize: 10, color: '#4b5563', margin: [10, 8, 10, 8] },
-                            { text: `Rs. ${payment.principalPortion?.toLocaleString() || '0'}`, fontSize: 10, alignment: 'right', margin: [10, 8, 10, 8] }
+                            { text: 'Principal Component', fontSize: 9, color: '#4b5563', margin: [8, 6, 8, 6] },
+                            { text: `Rs. ${payment.principalPortion?.toLocaleString() || '0'}`, fontSize: 9, alignment: 'right', margin: [8, 6, 8, 6] }
                         ],
                         [
-                            { text: 'Interest Component', fontSize: 10, color: '#4b5563', margin: [10, 8, 10, 8] },
-                            { text: `Rs. ${payment.interestPortion?.toLocaleString() || '0'}`, fontSize: 10, alignment: 'right', margin: [10, 8, 10, 8] }
+                            { text: 'Interest Component', fontSize: 9, color: '#4b5563', margin: [8, 6, 8, 6] },
+                            { text: `Rs. ${payment.interestPortion?.toLocaleString() || '0'}`, fontSize: 9, alignment: 'right', margin: [8, 6, 8, 6] }
                         ],
                         [
-                            { text: 'Outstanding Balance After Payment', fontSize: 10, bold: true, color: '#111827', fillColor: '#fff7ed', margin: [10, 10, 10, 10] },
-                            { text: `Rs. ${payment.balanceAfterPayment?.toLocaleString()}`, fontSize: 11, bold: true, color: '#ea580c', fillColor: '#fff7ed', alignment: 'right', margin: [10, 10, 10, 10] }
+                            { text: 'Outstanding Balance After Payment', fontSize: 9, bold: true, color: '#111827', fillColor: '#fff7ed', margin: [8, 8, 8, 8] },
+                            { text: `Rs. ${payment.balanceAfterPayment?.toLocaleString()}`, fontSize: 10, bold: true, color: '#ea580c', fillColor: '#fff7ed', alignment: 'right', margin: [8, 8, 8, 8] }
                         ]
                     ]
                 },
@@ -438,7 +438,136 @@ const generatePaymentReceipt = async (payment, lender) => {
                 }
             },
 
+            // Bank Details Section (Professional Design)
+            (payment.bankDetails && (
+                payment.bankDetails.accountNumber ||
+                payment.bankDetails.upiId ||
+                payment.bankDetails.transactionId ||
+                payment.bankDetails.bankName
+            )) ? {
+                margin: [0, 15, 0, 0],
+                table: {
+                    widths: ['*'],
+                    body: [[{
+                        fillColor: '#eff6ff',
+                        stack: [
+                            // Header
+                            {
+                                columns: [
+                                    {
+                                        width: 'auto',
+                                        text: payment.bankDetails.upiId ? 'UPI PAYMENT DETAILS' : 'BANK TRANSFER DETAILS',
+                                        fontSize: 10,
+                                        bold: true,
+                                        color: '#1e40af'
+                                    },
+                                    {
+                                        width: '*',
+                                        canvas: [{ type: 'line', x1: 10, y1: 5, x2: 350, y2: 5, lineWidth: 1, lineColor: '#93c5fd' }]
+                                    }
+                                ],
+                                margin: [0, 0, 0, 8]
+                            },
+                            // Details Grid
+                            payment.bankDetails.upiId ? {
+                                // UPI Details
+                                columns: [
+                                    {
+                                        width: '50%',
+                                        stack: [
+                                            { text: 'UPI ID', fontSize: 8, color: '#6b7280', margin: [0, 0, 0, 2] },
+                                            { text: payment.bankDetails.upiId || '-', fontSize: 9, bold: true, color: '#1f2937' }
+                                        ]
+                                    },
+                                    {
+                                        width: '50%',
+                                        stack: [
+                                            { text: 'Transaction ID', fontSize: 8, color: '#6b7280', margin: [0, 0, 0, 2] },
+                                            { text: payment.bankDetails.transactionId || '-', fontSize: 9, bold: true, color: '#059669' }
+                                        ]
+                                    }
+                                ]
+
+                            } : {
+                                // Bank Transfer Details
+                                stack: [
+                                    // First Row: Account Holder & Bank Name
+                                    {
+                                        columns: [
+                                            {
+                                                width: '50%',
+                                                stack: [
+                                                    { text: 'Account Holder Name', fontSize: 8, color: '#6b7280', margin: [0, 0, 0, 2] },
+                                                    { text: payment.bankDetails.accountHolderName || '-', fontSize: 9, bold: true, color: '#1f2937' }
+                                                ]
+                                            },
+                                            {
+                                                width: '50%',
+                                                stack: [
+                                                    { text: 'Bank Name', fontSize: 8, color: '#6b7280', margin: [0, 0, 0, 2] },
+                                                    { text: payment.bankDetails.bankName || '-', fontSize: 9, bold: true, color: '#1f2937' }
+                                                ]
+                                            }
+                                        ],
+                                        margin: [0, 0, 0, 8]
+                                    },
+                                    // Second Row: Account Number & IFSC
+                                    {
+                                        columns: [
+                                            {
+                                                width: '50%',
+                                                stack: [
+                                                    { text: 'Account Number', fontSize: 8, color: '#6b7280', margin: [0, 0, 0, 2] },
+                                                    { text: payment.bankDetails.accountNumber || '-', fontSize: 9, bold: true, color: '#1f2937' }
+                                                ]
+                                            },
+                                            {
+                                                width: '50%',
+                                                stack: [
+                                                    { text: 'IFSC Code', fontSize: 8, color: '#6b7280', margin: [0, 0, 0, 2] },
+                                                    { text: payment.bankDetails.ifscCode || '-', fontSize: 9, bold: true, color: '#1f2937' }
+                                                ]
+                                            }
+                                        ],
+                                        margin: [0, 0, 0, 8]
+                                    },
+                                    // Third Row: Branch & Transaction ID
+                                    {
+                                        columns: [
+                                            {
+                                                width: '50%',
+                                                stack: [
+                                                    { text: 'Branch', fontSize: 8, color: '#6b7280', margin: [0, 0, 0, 2] },
+                                                    { text: payment.bankDetails.branch || '-', fontSize: 9, color: '#1f2937' }
+                                                ]
+                                            },
+                                            {
+                                                width: '50%',
+                                                stack: [
+                                                    { text: 'Transaction / Cheque No.', fontSize: 8, color: '#6b7280', margin: [0, 0, 0, 2] },
+                                                    { text: payment.bankDetails.transactionId || '-', fontSize: 9, bold: true, color: '#059669' }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        margin: [10, 10, 10, 10]
+                    }]]
+                },
+
+                layout: {
+                    hLineWidth: () => 1,
+                    vLineWidth: () => 1,
+                    hLineColor: () => '#93c5fd',
+                    vLineColor: () => '#93c5fd'
+                }
+            } : null,
+
+
             // Customer Signature Section
+
             {
                 margin: [0, 40, 0, 0],
                 columns: [
@@ -801,10 +930,220 @@ const generateInvoicePDF = async (invoice, lender) => {
     return printer.createPdfKitDocument(docDefinition);
 };
 
+/**
+ * Generate Settlement Certificate PDF
+ * Includes: Settlement amount, discount, payment method, loan summary
+ */
+const generateSettlementCertificate = async (loan, lender, settlementData) => {
+    const businessName = lender?.businessName || 'MoneyLender';
+    const customerName = `${loan.customerId.firstName} ${loan.customerId.lastName}`;
+    const customer = loan.customerId;
+    const formatCurrency = (amount) => `₹${(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+    const paymentMethodLabels = {
+        cash: 'Cash',
+        bank_transfer: 'Bank Transfer',
+        upi: 'UPI',
+        cheque: 'Cheque',
+        other: 'Other'
+    };
+
+    const docDefinition = {
+        pageSize: 'A4',
+        pageMargins: [50, 50, 50, 50],
+        content: [
+            // Header
+            { text: businessName.toUpperCase(), fontSize: 22, bold: true, color: '#0d9488', alignment: 'center' },
+            { text: lender?.address || '', fontSize: 9, color: '#6b7280', alignment: 'center', margin: [0, 5, 0, 0] },
+            { text: `Phone: ${lender?.phone || 'N/A'} | Email: ${lender?.email || 'N/A'}`, fontSize: 9, color: '#6b7280', alignment: 'center', margin: [0, 3, 0, 0] },
+            { canvas: [{ type: 'line', x1: 0, y1: 5, x2: 495, y2: 5, lineWidth: 2, lineColor: '#0d9488' }], margin: [0, 15, 0, 30] },
+
+            // Title
+            { text: 'LOAN SETTLEMENT CERTIFICATE', fontSize: 18, bold: true, alignment: 'center', color: '#1f2937', margin: [0, 0, 0, 5] },
+            { text: `Certificate No: SC-${loan.loanNumber}`, fontSize: 10, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 25] },
+
+            // Customer & Loan Info Box
+            {
+                table: {
+                    widths: ['50%', '50%'],
+                    body: [
+                        [
+                            { text: 'BORROWER DETAILS', fillColor: '#f0fdfa', bold: true, fontSize: 10, color: '#0d9488', margin: [8, 8, 8, 8] },
+                            { text: 'LOAN DETAILS', fillColor: '#f0fdfa', bold: true, fontSize: 10, color: '#0d9488', margin: [8, 8, 8, 8] }
+                        ],
+                        [
+                            {
+                                stack: [
+                                    { text: customerName, bold: true, fontSize: 11 },
+                                    { text: customer?.phone || '', fontSize: 9, color: '#6b7280', margin: [0, 2, 0, 0] },
+                                    { text: customer?.email || '', fontSize: 9, color: '#6b7280' },
+                                    { text: `${customer?.address?.street || ''}, ${customer?.address?.city || ''}`, fontSize: 9, color: '#6b7280', margin: [0, 2, 0, 0] }
+                                ],
+                                margin: [8, 8, 8, 8]
+                            },
+                            {
+                                stack: [
+                                    { text: `Loan No: ${loan.loanNumber}`, bold: true, fontSize: 11 },
+                                    { text: `Principal: ${formatCurrency(loan.principal)}`, fontSize: 9, margin: [0, 2, 0, 0] },
+                                    { text: `Interest Rate: ${loan.monthlyInterestRate}% p.m.`, fontSize: 9 },
+                                    { text: `Tenure: ${loan.loanDurationMonths} months`, fontSize: 9 }
+                                ],
+                                margin: [8, 8, 8, 8]
+                            }
+                        ]
+                    ]
+                },
+                layout: {
+                    hLineWidth: () => 0.5,
+                    vLineWidth: () => 0.5,
+                    hLineColor: () => '#e5e7eb',
+                    vLineColor: () => '#e5e7eb'
+                },
+                margin: [0, 0, 0, 20]
+            },
+
+            // Settlement Summary
+            { text: 'SETTLEMENT SUMMARY', fontSize: 12, bold: true, color: '#1f2937', margin: [0, 10, 0, 10] },
+            {
+                table: {
+                    widths: ['60%', '40%'],
+                    body: [
+                        [{ text: 'Outstanding Balance', fontSize: 10 }, { text: formatCurrency(settlementData.originalBalance || loan.remainingBalance), fontSize: 10, alignment: 'right' }],
+                        settlementData.discount > 0 ? [{ text: 'Settlement Discount', fontSize: 10, color: '#10b981' }, { text: `- ${formatCurrency(settlementData.discount)}`, fontSize: 10, color: '#10b981', alignment: 'right' }] : null,
+                        [{ text: 'Final Settlement Amount', bold: true, fontSize: 11 }, { text: formatCurrency(settlementData.settlementAmount), bold: true, fontSize: 11, alignment: 'right', color: '#0d9488' }],
+                        [{ text: 'Payment Method', fontSize: 10 }, { text: paymentMethodLabels[settlementData.paymentMethod] || settlementData.paymentMethod, fontSize: 10, alignment: 'right' }],
+                        [{ text: 'Settlement Date', fontSize: 10 }, { text: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }), fontSize: 10, alignment: 'right' }]
+                    ].filter(Boolean)
+                },
+                layout: {
+                    hLineWidth: (i, node) => (i === 0 || i === node.table.body.length) ? 0.5 : 0,
+                    vLineWidth: () => 0,
+                    hLineColor: () => '#e5e7eb',
+                    paddingTop: () => 6,
+                    paddingBottom: () => 6
+                },
+                margin: [0, 0, 0, 20]
+            },
+
+            // Loan History Summary
+            { text: 'LOAN HISTORY', fontSize: 12, bold: true, color: '#1f2937', margin: [0, 10, 0, 10] },
+            {
+                table: {
+                    widths: ['50%', '50%'],
+                    body: [
+                        [{ text: 'Loan Disbursed On', fontSize: 10 }, { text: new Date(loan.disbursementDate || loan.createdAt).toLocaleDateString('en-IN'), fontSize: 10, alignment: 'right' }],
+                        [{ text: 'Total EMIs Paid', fontSize: 10 }, { text: `${loan.paymentsReceived} of ${loan.loanDurationMonths}`, fontSize: 10, alignment: 'right' }],
+                        [{ text: 'Total Amount Paid', fontSize: 10 }, { text: formatCurrency(loan.totalAmountPaid || (loan.paymentsReceived * loan.monthlyEMI)), fontSize: 10, alignment: 'right' }],
+                        [{ text: 'Loan Status', fontSize: 10 }, { text: 'CLOSED', bold: true, fontSize: 10, color: '#10b981', alignment: 'right' }]
+                    ]
+                },
+                layout: {
+                    hLineWidth: () => 0,
+                    vLineWidth: () => 0,
+                    paddingTop: () => 4,
+                    paddingBottom: () => 4
+                },
+                margin: [0, 0, 0, 20]
+            },
+
+            // Bank Details (if any)
+            (settlementData.bankDetails && (settlementData.bankDetails.accountNumber || settlementData.bankDetails.upiId)) ? {
+                stack: [
+                    { text: settlementData.bankDetails.upiId ? 'UPI PAYMENT DETAILS' : 'BANK PAYMENT DETAILS', fontSize: 12, bold: true, color: '#1f2937', margin: [0, 10, 0, 10] },
+                    {
+                        table: {
+                            widths: ['40%', '60%'],
+                            body: [
+                                settlementData.bankDetails.upiId ?
+                                    [{ text: 'UPI ID', fontSize: 10 }, { text: settlementData.bankDetails.upiId, fontSize: 10 }] : null,
+                                settlementData.bankDetails.accountHolderName ?
+                                    [{ text: 'Account Holder', fontSize: 10 }, { text: settlementData.bankDetails.accountHolderName, fontSize: 10 }] : null,
+                                settlementData.bankDetails.bankName ?
+                                    [{ text: 'Bank Name', fontSize: 10 }, { text: settlementData.bankDetails.bankName, fontSize: 10 }] : null,
+                                settlementData.bankDetails.accountNumber ?
+                                    [{ text: 'Account Number', fontSize: 10 }, { text: settlementData.bankDetails.accountNumber, fontSize: 10 }] : null,
+                                settlementData.bankDetails.ifscCode ?
+                                    [{ text: 'IFSC Code', fontSize: 10 }, { text: settlementData.bankDetails.ifscCode, fontSize: 10 }] : null,
+                                settlementData.bankDetails.branch ?
+                                    [{ text: 'Branch', fontSize: 10 }, { text: settlementData.bankDetails.branch, fontSize: 10 }] : null,
+                                settlementData.bankDetails.transactionId ?
+                                    [{ text: 'Transaction/Cheque No.', fontSize: 10 }, { text: settlementData.bankDetails.transactionId, fontSize: 10, bold: true }] : null,
+                            ].filter(Boolean)
+                        },
+                        layout: {
+                            hLineWidth: () => 0,
+                            vLineWidth: () => 0,
+                            paddingTop: () => 4,
+                            paddingBottom: () => 4
+                        }
+                    }
+                ],
+                margin: [0, 0, 0, 20]
+            } : null,
+
+            // Notes if any
+            settlementData.notes ? {
+                stack: [
+                    { text: 'REMARKS', fontSize: 10, bold: true, color: '#6b7280', margin: [0, 0, 0, 5] },
+                    { text: settlementData.notes, fontSize: 10, italics: true, color: '#6b7280' }
+                ],
+                margin: [0, 0, 0, 20]
+            } : null,
+
+
+            // Certificate Statement
+            {
+                text: [
+                    'This is to certify that the above-mentioned loan has been ',
+                    { text: 'FULLY SETTLED AND CLOSED', bold: true, color: '#10b981' },
+                    ' as of the date mentioned above. There are no outstanding dues, interest, or penalties remaining against this loan account.'
+                ],
+                fontSize: 10,
+                lineHeight: 1.5,
+                margin: [0, 10, 0, 40]
+            },
+
+            // Signatures
+            {
+                columns: [
+                    {
+                        width: '50%',
+                        stack: [
+                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 150, y2: 0, lineWidth: 0.5, lineColor: '#9ca3af' }] },
+                            { text: 'Borrower Signature', fontSize: 9, color: '#6b7280', margin: [0, 5, 0, 0] },
+                            { text: customerName, fontSize: 10, margin: [0, 3, 0, 0] }
+                        ]
+                    },
+                    {
+                        width: '50%',
+                        stack: [
+                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 150, y2: 0, lineWidth: 0.5, lineColor: '#9ca3af' }] },
+                            { text: 'Authorized Signatory', fontSize: 9, color: '#6b7280', margin: [0, 5, 0, 0] },
+                            { text: `For ${businessName}`, fontSize: 10, margin: [0, 3, 0, 0] }
+                        ],
+                        alignment: 'right'
+                    }
+                ],
+                margin: [0, 20, 0, 0]
+            }
+        ].filter(Boolean),
+        footer: (currentPage, pageCount) => ({
+            columns: [
+                { text: `Generated on ${new Date().toLocaleString('en-IN')}`, fontSize: 8, color: '#9ca3af' },
+                { text: `Page ${currentPage} of ${pageCount}`, fontSize: 8, color: '#9ca3af', alignment: 'right' }
+            ],
+            margin: [50, 10, 50, 0]
+        }),
+        defaultStyle: { font: 'Roboto' }
+    };
+
+    return printer.createPdfKitDocument(docDefinition);
+};
+
 module.exports = {
     generateLoanAgreement,
     generateLoanStatement,
     generatePaymentReceipt,
     generateLoanClosureNOC,
-    generateInvoicePDF
+    generateInvoicePDF,
+    generateSettlementCertificate
 };

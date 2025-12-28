@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+
 import { motion } from 'framer-motion';
 import { FiPlus, FiSearch, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
@@ -35,12 +36,14 @@ const itemVariants = {
 
 
 export const LoanList = () => {
+    const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [status, setStatus] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, loan: null });
     const deleteLoan = useDeleteLoan();
+
 
     const { data, isLoading, error, refetch } = useLoans({ page, limit: 20, status: status || undefined, search });
 
@@ -140,11 +143,15 @@ export const LoanList = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {loans.map((loan) => (
-                            <tr key={loan._id}>
+                            <tr
+                                key={loan._id}
+                                onClick={() => navigate(`/loans/${loan._id}`)}
+                                className="cursor-pointer hover:bg-teal-50/50 dark:hover:bg-teal-900/20 transition-colors"
+                            >
                                 <td>
-                                    <Link to={`/loans/${loan._id}`} className="text-teal-600 hover:text-teal-700 font-medium">
+                                    <span className="text-teal-600 font-medium">
                                         {loan.loanNumber}
-                                    </Link>
+                                    </span>
                                 </td>
                                 <td>
                                     {loan.customerId?.firstName} {loan.customerId?.lastName}
@@ -153,10 +160,10 @@ export const LoanList = () => {
                                 <td>{formatCurrency(loan.monthlyEMI)}</td>
                                 <td>{loan.monthlyInterestRate}%</td>
                                 <td className="font-medium">{formatCurrency(loan.remainingBalance)}</td>
-                                <td>
+                                <td onClick={(e) => e.stopPropagation()}>
                                     <StatusToggle loan={loan} />
                                 </td>
-                                <td>
+                                <td onClick={(e) => e.stopPropagation()}>
                                     <button
                                         onClick={() => setDeleteModal({ isOpen: true, loan })}
                                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
@@ -167,6 +174,7 @@ export const LoanList = () => {
                                 </td>
                             </tr>
                         ))}
+
                         {loans.length === 0 && (
                             <tr>
                                 <td colSpan={8} className="text-center py-8 text-gray-500">
