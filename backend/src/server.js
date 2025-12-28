@@ -21,13 +21,14 @@ initSchedulers();
 // Security middleware
 app.use(helmet());
 
-// Rate limiting
+// Rate limiting - configurable via environment
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 500, // Limit each IP to 500 requests per windowMs (increased for development)
+    max: parseInt(process.env.RATE_LIMIT_MAX) || (process.env.NODE_ENV === 'production' ? 100 : 500),
     message: { success: false, message: 'Too many requests, please try again later.' },
 });
 app.use('/api/', limiter);
+
 
 
 // CORS
@@ -60,13 +61,18 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
-app.use('/api/customers', require('./routes/customers'));
-app.use('/api/loans', require('./routes/loans'));
-app.use('/api/payments', require('./routes/payments'));
-app.use('/api/lender', require('./routes/lender'));
-app.use('/api/stats', require('./routes/stats'));
-app.use('/api/invoices', require('./routes/invoices'));
-app.use('/api/export', require('./routes/export'));
+// Auth routes (public)
+app.use('/api/auth', require('./routes/auth'));
+
+// Protected routes - require authentication
+const { protect } = require('./middleware/auth');
+app.use('/api/customers', protect, require('./routes/customers'));
+app.use('/api/loans', protect, require('./routes/loans'));
+app.use('/api/payments', protect, require('./routes/payments'));
+app.use('/api/lender', protect, require('./routes/lender'));
+app.use('/api/stats', protect, require('./routes/stats'));
+app.use('/api/invoices', protect, require('./routes/invoices'));
+app.use('/api/export', protect, require('./routes/export'));
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -74,6 +80,7 @@ app.get('/', (req, res) => {
         message: 'Loan Lender API',
         version: '1.0.0',
         endpoints: {
+            auth: '/api/auth',
             customers: '/api/customers',
             loans: '/api/loans',
             payments: '/api/payments',
@@ -83,6 +90,7 @@ app.get('/', (req, res) => {
         },
     });
 });
+
 
 // Error handling
 app.use(notFound);

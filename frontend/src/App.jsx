@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/common/Layout';
@@ -18,6 +18,7 @@ import Register from './pages/Auth/Register';
 import SignOut from './pages/Auth/SignOut';
 import Settings from './pages/Settings';
 import InvoiceList from './pages/Invoices/InvoiceList';
+import useAuthStore from './store/authStore';
 
 // Create React Query client with optimized defaults
 const queryClient = new QueryClient({
@@ -31,6 +32,28 @@ const queryClient = new QueryClient({
   },
 });
 
+// Protected Route component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useAuthStore();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+// Public Route component (redirect to home if already authenticated)
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated } = useAuthStore();
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -38,12 +61,13 @@ function App() {
       <GlobalErrorBoundary>
         <BrowserRouter>
           <Routes>
-            {/* Auth Routes (No Layout) */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            {/* Auth Routes (No Layout) - Public only */}
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
             <Route path="/signout" element={<SignOut />} />
 
-            <Route element={<Layout />}>
+            {/* Protected Routes with Layout */}
+            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               {/* Dashboard */}
               <Route path="/" element={<Dashboard />} />
 

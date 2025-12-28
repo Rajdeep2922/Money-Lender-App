@@ -11,9 +11,21 @@ export const api = axios.create({
     timeout: 10000,
 });
 
-// Request interceptor for logging
+// Request interceptor - add JWT token to requests
 api.interceptors.request.use(
     (config) => {
+        // Get token from localStorage (zustand persist)
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+            try {
+                const { state } = JSON.parse(authStorage);
+                if (state?.token) {
+                    config.headers.Authorization = `Bearer ${state.token}`;
+                }
+            } catch (e) {
+                console.error('Error parsing auth storage:', e);
+            }
+        }
         console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
         return config;
     },
@@ -28,9 +40,20 @@ api.interceptors.response.use(
     (error) => {
         const message = error.response?.data?.message || error.message || 'An error occurred';
         console.error('API Error:', message);
+
+        // Handle 401 Unauthorized - clear auth and redirect to login
+        if (error.response?.status === 401) {
+            localStorage.removeItem('auth-storage');
+            // Only redirect if not already on login page
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
+        }
+
         return Promise.reject(error);
     }
 );
+
 
 // Customer API
 export const customerAPI = {

@@ -1,17 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wallet, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Wallet, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import { useLogin } from '../../hooks/useAuth';
 
 const Login = () => {
     const navigate = useNavigate();
+    const loginMutation = useLogin();
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+    });
 
-    const handleSubmit = (e) => {
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // TODO: Implement actual auth
-        console.log('Login attempt');
-        navigate('/');
+        try {
+            await loginMutation.mutateAsync(formData);
+            navigate('/');
+        } catch (error) {
+            // Error handled by mutation
+        }
     };
 
     return (
@@ -70,8 +83,11 @@ const Login = () => {
                                     type="email"
                                     autoComplete="email"
                                     required
+                                    value={formData.email}
+                                    onChange={handleChange}
                                     className="input pl-10"
                                     placeholder="you@example.com"
+                                    disabled={loginMutation.isPending}
                                 />
                             </div>
                         </div>
@@ -90,8 +106,11 @@ const Login = () => {
                                     type="password"
                                     autoComplete="current-password"
                                     required
+                                    value={formData.password}
+                                    onChange={handleChange}
                                     className="input pl-10"
                                     placeholder="••••••••"
+                                    disabled={loginMutation.isPending}
                                 />
                             </div>
                         </div>
@@ -108,12 +127,6 @@ const Login = () => {
                                     Remember me
                                 </label>
                             </div>
-
-                            <div className="text-sm">
-                                <a href="#" className="font-medium text-teal-600 hover:text-teal-500 dark:text-teal-400">
-                                    Forgot your password?
-                                </a>
-                            </div>
                         </div>
 
                         <div>
@@ -121,30 +134,13 @@ const Login = () => {
                                 type="submit"
                                 variant="primary"
                                 className="w-full flex justify-center py-2 px-4"
-                                icon={ArrowRight}
+                                icon={loginMutation.isPending ? Loader2 : ArrowRight}
+                                disabled={loginMutation.isPending}
                             >
-                                Sign in
+                                {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
                             </Button>
                         </div>
                     </form>
-
-                    <div className="mt-6">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">
-                                    Demo Credentials
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                            <p>Email: admin@moneylender.com</p>
-                            <p>Password: admin123</p>
-                        </div>
-                    </div>
                 </div>
             </motion.div>
         </div>

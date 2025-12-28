@@ -1,17 +1,50 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wallet, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Wallet, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import Button from '../../components/common/Button';
+import { useRegister } from '../../hooks/useAuth';
+import toast from 'react-hot-toast';
 
 const Register = () => {
     const navigate = useNavigate();
+    const registerMutation = useRegister();
+    const [formData, setFormData] = useState({
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+    });
 
-    const handleSubmit = (e) => {
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // TODO: Implement actual registration
-        console.log('Registration attempt');
-        navigate('/');
+
+        // Validate passwords match
+        if (formData.password !== formData.confirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
+
+        // Validate password length
+        if (formData.password.length < 6) {
+            toast.error('Password must be at least 6 characters');
+            return;
+        }
+
+        try {
+            await registerMutation.mutateAsync({
+                username: formData.username,
+                email: formData.email,
+                password: formData.password,
+            });
+            navigate('/login');
+        } catch (error) {
+            // Error handled by mutation
+        }
     };
 
     return (
@@ -57,21 +90,24 @@ const Register = () => {
                 <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100 dark:border-gray-700">
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Full Name
+                            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Username
                             </label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <User className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <input
-                                    id="name"
-                                    name="name"
+                                    id="username"
+                                    name="username"
                                     type="text"
-                                    autoComplete="name"
+                                    autoComplete="username"
                                     required
+                                    value={formData.username}
+                                    onChange={handleChange}
                                     className="input pl-10"
-                                    placeholder="John Doe"
+                                    placeholder="johndoe"
+                                    disabled={registerMutation.isPending}
                                 />
                             </div>
                         </div>
@@ -90,8 +126,11 @@ const Register = () => {
                                     type="email"
                                     autoComplete="email"
                                     required
+                                    value={formData.email}
+                                    onChange={handleChange}
                                     className="input pl-10"
                                     placeholder="you@example.com"
+                                    disabled={registerMutation.isPending}
                                 />
                             </div>
                         </div>
@@ -109,14 +148,18 @@ const Register = () => {
                                     name="password"
                                     type="password"
                                     required
+                                    value={formData.password}
+                                    onChange={handleChange}
                                     className="input pl-10"
                                     placeholder="••••••••"
+                                    disabled={registerMutation.isPending}
                                 />
                             </div>
+                            <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
                         </div>
 
                         <div>
-                            <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Confirm Password
                             </label>
                             <div className="mt-1 relative rounded-md shadow-sm">
@@ -124,12 +167,15 @@ const Register = () => {
                                     <Lock className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <input
-                                    id="confirm-password"
-                                    name="confirm-password"
+                                    id="confirmPassword"
+                                    name="confirmPassword"
                                     type="password"
                                     required
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
                                     className="input pl-10"
                                     placeholder="••••••••"
+                                    disabled={registerMutation.isPending}
                                 />
                             </div>
                         </div>
@@ -139,9 +185,10 @@ const Register = () => {
                                 type="submit"
                                 variant="primary"
                                 className="w-full flex justify-center py-2 px-4"
-                                icon={ArrowRight}
+                                icon={registerMutation.isPending ? Loader2 : ArrowRight}
+                                disabled={registerMutation.isPending}
                             >
-                                Create Account
+                                {registerMutation.isPending ? 'Creating account...' : 'Create Account'}
                             </Button>
                         </div>
                     </form>

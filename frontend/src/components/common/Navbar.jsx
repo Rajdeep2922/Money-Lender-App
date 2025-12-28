@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Wallet,
@@ -18,15 +18,21 @@ import {
 } from 'lucide-react';
 import Button from './Button';
 import { useLender } from '../../hooks/useLender';
+import useAuthStore from '../../store/authStore';
+import { useLogout } from '../../hooks/useAuth';
 
 // Mobile detection for reduced animations
 const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
 
 const Navbar = () => {
     const { data: lender } = useLender();
-    const user = { username: lender?.ownerName || 'Lender' };
+    const { user: authUser, isAuthenticated } = useAuthStore();
+    const logoutMutation = useLogout();
+    const navigate = useNavigate();
+    const user = authUser ? { username: authUser.username } : null;
     const businessName = lender?.businessName || 'MoneyLender';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
     const [darkMode, setDarkMode] = useState(() => {
         // Initial state from localStorage to prevent flash/re-render
         if (typeof window === 'undefined') return false;
@@ -233,9 +239,10 @@ const Navbar = () => {
                                         </Link>
                                         <Button
                                             variant="danger"
-                                            onClick={() => {
-                                                logout();
+                                            onClick={async () => {
+                                                await logoutMutation.mutateAsync();
                                                 setIsMobileMenuOpen(false);
+                                                navigate('/login');
                                             }}
                                             className="w-full justify-start mt-2"
                                             icon={LogOut}
@@ -243,6 +250,7 @@ const Navbar = () => {
                                             Logout
                                         </Button>
                                     </div>
+
                                 </>
                             )}
                         </div>
