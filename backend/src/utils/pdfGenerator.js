@@ -487,7 +487,6 @@ const generatePaymentReceipt = async (payment, lender) => {
                                         ]
                                     }
                                 ]
-
                             } : {
                                 // Bank Transfer Details
                                 stack: [
@@ -556,7 +555,6 @@ const generatePaymentReceipt = async (payment, lender) => {
                         margin: [10, 10, 10, 10]
                     }]]
                 },
-
                 layout: {
                     hLineWidth: () => 1,
                     vLineWidth: () => 1,
@@ -565,9 +563,7 @@ const generatePaymentReceipt = async (payment, lender) => {
                 }
             } : null,
 
-
             // Customer Signature Section
-
             {
                 margin: [0, 40, 0, 0],
                 columns: [
@@ -801,109 +797,162 @@ const generateInvoicePDF = async (invoice, lender) => {
                 margin: [0, 0, 0, 30]
             },
 
-            // Items Table
-            {
+            // 1. Payment Record Status (Professional & Compact) - MOVED TO TOP
+            (invoice.amountPaid > 0) ? {
+                margin: [0, 0, 0, 20],
                 table: {
-                    headerRows: 1,
-                    widths: ['auto', '*', 'auto', 'auto'],
+                    widths: ['*', '*', '*'],
                     body: [
+                        // Header
                         [
-                            { text: '#', bold: true, fillColor: '#0d9488', color: '#ffffff', alignment: 'center', margin: [8, 10, 8, 10] },
-                            { text: 'DESCRIPTION', bold: true, fillColor: '#0d9488', color: '#ffffff', margin: [10, 10, 10, 10] },
-                            { text: 'EMI DUE', bold: true, fillColor: '#0d9488', color: '#ffffff', alignment: 'center', margin: [10, 10, 10, 10] },
-                            { text: 'AMOUNT', bold: true, fillColor: '#0d9488', color: '#ffffff', alignment: 'right', margin: [10, 10, 10, 10] }
+                            { text: 'PAYMENT RECEIVED & STATUS', colSpan: 3, bold: true, fontSize: 10, color: '#1e40af', fillColor: '#dbeafe', margin: [5, 5, 5, 5], border: [true, true, true, true] },
+                            {}, {}
                         ],
+                        // Key Figures Row
                         [
-                            { text: '1', alignment: 'center', margin: [8, 12, 8, 12], color: '#4b5563' },
                             {
                                 stack: [
-                                    { text: 'Monthly EMI Payment', fontSize: 11, bold: true, color: '#111827' },
-                                    { text: `Loan: ${loan.loanNumber} | Principal: Rs. ${loan.principal?.toLocaleString() || 'N/A'}`, fontSize: 9, color: '#6b7280', margin: [0, 3, 0, 0] }
+                                    { text: 'AMOUNT PAID', fontSize: 8, color: '#6b7280', bold: true },
+                                    { text: `Rs. ${(invoice.amountPaid || 0).toLocaleString()}`, fontSize: 11, color: '#16a34a', bold: true, margin: [0, 2, 0, 0] }
                                 ],
-                                margin: [10, 10, 10, 10]
+                                margin: [5, 5, 5, 5]
                             },
-                            { text: dueDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }), alignment: 'center', margin: [10, 12, 10, 12], color: '#4b5563' },
-                            { text: `Rs. ${invoice.amountDue.toLocaleString()}`, alignment: 'right', margin: [10, 12, 10, 12], bold: true, color: '#111827' }
+                            {
+                                stack: [
+                                    { text: 'PAYMENT METHOD', fontSize: 8, color: '#6b7280', bold: true },
+                                    { text: (invoice.paymentId?.paymentMethod || 'Manual/Other').toUpperCase().replace('_', ' '), fontSize: 10, color: '#374151', margin: [0, 2, 0, 0] }
+                                ],
+                                margin: [5, 5, 5, 5]
+                            },
+                            {
+                                stack: [
+                                    { text: 'LOAN OUTSTANDING', fontSize: 8, color: '#6b7280', bold: true },
+                                    { text: `Rs. ${(invoice.loanId?.remainingBalance || 0).toLocaleString()}`, fontSize: 11, color: '#dc2626', bold: true, margin: [0, 2, 0, 0] }
+                                ],
+                                margin: [5, 5, 5, 5],
+                                fillColor: '#fdf2f2'
+                            }
+                        ],
+                        // Transaction Details Row (only if existing)
+                        [(invoice.paymentId?.bankDetails?.transactionId || invoice.paymentId?.referenceId) ? {
+                            colSpan: 3,
+                            stack: [
+                                { text: 'TRANSACTION REFERENCE', fontSize: 8, color: '#6b7280', bold: true },
+                                { text: invoice.paymentId?.bankDetails?.transactionId || invoice.paymentId?.referenceId || '-', fontSize: 9, color: '#374151', margin: [0, 2, 0, 0] }
+                            ],
+                            margin: [5, 5, 5, 5]
+                        } : { text: '', colSpan: 3, border: [false, false, false, false] }, {}, {}],
+                        // Bank Details Row (only if existing)
+                        [(invoice.paymentId?.bankDetails && (invoice.paymentId.bankDetails.bankName || invoice.paymentId.bankDetails.upiId)) ? {
+                            colSpan: 3,
+                            stack: [
+                                { text: 'PAYMENT SOURCE DETAILS', fontSize: 8, color: '#6b7280', bold: true },
+                                {
+                                    text: invoice.paymentId.bankDetails.upiId
+                                        ? `UPI ID: ${invoice.paymentId.bankDetails.upiId}`
+                                        : `Bank: ${invoice.paymentId.bankDetails.bankName || '-'} | A/c: ${invoice.paymentId.bankDetails.accountNumber || '-'} | IFSC: ${invoice.paymentId.bankDetails.ifscCode || '-'} | Name: ${invoice.paymentId.bankDetails.accountHolderName || '-'}`,
+                                    fontSize: 9, color: '#374151', margin: [0, 2, 0, 0]
+                                }
+                            ],
+                            margin: [5, 5, 5, 5]
+                        } : { text: '', colSpan: 3, border: [false, false, false, false] }, {}, {}]
+                    ].filter(row => row[0].text !== '')
+                },
+                layout: {
+                    hLineWidth: (i, node) => (i === 0 || i === node.table.body.length) ? 1 : 0.5,
+                    vLineWidth: (i) => (i === 0 || i === 3) ? 1 : 0.5,
+                    hLineColor: () => '#bfdbfe',
+                    vLineColor: () => '#bfdbfe'
+                }
+            } : null,
+
+            // Financial Summary (Replaces Items Table)
+            {
+                margin: [0, 20, 0, 0],
+                table: {
+                    widths: ['*', 'auto'],
+                    body: [
+                        [
+                            { text: 'FINANCIAL SUMMARY', colSpan: 2, bold: true, fontSize: 10, color: '#111827', fillColor: '#f3f4f6', margin: [5, 5, 5, 5], border: [true, true, true, true] },
+                            {}
+                        ],
+                        [
+                            { text: 'Total EMI Amount Due:', fontSize: 10, color: '#4b5563', margin: [5, 5, 0, 5], border: [true, false, true, false] },
+                            { text: `Rs. ${invoice.amountDue.toLocaleString()}`, fontSize: 10, bold: true, alignment: 'right', margin: [0, 5, 5, 5], border: [false, false, true, false] }
+                        ],
+                        [
+                            { text: 'Amount Paid:', fontSize: 10, color: '#16a34a', margin: [5, 5, 0, 5], border: [true, false, true, false] },
+                            { text: `Rs. ${(invoice.amountPaid || 0).toLocaleString()}`, fontSize: 10, bold: true, color: '#16a34a', alignment: 'right', margin: [0, 5, 5, 5], border: [false, false, true, false] }
+                        ],
+                        [
+                            { text: 'TOTAL BALANCE DUE:', fontSize: 12, bold: true, color: '#0d9488', fillColor: '#f0fdfa', margin: [5, 8, 0, 8], border: [true, true, true, true] },
+                            { text: `Rs. ${(invoice.balanceDue || invoice.amountDue).toLocaleString()}`, fontSize: 13, bold: true, color: '#0d9488', fillColor: '#f0fdfa', alignment: 'right', margin: [0, 8, 5, 8], border: [true, true, true, true] }
                         ]
                     ]
                 },
                 layout: {
-                    hLineWidth: (i, node) => (i === 0 || i === 1 || i === node.table.body.length) ? 1 : 0,
-                    vLineWidth: () => 0,
+                    hLineWidth: (i, node) => (i === 0 || i === node.table.body.length) ? 1 : 0.5,
+                    vLineWidth: () => 0.5,
                     hLineColor: () => '#e5e7eb',
-                    paddingLeft: () => 0,
-                    paddingRight: () => 0
+                    vLineColor: () => '#e5e7eb'
                 }
             },
 
-            // Summary Box
-            {
-                margin: [0, 20, 0, 0],
-                columns: [
-                    { width: '*', text: '' },
-                    {
-                        width: 200,
-                        table: {
-                            widths: ['*', 'auto'],
-                            body: [
-                                [
-                                    { text: 'Subtotal:', fontSize: 10, color: '#6b7280', border: [false, false, false, false], margin: [0, 5, 0, 5] },
-                                    { text: `Rs. ${invoice.amountDue.toLocaleString()}`, fontSize: 10, alignment: 'right', border: [false, false, false, false], margin: [0, 5, 0, 5] }
-                                ],
-                                [
-                                    { text: 'Paid:', fontSize: 10, color: '#16a34a', border: [false, false, false, false], margin: [0, 5, 0, 5] },
-                                    { text: `Rs. ${(invoice.amountPaid || 0).toLocaleString()}`, fontSize: 10, color: '#16a34a', alignment: 'right', border: [false, false, false, false], margin: [0, 5, 0, 5] }
-                                ],
-                                [
-                                    { text: 'TOTAL DUE:', fontSize: 12, bold: true, color: '#111827', fillColor: '#f3f4f6', border: [false, false, false, false], margin: [8, 10, 8, 10] },
-                                    { text: `Rs. ${(invoice.balanceDue || invoice.amountDue).toLocaleString()}`, fontSize: 14, bold: true, color: '#0d9488', fillColor: '#f3f4f6', alignment: 'right', border: [false, false, false, false], margin: [8, 10, 8, 10] }
-                                ]
-                            ]
-                        },
-                        layout: 'noBorders'
-                    }
-                ]
-            },
-
+            // Payment Information (Source or Default Lender Info)
             // Payment Information & Customer Signature
             {
-                margin: [0, 40, 0, 0],
-                columns: [
+                margin: [0, 20, 0, 0],
+                stack: [
+                    // 2. Lender Payment Instructions (ALWAYS Visible Bottom Section)
+
+
+                    // 2. Lender Payment Instructions (ALWAYS Visible Bottom Section)
+                    // 3. Signatures
                     {
-                        width: '*',
-                        stack: [
-                            { text: 'PAYMENT INFORMATION', fontSize: 10, bold: true, color: '#0d9488', margin: [0, 0, 0, 10] },
-                            { text: `Bank: ${lender?.bankName || 'Contact for details'}`, fontSize: 9, color: '#4b5563' },
-                            { text: `Account: ${lender?.accountNumber || 'N/A'}`, fontSize: 9, color: '#4b5563' },
-                            { text: `IFSC: ${lender?.ifscCode || 'N/A'}`, fontSize: 9, color: '#4b5563' },
-                            { text: `UPI: ${lender?.upiId || 'N/A'}`, fontSize: 9, color: '#4b5563', margin: [0, 0, 0, 10] }
+                        margin: [0, 30, 0, 0],
+                        columns: [
+                            {
+                                width: '*',
+                                stack: [
+                                    { text: 'PAYMENT INSTRUCTIONS', fontSize: 10, bold: true, color: '#0d9488', margin: [0, 0, 0, 8] },
+                                    {
+                                        table: {
+                                            widths: ['auto', '*'],
+                                            body: [
+                                                [{ text: 'Bank:', fontSize: 9, color: '#6b7280' }, { text: lender?.bankDetails?.bankName || '-', fontSize: 9, bold: true, color: '#374151' }],
+                                                [{ text: 'Account:', fontSize: 9, color: '#6b7280' }, { text: lender?.bankDetails?.accountNumber || '-', fontSize: 9, bold: true, color: '#374151' }],
+                                                [{ text: 'IFSC:', fontSize: 9, color: '#6b7280' }, { text: lender?.bankDetails?.ifscCode || '-', fontSize: 9, bold: true, color: '#374151' }],
+                                                [{ text: 'UPI:', fontSize: 9, color: '#6b7280' }, { text: lender?.upiId || '-', fontSize: 9, bold: true, color: '#374151' }]
+                                            ]
+                                        },
+                                        layout: 'noBorders'
+                                    }
+                                ]
+                            },
+                            {
+                                width: 140,
+                                stack: [
+                                    { text: 'CUSTOMER SIGNATURE', fontSize: 8, bold: true, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 8] },
+                                    customer.signature ? { image: customer.signature, width: 90, alignment: 'center', margin: [0, 5, 0, 5] } : { text: '', margin: [0, 40, 0, 0] },
+                                    { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 120, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [0, 8, 0, 5] },
+                                    { text: 'Borrower', fontSize: 8, color: '#4b5563', alignment: 'center' }
+                                ],
+                                alignment: 'center'
+                            },
+                            {
+                                width: 140,
+                                stack: [
+                                    { text: 'AUTHORIZED SIGNATORY', fontSize: 8, bold: true, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 8] },
+                                    lender?.companyStamp ? { image: lender.companyStamp, width: 90, alignment: 'center', margin: [0, 5, 0, 5] } : { text: '', margin: [0, 40, 0, 0] },
+                                    { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 120, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [0, 8, 0, 5] },
+                                    { text: 'For ' + businessName, fontSize: 8, color: '#4b5563', alignment: 'center' }
+                                ],
+                                alignment: 'center'
+                            }
                         ]
-                    },
-                    {
-                        width: 140,
-                        stack: [
-                            { text: 'CUSTOMER SIGNATURE', fontSize: 8, bold: true, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 8] },
-                            customer.signature ? { image: customer.signature, width: 90, alignment: 'center', margin: [0, 5, 0, 5] } : { text: '', margin: [0, 40, 0, 0] },
-                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 120, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [0, 8, 0, 5] },
-                            { text: 'Borrower', fontSize: 8, color: '#4b5563', alignment: 'center' }
-                        ],
-                        alignment: 'center'
-                    },
-                    {
-                        width: 140,
-                        stack: [
-                            { text: 'AUTHORIZED SIGNATORY', fontSize: 8, bold: true, color: '#6b7280', alignment: 'center', margin: [0, 0, 0, 8] },
-                            lender?.companyStamp ? { image: lender.companyStamp, width: 90, alignment: 'center', margin: [0, 5, 0, 5] } : { text: '', margin: [0, 40, 0, 0] },
-                            { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 120, y2: 0, lineWidth: 1, lineColor: '#9ca3af' }], margin: [0, 8, 0, 5] },
-                            { text: 'For ' + businessName, fontSize: 8, color: '#4b5563', alignment: 'center' }
-                        ],
-                        alignment: 'center',
-                        margin: [20, 0, 0, 0]
                     }
                 ]
-            },
-
-            // Terms & Notes
+            },// Terms & Notes
             {
                 margin: [0, 30, 0, 0],
                 stack: [

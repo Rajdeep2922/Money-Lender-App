@@ -105,11 +105,18 @@ exports.downloadInvoice = async (req, res, next) => {
     try {
         const invoice = await Invoice.findById(req.params.id)
             .populate('loanId')
-            .populate('customerId', 'firstName lastName email phone address signature');
+            .populate('customerId', 'firstName lastName email phone address signature')
+            .populate('paymentId'); // Populate payment details including bank info
+
         const lender = await Lender.findOne();
 
         if (!invoice) {
             return next(new AppError('Invoice not found', 404));
+        }
+
+        // Restrict Invoice/Receipt generation to Paid amounts only
+        if (invoice.amountPaid <= 0) {
+            return next(new AppError('Receipts can only be generated for collected payments.', 400));
         }
 
         const pdfDoc = await generateInvoicePDF(invoice, lender);

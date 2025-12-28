@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { paymentAPI } from '../services/api';
 import { loanKeys } from './useLoans';
+import { invoiceKeys } from './useInvoices';
 
 // Query keys
 export const paymentKeys = {
@@ -53,6 +54,7 @@ export const useRecordPayment = () => {
         onSuccess: (response) => {
             queryClient.invalidateQueries({ queryKey: paymentKeys.lists() });
             queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: invoiceKeys.all }); // Refresh invoices/receipts list
             // Invalidate specific loan data
             if (response.data?.payment?.loanId) {
                 queryClient.invalidateQueries({

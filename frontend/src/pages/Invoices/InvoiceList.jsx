@@ -22,7 +22,6 @@ const InvoiceList = () => {
         try {
             const result = await generateInvoices.mutateAsync();
             toast.success(`Successfully generated ${result.data.count} new invoices!`, { id: toastId });
-            // Reset cache completely and force fresh fetch
             queryClient.removeQueries({ queryKey: invoiceKeys.all });
             queryClient.refetchQueries({ queryKey: invoiceKeys.all, type: 'all' });
         } catch (error) {
@@ -61,7 +60,8 @@ const InvoiceList = () => {
         );
     }
 
-    const invoices = data?.invoices || [];
+    // Filter to show ONLY paid/partial invoices (Receipts) as requested
+    const invoices = (data?.invoices || []).filter(inv => inv.amountPaid > 0 || inv.status === 'paid');
 
     const getStatusIcon = (status) => {
         switch (status) {
@@ -103,6 +103,8 @@ const InvoiceList = () => {
                 </button>
             </div>
 
+
+
             {/* Mobile View (Cards) */}
             <div className="grid grid-cols-1 gap-4 md:hidden">
                 {invoices.map((invoice) => (
@@ -139,9 +141,12 @@ const InvoiceList = () => {
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => downloadInvoice.mutate(invoice._id)}
-                                    disabled={downloadInvoice.isPending}
-                                    className="p-2 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
-                                    title="Download PDF"
+                                    disabled={downloadInvoice.isPending || invoice.status === 'pending' || (invoice.amountPaid || 0) <= 0}
+                                    className={`p-2 rounded-lg transition-colors ${invoice.status === 'pending' || (invoice.amountPaid || 0) <= 0
+                                        ? 'text-gray-300 cursor-not-allowed'
+                                        : 'text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30'
+                                        }`}
+                                    title={invoice.status === 'pending' ? "Payment required to download" : "Download PDF"}
                                 >
                                     <FiDownload className="w-5 h-5" />
                                 </button>
@@ -205,9 +210,12 @@ const InvoiceList = () => {
                                     <td className="text-right">
                                         <button
                                             onClick={() => downloadInvoice.mutate(invoice._id)}
-                                            disabled={downloadInvoice.isPending}
-                                            className="p-2 text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors inline-block mr-1"
-                                            title="Download PDF"
+                                            disabled={downloadInvoice.isPending || invoice.status === 'pending' || (invoice.amountPaid || 0) <= 0}
+                                            className={`p-2 rounded-lg transition-colors inline-block mr-1 ${invoice.status === 'pending' || (invoice.amountPaid || 0) <= 0
+                                                ? 'text-gray-300 cursor-not-allowed'
+                                                : 'text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30'
+                                                }`}
+                                            title={invoice.status === 'pending' ? "Payment required to download" : "Download PDF"}
                                         >
                                             <FiDownload className="w-5 h-5" />
                                         </button>

@@ -207,6 +207,32 @@ exports.recordPayment = async (req, res, next) => {
             }
 
             await pendingInvoice.save();
+        } else {
+            // ------------------------------------------------------------------
+            // AUTO-CREATE INVOICE (RECEIPT) IF NONE EXISTS
+            // ------------------------------------------------------------------
+            // Validating if we need to generate a receipt for this ad-hoc payment
+            console.log(`[Payment] No pending invoice found for Loan ${loan.loanNumber}. Auto-generating receipt.`);
+
+            const newInvoice = new Invoice({
+                invoiceNumber: `INV-${new Date().getFullYear()}-${String(paymentNumber).padStart(4, '0')}`, // Fallback numbering
+                customerId: loan.customerId._id,
+                loanId: loan._id,
+                amountDue: amountPaid, // For receipt, due matches paid
+                amountPaid: amountPaid,
+                balanceDue: 0,
+                dueDate: paymentDate || new Date(),
+                issuedDate: new Date(),
+                status: INVOICE_STATUS.PAID,
+                type: 'emi_receipt',
+                period: {
+                    month: new Date().getMonth() + 1,
+                    year: new Date().getFullYear()
+                },
+                paymentId: payment._id
+            });
+
+            await newInvoice.save();
         }
 
         res.status(201).json({

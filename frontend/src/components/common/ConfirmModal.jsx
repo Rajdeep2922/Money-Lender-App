@@ -75,14 +75,15 @@ export const ConfirmModal = ({
                         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                         className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md"
                     >
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden mx-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden mx-4 relative">
                             {/* Close Button */}
                             <button
                                 onClick={onClose}
-                                className="absolute top-4 right-4 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                             >
                                 <FiX className="w-5 h-5" />
                             </button>
+
 
                             {/* Content */}
                             <div className="p-6 pt-8 text-center">
