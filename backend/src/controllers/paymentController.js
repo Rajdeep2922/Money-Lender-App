@@ -24,6 +24,12 @@ exports.listPayments = async (req, res, next) => {
         } = req.query;
 
         const filter = {};
+
+        // SECURITY: Filter by lender to isolate user data
+        if (req.user && req.user.lenderId) {
+            filter.lenderId = req.user.lenderId;
+        }
+
         if (loanId) filter.loanId = loanId;
         if (customerId) filter.customerId = customerId;
 
@@ -164,6 +170,7 @@ exports.recordPayment = async (req, res, next) => {
             balanceAfterPayment: newRemainingBalance,
             notes,
             bankDetails,
+            lenderId: req.user && req.user.lenderId ? req.user.lenderId : undefined,
         });
 
 

@@ -58,6 +58,11 @@ const customerSchema = new mongoose.Schema({
         enum: Object.values(CUSTOMER_STATUS),
         default: CUSTOMER_STATUS.ACTIVE,
     },
+    lenderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Lender',
+        index: true,
+    },
     isDeleted: {
         type: Boolean,
         default: false,

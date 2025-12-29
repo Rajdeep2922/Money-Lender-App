@@ -74,6 +74,11 @@ const loanSchema = new mongoose.Schema({
         default: LOAN_STATUS.PENDING_APPROVAL,
         index: true,
     },
+    lenderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Lender',
+        index: true,
+    },
     approvalDate: {
         type: Date,
     },

@@ -35,17 +35,27 @@ exports.listLoans = async (req, res, next) => {
         } = req.query;
 
         const filter = {};
+
+        // SECURITY: Filter by lender to isolate user data
+        if (req.user && req.user.lenderId) {
+            filter.lenderId = req.user.lenderId;
+        }
+
         if (customerId) filter.customerId = customerId;
         if (status) filter.status = status;
 
         if (search) {
-            // Find customers that match the name
-            const matchingCustomers = await Customer.find({
+            // Find customers that match the name (also filter by lenderId)
+            const customerFilter = {
                 $or: [
                     { firstName: new RegExp(search, 'i') },
                     { lastName: new RegExp(search, 'i') },
                 ]
-            }).select('_id');
+            };
+            if (req.user && req.user.lenderId) {
+                customerFilter.lenderId = req.user.lenderId;
+            }
+            const matchingCustomers = await Customer.find(customerFilter).select('_id');
 
             const customerIds = matchingCustomers.map(c => c._id);
 
@@ -178,6 +188,7 @@ exports.createLoan = async (req, res, next) => {
             amortizationSchedule,
             status: LOAN_STATUS.PENDING_APPROVAL,
             notes,
+            lenderId: req.user && req.user.lenderId ? req.user.lenderId : undefined,
         });
 
         await loan.save();

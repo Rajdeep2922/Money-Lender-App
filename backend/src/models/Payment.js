@@ -53,6 +53,11 @@ const paymentSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
+    lenderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Lender',
+        index: true,
+    },
     // Bank details for bank transfers
     bankDetails: {
         accountHolderName: { type: String, trim: true },

@@ -20,6 +20,11 @@ exports.listCustomers = async (req, res, next) => {
 
         const filter = { isDeleted: { $ne: true } }; // Filter out deleted customers (handle missing field for legacy)
 
+        // SECURITY: Filter by lender to isolate user data
+        if (req.user && req.user.lenderId) {
+            filter.lenderId = req.user.lenderId;
+        }
+
         // Search filter
         if (search) {
             filter.$or = [
@@ -60,7 +65,11 @@ exports.listCustomers = async (req, res, next) => {
  */
 exports.getCustomer = async (req, res, next) => {
     try {
-        const customer = await Customer.findOne({ _id: req.params.id, isDeleted: { $ne: true } });
+        const filter = { _id: req.params.id, isDeleted: { $ne: true } };
+        if (req.user && req.user.lenderId) {
+            filter.lenderId = req.user.lenderId;
+        }
+        const customer = await Customer.findOne(filter);
 
         if (!customer) {
             return next(new AppError('Customer not found', 404));
@@ -80,7 +89,12 @@ exports.getCustomer = async (req, res, next) => {
  */
 exports.createCustomer = async (req, res, next) => {
     try {
-        const customer = new Customer(req.body);
+        const customerData = { ...req.body };
+        // Auto-assign lenderId for data isolation
+        if (req.user && req.user.lenderId) {
+            customerData.lenderId = req.user.lenderId;
+        }
+        const customer = new Customer(customerData);
         await customer.save();
 
         res.status(201).json({
@@ -98,8 +112,12 @@ exports.createCustomer = async (req, res, next) => {
  */
 exports.updateCustomer = async (req, res, next) => {
     try {
+        const filter = { _id: req.params.id, isDeleted: { $ne: true } };
+        if (req.user && req.user.lenderId) {
+            filter.lenderId = req.user.lenderId;
+        }
         const customer = await Customer.findOneAndUpdate(
-            { _id: req.params.id, isDeleted: { $ne: true } },
+            filter,
             req.body,
             { new: true, runValidators: true }
         );
@@ -123,8 +141,12 @@ exports.updateCustomer = async (req, res, next) => {
  */
 exports.deleteCustomer = async (req, res, next) => {
     try {
-        const customer = await Customer.findByIdAndUpdate(
-            req.params.id,
+        const filter = { _id: req.params.id };
+        if (req.user && req.user.lenderId) {
+            filter.lenderId = req.user.lenderId;
+        }
+        const customer = await Customer.findOneAndUpdate(
+            filter,
             { isDeleted: true }, // Mark as deleted
             { new: true }
         );
