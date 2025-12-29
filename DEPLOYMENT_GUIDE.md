@@ -18,7 +18,7 @@ Follow these steps to deploy your MERN stack application to Render (Backend) and
     *   **Region**: Choose one close to you (e.g., Singapore, Frankfurt, Oregon).
     *   **Root Directory**: `backend` (Important! Do not leave blank).
     *   **Environment**: `Node`
-    *   **Build Command**: `npm install`
+    *   **Build Command**: `    `
     *   **Start Command**: `npm start`
     *   **Instance Type**: Free (if available) or Starter.
 
