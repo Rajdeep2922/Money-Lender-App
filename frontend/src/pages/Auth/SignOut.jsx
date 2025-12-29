@@ -1,13 +1,24 @@
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogOut, ArrowRight } from 'lucide-react';
+import { useLogout } from '../../hooks/useAuth';
 
 
 const SignOut = () => {
+    const navigate = useNavigate();
+    const logoutMutation = useLogout();
+
     useEffect(() => {
-        // Clear auth data in real app
-        // localStorage.removeItem('token');
+        // Automatically logout when this page loads
+        logoutMutation.mutate(undefined, {
+            onSuccess: () => {
+                // Logout successful, user can click "Sign In Again"
+            },
+            onError: () => {
+                // Even on error, clear local state
+            }
+        });
     }, []);
 
     return (
