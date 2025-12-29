@@ -9,6 +9,9 @@ exports.getDashboardStats = async (req, res, next) => {
     try {
         const now = new Date();
 
+        // SECURITY: Filter by lender to isolate user data
+        const lenderFilter = req.user && req.user.lenderId ? { lenderId: req.user.lenderId } : {};
+
         const [
             totalCustomers,
             loanStats,
@@ -17,8 +20,9 @@ exports.getDashboardStats = async (req, res, next) => {
             overdueLoansCount
         ] = await Promise.all([
             // Exclude soft-deleted customers from count
-            Customer.countDocuments({ isDeleted: { $ne: true } }),
+            Customer.countDocuments({ isDeleted: { $ne: true }, ...lenderFilter }),
             Loan.aggregate([
+                { $match: lenderFilter },
                 {
                     $group: {
                         _id: null,
@@ -29,12 +33,14 @@ exports.getDashboardStats = async (req, res, next) => {
                 }
             ]),
             Payment.aggregate([
+                { $match: lenderFilter },
                 { $group: { _id: null, totalCollected: { $sum: '$amountPaid' } } }
             ]),
-            Loan.countDocuments({ status: 'active' }),
+            Loan.countDocuments({ status: 'active', ...lenderFilter }),
             Loan.countDocuments({
                 status: 'active',
-                nextDueDate: { $lt: now }
+                nextDueDate: { $lt: now },
+                ...lenderFilter
             })
         ]);
 
@@ -51,7 +57,7 @@ exports.getDashboardStats = async (req, res, next) => {
 
         const [monthlyLoans, monthlyPayments] = await Promise.all([
             Loan.aggregate([
-                { $match: { createdAt: { $gte: sixMonthsAgo } } },
+                { $match: { createdAt: { $gte: sixMonthsAgo }, ...lenderFilter } },
                 {
                     $group: {
                         _id: {
@@ -63,7 +69,7 @@ exports.getDashboardStats = async (req, res, next) => {
                 }
             ]),
             Payment.aggregate([
-                { $match: { paymentDate: { $gte: sixMonthsAgo } } },
+                { $match: { paymentDate: { $gte: sixMonthsAgo }, ...lenderFilter } },
                 {
                     $group: {
                         _id: {
