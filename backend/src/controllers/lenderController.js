@@ -6,7 +6,19 @@ const { AppError } = require('../middleware/errorHandler');
  */
 exports.getLender = async (req, res, next) => {
     try {
-        const lender = await Lender.getLender();
+        // SECURITY: Get the lender for the authenticated user
+        const lenderId = req.user?.lenderId;
+
+        if (!lenderId) {
+            return next(new AppError('User does not have an associated lender', 404));
+        }
+
+        const lender = await Lender.findById(lenderId);
+
+        if (!lender) {
+            return next(new AppError('Lender not found', 404));
+        }
+
         res.json({
             success: true,
             lender,
@@ -25,7 +37,14 @@ exports.updateLender = async (req, res, next) => {
         console.log('Request body keys:', Object.keys(req.body));
         console.log('Request body has companyStamp key:', 'companyStamp' in req.body);
 
-        let lender = await Lender.findOne();
+        // SECURITY: Get the lender for the authenticated user
+        const lenderId = req.user?.lenderId;
+
+        if (!lenderId) {
+            return next(new AppError('User does not have an associated lender', 404));
+        }
+
+        let lender = await Lender.findById(lenderId);
 
         if (!lender) {
             lender = new Lender(req.body);
