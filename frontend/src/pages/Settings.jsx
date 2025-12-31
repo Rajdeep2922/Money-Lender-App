@@ -172,197 +172,196 @@ const ProfileSettings = () => {
     };
 
     return (
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full max-w-full">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4">
                 Business Information
             </h2>
 
-            {/* Mobile-first responsive grid: FORCE single column on mobile */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full">
-                {/* Business Name - Full width on all screens */}
-                <div className="md:col-span-2 flex flex-col space-y-2">
-                    <label className="label">Business Name</label>
+            {/* Simple stacked layout - NO GRID, just flex column */}
+            <div className="flex flex-col gap-4">
+                {/* Business Name */}
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Business Name</label>
                     <input
                         {...register('businessName')}
-                        className="input w-full min-h-[44px]"
+                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="Enter business name"
                     />
                 </div>
 
-                {/* Owner Name - Stacks on mobile */}
-                <div className="flex flex-col space-y-2">
-                    <label className="label">Owner Name</label>
+                {/* Owner Name */}
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Owner Name</label>
                     <input
                         {...register('ownerName')}
-                        className="input w-full min-h-[44px]"
+                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="Enter owner name"
                     />
                 </div>
 
-                {/* Tax ID - Stacks on mobile */}
-                <div className="flex flex-col space-y-2">
-                    <label className="label">Tax ID / PAN Number</label>
+                {/* Tax ID */}
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tax ID / PAN Number</label>
                     <input
                         {...register('panNumber')}
-                        className="input w-full min-h-[44px]"
+                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="Enter PAN number"
                     />
                 </div>
 
-                {/* Business Email - Stacks on mobile */}
-                <div className="flex flex-col space-y-2">
-                    <label className="label">Business Email</label>
+                {/* Business Email */}
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Business Email</label>
                     <input
                         {...register('email')}
                         type="email"
-                        className="input w-full min-h-[44px]"
+                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="business@example.com"
                     />
                 </div>
 
-                {/* Phone Number - Stacks on mobile */}
-                <div className="flex flex-col space-y-2">
-                    <label className="label">Phone Number</label>
+                {/* Phone Number */}
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
                     <input
                         {...register('phone')}
                         type="tel"
-                        className="input w-full min-h-[44px]"
+                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="Enter phone number"
                     />
                 </div>
 
-                {/* Street Address - Full width on all screens */}
-                <div className="md:col-span-2 flex flex-col space-y-2">
-                    <label className="label">Street Address</label>
+                {/* Street Address */}
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Street Address</label>
                     <input
                         {...register('address.street')}
-                        className="input w-full min-h-[44px]"
+                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="Enter street address"
                     />
                 </div>
 
-                {/* City - Stacks on mobile */}
-                <div className="flex flex-col space-y-2">
-                    <label className="label">City</label>
+                {/* City */}
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">City</label>
                     <input
                         {...register('address.city')}
-                        className="input w-full min-h-[44px]"
+                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="Enter city"
                     />
                 </div>
 
-                {/* State - Stacks on mobile */}
-                <div className="flex flex-col space-y-2">
-                    <label className="label">State</label>
+                {/* State */}
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">State</label>
                     <input
                         {...register('address.state')}
-                        className="input w-full min-h-[44px]"
+                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="Enter state"
                     />
                 </div>
+            </div>
 
-                {/* Bank Details Section */}
-                <div className="md:col-span-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <h3 className="text-md font-medium text-gray-900 dark:text-white mb-4">Bank Details (For EMI Payments)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        <div className="flex flex-col space-y-2">
-                            <label className="label">Bank Name</label>
-                            <input
-                                {...register('bankDetails.bankName')}
-                                className="input w-full min-h-[44px]"
-                                placeholder="Enter bank name"
-                            />
-                        </div>
-                        <div className="flex flex-col space-y-2">
-                            <label className="label">Account Number</label>
-                            <input
-                                {...register('bankDetails.accountNumber')}
-                                type="text"
-                                className="input w-full min-h-[44px]"
-                                placeholder="Enter account number"
-                            />
-                        </div>
-                        <div className="flex flex-col space-y-2">
-                            <label className="label">IFSC Code</label>
-                            <input
-                                {...register('bankDetails.ifscCode')}
-                                className="input w-full min-h-[44px]"
-                                placeholder="Enter IFSC code"
-                            />
-                        </div>
-                        <div className="flex flex-col space-y-2">
-                            <label className="label">Account Name</label>
-                            <input
-                                {...register('bankDetails.accountName')}
-                                className="input w-full min-h-[44px]"
-                                placeholder="Enter account holder name"
-                            />
-                        </div>
+            {/* Bank Details Section */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-md font-medium text-gray-900 dark:text-white mb-4">Bank Details (For EMI Payments)</h3>
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank Name</label>
+                        <input
+                            {...register('bankDetails.bankName')}
+                            className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            placeholder="Enter bank name"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Number</label>
+                        <input
+                            {...register('bankDetails.accountNumber')}
+                            type="text"
+                            className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            placeholder="Enter account number"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">IFSC Code</label>
+                        <input
+                            {...register('bankDetails.ifscCode')}
+                            className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            placeholder="Enter IFSC code"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Name</label>
+                        <input
+                            {...register('bankDetails.accountName')}
+                            className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            placeholder="Enter account holder name"
+                        />
                     </div>
                 </div>
+            </div>
 
-                {/* Terms & Conditions Section */}
-                <div className="col-span-2 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <h3 className="text-md font-medium text-gray-900 dark:text-white mb-2">Loan Agreement Terms & Conditions</h3>
-                    <p className="text-xs text-gray-500 mb-2">Each line will be automatically numbered in the PDF agreement.</p>
-                    <textarea
-                        {...register('termsAndConditions')}
-                        rows="6"
-                        className="input font-mono text-sm"
-                        placeholder="Enter terms here, one per line..."
-                    />
-                </div>
+            {/* Terms & Conditions Section */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-md font-medium text-gray-900 dark:text-white mb-2">Loan Agreement Terms & Conditions</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Each line will be automatically numbered in the PDF agreement.</p>
+                <textarea
+                    {...register('termsAndConditions')}
+                    rows="6"
+                    className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-mono text-sm"
+                    placeholder="Enter terms here, one per line..."
+                />
+            </div>
 
-                {/* Company Stamp/Signature */}
-                <div className="col-span-2 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <label className="label">Company Stamp / Lender Signature</label>
-                    <div className="mt-2 flex items-center gap-6">
-                        <div className="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900/50">
-                            {stampPreview ? (
-                                <img src={stampPreview} alt="Company Stamp" className="max-w-full max-h-full object-contain" />
-                            ) : (
-                                <Building className="w-8 h-8 text-gray-400" />
-                            )}
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <label className="btn btn-secondary btn-sm gap-2 cursor-pointer w-fit">
-                                <Upload className="w-4 h-4" />
-                                {stampPreview ? 'Change Stamp' : 'Upload Stamp'}
-                                <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                            </label>
-                            <p className="text-xs text-gray-500">
-                                Recommended: PNG with transparent background. Max 100KB.
-                            </p>
-                            {stampPreview && (
-                                <button
-                                    type="button"
-                                    onClick={async (e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setStampPreview(null);
-                                        setValue('companyStamp', '', { shouldDirty: true });
-                                        // Auto-save the removal with all current form data
-                                        const toastId = toast.loading('Removing stamp...');
-                                        try {
-                                            const currentData = getValues();
-                                            await updateLender.mutateAsync({
-                                                ...currentData,
-                                                companyStamp: ''
-                                            });
-                                            toast.success('Stamp removed successfully!', { id: toastId });
-                                        } catch (error) {
-                                            toast.error('Failed to remove stamp', { id: toastId });
-                                        }
-                                    }}
-                                    className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1 hover:underline"
-                                >
-                                    <Trash2 className="w-3 h-3" /> Remove Stamp
-                                </button>
-                            )}
+            {/* Company Stamp/Signature */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Company Stamp / Lender Signature</label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900/50">
+                        {stampPreview ? (
+                            <img src={stampPreview} alt="Company Stamp" className="max-w-full max-h-full object-contain" />
+                        ) : (
+                            <Building className="w-8 h-8 text-gray-400" />
+                        )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                        <label className="btn btn-secondary btn-sm gap-2 cursor-pointer w-fit">
+                            <Upload className="w-4 h-4" />
+                            {stampPreview ? 'Change Stamp' : 'Upload Stamp'}
+                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                        </label>
+                        <p className="text-xs text-gray-500">
+                            Recommended: PNG with transparent background. Max 100KB.
+                        </p>
+                        {stampPreview && (
+                            <button
+                                type="button"
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setStampPreview(null);
+                                    setValue('companyStamp', '', { shouldDirty: true });
+                                    // Auto-save the removal with all current form data
+                                    const toastId = toast.loading('Removing stamp...');
+                                    try {
+                                        const currentData = getValues();
+                                        await updateLender.mutateAsync({
+                                            ...currentData,
+                                            companyStamp: ''
+                                        });
+                                        toast.success('Stamp removed successfully!', { id: toastId });
+                                    } catch (error) {
+                                        toast.error('Failed to remove stamp', { id: toastId });
+                                    }
+                                }}
+                                className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1 hover:underline"
+                            >
+                                <Trash2 className="w-3 h-3" /> Remove Stamp
+                            </button>
+                        )}
 
 
-                        </div>
                     </div>
                 </div>
             </div>
@@ -373,7 +372,7 @@ const ProfileSettings = () => {
                     {updateLender.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
             </div>
-        </form>
+        </form >
     );
 };
 
