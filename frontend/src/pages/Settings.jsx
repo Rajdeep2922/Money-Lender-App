@@ -178,66 +178,126 @@ const ProfileSettings = () => {
                 Business Information
             </h2>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div className="col-span-2">
+            {/* Mobile-first responsive grid: stack on mobile, 2 cols on tablet+ */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                {/* Business Name - Full width on all screens */}
+                <div className="md:col-span-2">
                     <label className="label">Business Name</label>
-                    <input {...register('businessName')} className="input" />
+                    <input
+                        {...register('businessName')}
+                        className="input w-full min-h-[44px]"
+                        placeholder="Enter business name"
+                    />
                 </div>
 
+                {/* Owner Name - Stacks on mobile */}
                 <div>
                     <label className="label">Owner Name</label>
-                    <input {...register('ownerName')} className="input" />
+                    <input
+                        {...register('ownerName')}
+                        className="input w-full min-h-[44px]"
+                        placeholder="Enter owner name"
+                    />
                 </div>
 
+                {/* Tax ID - Stacks on mobile */}
                 <div>
                     <label className="label">Tax ID / PAN Number</label>
-                    <input {...register('panNumber')} className="input" />
+                    <input
+                        {...register('panNumber')}
+                        className="input w-full min-h-[44px]"
+                        placeholder="Enter PAN number"
+                    />
                 </div>
 
+                {/* Business Email - Stacks on mobile */}
                 <div>
                     <label className="label">Business Email</label>
-                    <input {...register('email')} type="email" className="input" />
+                    <input
+                        {...register('email')}
+                        type="email"
+                        className="input w-full min-h-[44px]"
+                        placeholder="business@example.com"
+                    />
                 </div>
 
+                {/* Phone Number - Stacks on mobile */}
                 <div>
                     <label className="label">Phone Number</label>
-                    <input {...register('phone')} className="input" />
+                    <input
+                        {...register('phone')}
+                        type="tel"
+                        className="input w-full min-h-[44px]"
+                        placeholder="Enter phone number"
+                    />
                 </div>
 
-                <div className="col-span-2">
+                {/* Street Address - Full width on all screens */}
+                <div className="md:col-span-2">
                     <label className="label">Street Address</label>
-                    <input {...register('address.street')} className="input" />
+                    <input
+                        {...register('address.street')}
+                        className="input w-full min-h-[44px]"
+                        placeholder="Enter street address"
+                    />
                 </div>
 
+                {/* City - Stacks on mobile */}
                 <div>
                     <label className="label">City</label>
-                    <input {...register('address.city')} className="input" />
+                    <input
+                        {...register('address.city')}
+                        className="input w-full min-h-[44px]"
+                        placeholder="Enter city"
+                    />
                 </div>
 
+                {/* State - Stacks on mobile */}
                 <div>
                     <label className="label">State</label>
-                    <input {...register('address.state')} className="input" />
+                    <input
+                        {...register('address.state')}
+                        className="input w-full min-h-[44px]"
+                        placeholder="Enter state"
+                    />
                 </div>
 
                 {/* Bank Details Section */}
-                <div className="col-span-2 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <div className="md:col-span-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <h3 className="text-md font-medium text-gray-900 dark:text-white mb-4">Bank Details (For EMI Payments)</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div>
                             <label className="label">Bank Name</label>
-                            <input {...register('bankDetails.bankName')} className="input" />
+                            <input
+                                {...register('bankDetails.bankName')}
+                                className="input w-full min-h-[44px]"
+                                placeholder="Enter bank name"
+                            />
                         </div>
                         <div>
                             <label className="label">Account Number</label>
-                            <input {...register('bankDetails.accountNumber')} className="input" />
+                            <input
+                                {...register('bankDetails.accountNumber')}
+                                type="text"
+                                className="input w-full min-h-[44px]"
+                                placeholder="Enter account number"
+                            />
                         </div>
                         <div>
                             <label className="label">IFSC Code</label>
-                            <input {...register('bankDetails.ifscCode')} className="input" />
+                            <input
+                                {...register('bankDetails.ifscCode')}
+                                className="input w-full min-h-[44px]"
+                                placeholder="Enter IFSC code"
+                            />
                         </div>
                         <div>
                             <label className="label">Account Name</label>
-                            <input {...register('bankDetails.accountName')} className="input" />
+                            <input
+                                {...register('bankDetails.accountName')}
+                                className="input w-full min-h-[44px]"
+                                placeholder="Enter account holder name"
+                            />
                         </div>
                     </div>
                 </div>
