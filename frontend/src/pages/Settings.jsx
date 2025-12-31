@@ -173,15 +173,15 @@ const ProfileSettings = () => {
 
     return (
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full max-w-full">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
                 Business Information
             </h2>
 
-            {/* Mobile-first responsive grid: stack on mobile, 2 cols on tablet+ */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {/* Mobile-first responsive grid: FORCE single column on mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full">
                 {/* Business Name - Full width on all screens */}
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 flex flex-col space-y-2">
                     <label className="label">Business Name</label>
                     <input
                         {...register('businessName')}
@@ -191,7 +191,7 @@ const ProfileSettings = () => {
                 </div>
 
                 {/* Owner Name - Stacks on mobile */}
-                <div>
+                <div className="flex flex-col space-y-2">
                     <label className="label">Owner Name</label>
                     <input
                         {...register('ownerName')}
@@ -201,7 +201,7 @@ const ProfileSettings = () => {
                 </div>
 
                 {/* Tax ID - Stacks on mobile */}
-                <div>
+                <div className="flex flex-col space-y-2">
                     <label className="label">Tax ID / PAN Number</label>
                     <input
                         {...register('panNumber')}
@@ -211,7 +211,7 @@ const ProfileSettings = () => {
                 </div>
 
                 {/* Business Email - Stacks on mobile */}
-                <div>
+                <div className="flex flex-col space-y-2">
                     <label className="label">Business Email</label>
                     <input
                         {...register('email')}
@@ -222,7 +222,7 @@ const ProfileSettings = () => {
                 </div>
 
                 {/* Phone Number - Stacks on mobile */}
-                <div>
+                <div className="flex flex-col space-y-2">
                     <label className="label">Phone Number</label>
                     <input
                         {...register('phone')}
@@ -233,7 +233,7 @@ const ProfileSettings = () => {
                 </div>
 
                 {/* Street Address - Full width on all screens */}
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 flex flex-col space-y-2">
                     <label className="label">Street Address</label>
                     <input
                         {...register('address.street')}
@@ -243,7 +243,7 @@ const ProfileSettings = () => {
                 </div>
 
                 {/* City - Stacks on mobile */}
-                <div>
+                <div className="flex flex-col space-y-2">
                     <label className="label">City</label>
                     <input
                         {...register('address.city')}
@@ -253,7 +253,7 @@ const ProfileSettings = () => {
                 </div>
 
                 {/* State - Stacks on mobile */}
-                <div>
+                <div className="flex flex-col space-y-2">
                     <label className="label">State</label>
                     <input
                         {...register('address.state')}
@@ -266,7 +266,7 @@ const ProfileSettings = () => {
                 <div className="md:col-span-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <h3 className="text-md font-medium text-gray-900 dark:text-white mb-4">Bank Details (For EMI Payments)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        <div>
+                        <div className="flex flex-col space-y-2">
                             <label className="label">Bank Name</label>
                             <input
                                 {...register('bankDetails.bankName')}
@@ -274,7 +274,7 @@ const ProfileSettings = () => {
                                 placeholder="Enter bank name"
                             />
                         </div>
-                        <div>
+                        <div className="flex flex-col space-y-2">
                             <label className="label">Account Number</label>
                             <input
                                 {...register('bankDetails.accountNumber')}
@@ -283,7 +283,7 @@ const ProfileSettings = () => {
                                 placeholder="Enter account number"
                             />
                         </div>
-                        <div>
+                        <div className="flex flex-col space-y-2">
                             <label className="label">IFSC Code</label>
                             <input
                                 {...register('bankDetails.ifscCode')}
@@ -291,7 +291,7 @@ const ProfileSettings = () => {
                                 placeholder="Enter IFSC code"
                             />
                         </div>
-                        <div>
+                        <div className="flex flex-col space-y-2">
                             <label className="label">Account Name</label>
                             <input
                                 {...register('bankDetails.accountName')}
