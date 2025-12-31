@@ -37,7 +37,7 @@ const Settings = () => {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="max-w-4xl mx-auto space-y-6"
+            className="max-w-7xl mx-auto space-y-6 px-4 sm:px-6"
         >
             <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
@@ -48,30 +48,52 @@ const Settings = () => {
 
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Sidebar Navigation */}
-                <div className="lg:w-64 flex-shrink-0">
-                    <nav className="space-y-1">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === tab.id
-                                        ? 'bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400'
-                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                                        }`}
-                                >
-                                    <Icon className="w-5 h-5" />
-                                    {tab.label}
-                                </button>
-                            );
-                        })}
+                <div className="lg:w-72 flex-shrink-0">
+                    <nav className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-2 lg:sticky lg:top-4">
+                        <div className="space-y-1">
+                            {tabs.map((tab) => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`
+                                            group w-full flex items-center gap-3 
+                                            px-4 py-3 sm:py-3.5
+                                            text-sm font-medium rounded-lg 
+                                            transition-all duration-200
+                                            min-h-[44px]
+                                            ${isActive
+                                                ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/25'
+                                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                                            }
+                                        `}
+                                    >
+                                        <Icon
+                                            className={`
+                                                w-5 h-5 flex-shrink-0 transition-transform duration-200
+                                                ${isActive
+                                                    ? 'text-white'
+                                                    : 'text-gray-500 dark:text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400'
+                                                }
+                                                ${isActive ? 'scale-110' : 'group-hover:scale-105'}
+                                            `}
+                                        />
+                                        <span className="truncate">{tab.label}</span>
+                                        {isActive && (
+                                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white"></div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </nav>
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1">
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-xl border border-gray-100 dark:border-gray-700 p-6">
+                <div className="flex-1 min-w-0">
+                    <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
                         {activeTab === 'profile' && <ProfileSettings />}
                         {activeTab === 'preferences' && <PreferenceSettings isDark={isDark} setIsDark={setIsDark} />}
                         {activeTab === 'notifications' && <NotificationSettings />}
