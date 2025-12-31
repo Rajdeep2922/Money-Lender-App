@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Wallet, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Wallet, Mail, Lock, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Button from '../../components/common/Button';
 import { useRegister } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
@@ -43,9 +43,12 @@ const Register = () => {
             });
             navigate('/login');
         } catch (error) {
-            // Error handled by mutation
+            // Error handled by mutation onError
         }
     };
+
+    const isLoading = registerMutation.isPending;
+    const error = registerMutation.error;
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -89,6 +92,33 @@ const Register = () => {
             >
                 <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100 dark:border-gray-700">
                     <form className="space-y-6" onSubmit={handleSubmit}>
+                        {/* Error Message Display */}
+                        <AnimatePresence mode="wait">
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4"
+                                >
+                                    <div className="flex items-start">
+                                        <div className="flex-shrink-0">
+                                            <AlertCircle className="h-5 w-5 text-red-400 dark:text-red-500" />
+                                        </div>
+                                        <div className="ml-3">
+                                            <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
+                                                Registration failed
+                                            </h3>
+                                            <div className="mt-1 text-sm text-red-700 dark:text-red-400">
+                                                {error.response?.data?.message || 'An error occurred. Please try again.'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Username
@@ -105,9 +135,9 @@ const Register = () => {
                                     required
                                     value={formData.username}
                                     onChange={handleChange}
-                                    className="input pl-10"
+                                    className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed"
                                     placeholder="johndoe"
-                                    disabled={registerMutation.isPending}
+                                    disabled={isLoading}
                                 />
                             </div>
                         </div>
@@ -128,9 +158,9 @@ const Register = () => {
                                     required
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="input pl-10"
+                                    className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed"
                                     placeholder="you@example.com"
-                                    disabled={registerMutation.isPending}
+                                    disabled={isLoading}
                                 />
                             </div>
                         </div>
@@ -150,9 +180,9 @@ const Register = () => {
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="input pl-10"
+                                    className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed"
                                     placeholder="••••••••"
-                                    disabled={registerMutation.isPending}
+                                    disabled={isLoading}
                                 />
                             </div>
                             <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
@@ -173,23 +203,41 @@ const Register = () => {
                                     required
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
-                                    className="input pl-10"
+                                    className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed"
                                     placeholder="••••••••"
-                                    disabled={registerMutation.isPending}
+                                    disabled={isLoading}
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <Button
+                            <motion.button
                                 type="submit"
-                                variant="primary"
-                                className="w-full flex justify-center py-2 px-4"
-                                icon={registerMutation.isPending ? Loader2 : ArrowRight}
-                                disabled={registerMutation.isPending}
+                                disabled={isLoading}
+                                whileTap={!isLoading ? { scale: 0.98 } : {}}
+                                className={`
+                                    w-full flex items-center justify-center gap-2 px-4 py-3 
+                                    bg-gradient-to-r from-teal-500 to-cyan-500 
+                                    text-white font-semibold rounded-xl
+                                    shadow-md hover:shadow-lg
+                                    transition-all duration-200
+                                    disabled:opacity-70 disabled:cursor-not-allowed
+                                    disabled:hover:shadow-md
+                                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500
+                                `}
                             >
-                                {registerMutation.isPending ? 'Creating account...' : 'Create Account'}
-                            </Button>
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span>Creating account...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>Create Account</span>
+                                        <ArrowRight className="w-5 h-5" />
+                                    </>
+                                )}
+                            </motion.button>
                         </div>
                     </form>
                 </div>
