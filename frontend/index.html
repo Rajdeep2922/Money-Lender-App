@@ -2,12 +2,63 @@
 <html lang="en">
 
 <head>
+  <!-- Critical: Prevent Dark Mode Flash -->
+  <script>
+    // Execute IMMEDIATELY to prevent flash - before any CSS loads
+    (function () {
+      try {
+        const darkMode = localStorage.getItem('darkMode');
+        // Apply dark class if enabled, or auto-detect from system
+        if (darkMode === 'true' || (darkMode === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {
+        console.error('Dark mode init error:', e);
+      }
+    })();
+  </script>
+
   <meta charset="UTF-8" />
+
+  <!-- Preconnect to external resources for faster loading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- SEO Meta Tags -->
   <meta name="description"
     content="Professional Money Lender Management System. Manage customers, loans, payments, and agreements efficiently." />
+  <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+
   <title>Money Lender App</title>
+
+  <!-- Critical CSS to prevent layout shift -->
+  <style>
+    /* Prevent flash of unstyled content */
+    #root {
+      min-height: 100vh;
+      background-color: #f8fafc;
+    }
+
+    .dark #root {
+      background-color: #0f172a;
+    }
+
+    /* Loading state to prevent white flash */
+    #root:empty {
+      background-color: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dark #root:empty {
+      background-color: #0f172a;
+    }
+  </style>
 </head>
 
 <body>
