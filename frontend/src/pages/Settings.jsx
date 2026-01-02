@@ -59,30 +59,31 @@ const Settings = () => {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`
-                                            group w-full flex items-center gap-3 
-                                            px-4 py-3 sm:py-3.5
+                                            group w-full flex items-center
+                                            px-3 py-3
                                             text-sm font-medium rounded-lg 
                                             transition-all duration-200
-                                            min-h-[44px]
+                                            min-h-[48px]
                                             ${isActive
                                                 ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/25'
                                                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
                                             }
                                         `}
                                     >
-                                        <Icon
-                                            className={`
-                                                w-5 h-5 flex-shrink-0 transition-transform duration-200
-                                                ${isActive
-                                                    ? 'text-white'
-                                                    : 'text-gray-500 dark:text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400'
-                                                }
-                                                ${isActive ? 'scale-110' : 'group-hover:scale-105'}
-                                            `}
-                                        />
-                                        <span className="truncate">{tab.label}</span>
+                                        <div className="w-6 h-6 flex items-center justify-center flex-shrink-0 mr-3">
+                                            <Icon
+                                                className={`
+                                                    w-5 h-5 transition-transform duration-200
+                                                    ${isActive
+                                                        ? 'text-white'
+                                                        : 'text-gray-500 dark:text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400'
+                                                    }
+                                                `}
+                                            />
+                                        </div>
+                                        <span className="flex-1 text-left truncate">{tab.label}</span>
                                         {isActive && (
-                                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white"></div>
+                                            <div className="w-2 h-2 rounded-full bg-white ml-2 flex-shrink-0"></div>
                                         )}
                                     </button>
                                 );
@@ -428,25 +429,6 @@ const PreferenceSettings = ({ isDark, setIsDark }) => {
             </h2>
 
             <div className="space-y-4">
-                {/* Dark Mode Toggle */}
-                <div className="flex items-center justify-between py-3">
-                    <div>
-                        <h3 className="font-medium text-gray-900 dark:text-white">Dark Mode</h3>
-                        <p className="text-sm text-gray-500">Toggle between light and dark theme</p>
-                    </div>
-                    <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                        <input
-                            type="checkbox"
-                            id="darkModeToggle"
-                            checked={darkMode}
-                            onChange={(e) => toggleDarkMode(e.target.checked)}
-                            className="peer absolute w-full h-full opacity-0 cursor-pointer z-10"
-                        />
-                        <div className="block w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer-checked:bg-teal-600 transition-colors"></div>
-                        <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-6"></div>
-                    </div>
-                </div>
-
                 {/* Currency Selection */}
                 <div className="flex items-center justify-between py-3">
                     <div>

@@ -62,44 +62,8 @@ export const CustomerList = () => {
         }
     };
 
-    // Show skeleton during initial load - NO animations to prevent flicker
-    if (isLoading && !data) {
-        return (
-            <div className="space-y-6">
-                {/* Header - Static, no animation */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Customers</h1>
-                        <p className="text-gray-500 dark:text-gray-400 mt-1">Manage your borrowers</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <button className="btn btn-secondary" disabled>
-                            <FiRefreshCw className="w-4 h-4" />
-                        </button>
-                        <button className="btn btn-primary" disabled>
-                            <FiPlus className="w-4 h-4 mr-2" />
-                            Add Customer
-                        </button>
-                    </div>
-                </div>
-
-                {/* Filters - Static */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="relative flex-1">
-                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input type="text" placeholder="Search..." className="input pl-10" disabled />
-                    </div>
-                    <select className="input sm:w-48" disabled>
-                        <option>All Status</option>
-                    </select>
-                </div>
-
-                {/* Skeleton - NO animation wrapper */}
-                <TableSkeleton columns={4} rows={10} />
-            </div>
-        );
-    }
-
+    // Only show full page loader on initial load, not during search/filter
+    if (isLoading && !data) return <TableSkeleton columns={4} rows={10} />;
     if (error) return <div className="text-red-500">Error: {error.message}</div>;
 
     const { customers = [], pagination = {} } = data || {};
