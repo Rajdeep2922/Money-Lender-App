@@ -1,11 +1,15 @@
 const User = require('../models/User');
 const Lender = require('../models/Lender');
-const { generateToken } = require('../middleware/auth');
+const Customer = require('../models/Customer');
+const { generateToken, generateCustomerToken } = require('../middleware/auth');
 
 /**
- * @desc    Register new user
+ * @desc    Register new lender user
  * @route   POST /api/auth/register
  * @access  Public
+ * 
+ * NOTE: This is ONLY for lender registration.
+ * Customers cannot self-register - their credentials are created by lenders.
  */
 const register = async (req, res, next) => {
     try {
@@ -22,6 +26,15 @@ const register = async (req, res, next) => {
                 message: existingUser.email === email
                     ? 'Email already registered'
                     : 'Username already taken',
+            });
+        }
+
+        // Also check if email exists as a customer (prevent conflicts)
+        const existingCustomer = await Customer.findOne({ email, isDeleted: false });
+        if (existingCustomer) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email already registered as a customer',
             });
         }
 
@@ -58,8 +71,10 @@ const register = async (req, res, next) => {
                     id: user._id,
                     username: user.username,
                     email: user.email,
+                    role: 'lender',
                 },
                 token,
+                role: 'lender',
             },
         });
     } catch (error) {
@@ -68,9 +83,14 @@ const register = async (req, res, next) => {
 };
 
 /**
- * @desc    Login user
+ * @desc    Unified login - works for both lenders and customers
  * @route   POST /api/auth/login
  * @access  Public
+ * 
+ * EMAIL DETERMINES ROLE:
+ * - If email exists in User table -> Lender login
+ * - If email exists in Customer table with password -> Customer login
+ * - No role selector needed - email alone determines identity
  */
 const login = async (req, res, next) => {
     try {
@@ -84,61 +104,122 @@ const login = async (req, res, next) => {
             });
         }
 
-        // Find user and include password for comparison
+        // STEP 1: Try to find as Lender (User table)
         const user = await User.findOne({ email }).select('+password').populate('lenderId');
 
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid credentials',
-            });
-        }
+        if (user) {
+            // Check if account is active
+            if (!user.isActive) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Account is deactivated. Please contact support.',
+                });
+            }
 
-        // Check if account is active
-        if (!user.isActive) {
-            return res.status(401).json({
-                success: false,
-                message: 'Account is deactivated. Please contact support.',
-            });
-        }
+            // Check password
+            const isMatch = await user.comparePassword(password);
 
-        // Check password
-        const isMatch = await user.comparePassword(password);
+            if (!isMatch) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid credentials',
+                });
+            }
 
-        if (!isMatch) {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid credentials',
-            });
-        }
+            // Update last login
+            user.lastLogin = new Date();
+            await user.save({ validateBeforeSave: false });
 
-        // Update last login
-        user.lastLogin = new Date();
-        await user.save({ validateBeforeSave: false });
+            // Generate lender token
+            const token = generateToken(user._id);
 
-        // Generate token
-        const token = generateToken(user._id);
-
-        res.json({
-            success: true,
-            message: 'Login successful',
-            data: {
-                user: {
-                    id: user._id,
-                    username: user.username,
-                    email: user.email,
-                    lender: user.lenderId,
+            return res.json({
+                success: true,
+                message: 'Login successful',
+                data: {
+                    user: {
+                        id: user._id,
+                        username: user.username,
+                        email: user.email,
+                        lender: user.lenderId,
+                        role: 'lender',
+                    },
+                    token,
+                    role: 'lender',
+                    redirectTo: '/', // Lender dashboard
                 },
-                token,
-            },
+            });
+        }
+
+        // STEP 2: Try to find as Customer
+        const customer = await Customer.findOne({ email, isDeleted: false }).select('+password');
+
+        if (customer) {
+            // Check if customer has portal access enabled
+            if (!customer.isPortalActive) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Portal access is not enabled. Please contact your lender.',
+                });
+            }
+
+            // Check if password is set
+            if (!customer.password) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'No password set for this account. Please contact your lender.',
+                });
+            }
+
+            // Check password
+            const isMatch = await customer.comparePassword(password);
+
+            if (!isMatch) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid credentials',
+                });
+            }
+
+            // Update last login
+            customer.lastPortalLogin = new Date();
+            await customer.save({ validateBeforeSave: false });
+
+            // Generate customer token
+            const token = generateCustomerToken(customer._id);
+
+            return res.json({
+                success: true,
+                message: 'Login successful',
+                data: {
+                    user: {
+                        id: customer._id,
+                        firstName: customer.firstName,
+                        lastName: customer.lastName,
+                        email: customer.email,
+                        fullName: customer.fullName,
+                        role: 'customer',
+                    },
+                    token,
+                    role: 'customer',
+                    redirectTo: '/portal', // Customer portal
+                },
+            });
+        }
+
+        // No user found with this email
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid credentials',
         });
+
     } catch (error) {
         next(error);
     }
 };
 
 /**
- * @desc    Get current logged in user
+ * @desc    Get current logged in user (lender only)
  * @route   GET /api/auth/me
  * @access  Private
  */
@@ -155,6 +236,7 @@ const getMe = async (req, res, next) => {
                     email: user.email,
                     lender: user.lenderId,
                     lastLogin: user.lastLogin,
+                    role: 'lender',
                 },
             },
         });
@@ -187,3 +269,4 @@ module.exports = {
     getMe,
     logout,
 };
+
