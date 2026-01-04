@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const { CUSTOMER_STATUS } = require('../config/constants');
 
 const customerSchema = new mongoose.Schema({
@@ -26,6 +27,20 @@ const customerSchema = new mongoose.Schema({
         required: [true, 'Phone number is required'],
         trim: true,
         index: true,
+    },
+    // Portal authentication fields
+    password: {
+        type: String,
+        minlength: [6, 'Password must be at least 6 characters'],
+        select: false, // Don't return password by default
+    },
+    isPortalActive: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
+    lastPortalLogin: {
+        type: Date,
     },
     address: {
         street: { type: String, trim: true },
@@ -82,6 +97,21 @@ const customerSchema = new mongoose.Schema({
     timestamps: true,
 });
 
+// Hash password before saving (only if modified)
+customerSchema.pre('save', async function (next) {
+    if (!this.isModified('password') || !this.password) {
+        return next();
+    }
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+// Method to compare passwords for portal login
+customerSchema.methods.comparePassword = async function (candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+};
+
 // Virtual for full name
 customerSchema.virtual('fullName').get(function () {
     return `${this.firstName} ${this.lastName}`;
@@ -91,7 +121,15 @@ customerSchema.virtual('fullName').get(function () {
 customerSchema.set('toJSON', { virtuals: true });
 customerSchema.set('toObject', { virtuals: true });
 
+// Method to get customer without password
+customerSchema.methods.toJSON = function () {
+    const customer = this.toObject();
+    delete customer.password;
+    return customer;
+};
+
 // Compound index for searching
 customerSchema.index({ firstName: 'text', lastName: 'text', email: 'text' });
 
 module.exports = mongoose.model('Customer', customerSchema);
+
