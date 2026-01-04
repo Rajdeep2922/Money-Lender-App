@@ -86,14 +86,23 @@ exports.getCustomer = async (req, res, next) => {
 
 /**
  * Create new customer
+ * Lender can optionally set portal credentials during creation
  */
 exports.createCustomer = async (req, res, next) => {
     try {
-        const customerData = { ...req.body };
+        const { enablePortal, portalPassword, ...customerData } = req.body;
+
         // Auto-assign lenderId for data isolation
         if (req.user && req.user.lenderId) {
             customerData.lenderId = req.user.lenderId;
         }
+
+        // Handle portal access if requested
+        if (enablePortal && portalPassword) {
+            customerData.isPortalActive = true;
+            customerData.password = portalPassword; // Will be hashed by pre-save hook
+        }
+
         const customer = new Customer(customerData);
         await customer.save();
 
@@ -109,22 +118,37 @@ exports.createCustomer = async (req, res, next) => {
 
 /**
  * Update customer
+ * Lender can update portal credentials
  */
 exports.updateCustomer = async (req, res, next) => {
     try {
+        const { enablePortal, portalPassword, ...updateData } = req.body;
+
         const filter = { _id: req.params.id, isDeleted: { $ne: true } };
         if (req.user && req.user.lenderId) {
             filter.lenderId = req.user.lenderId;
         }
-        const customer = await Customer.findOneAndUpdate(
-            filter,
-            req.body,
-            { new: true, runValidators: true }
-        );
 
+        // Find customer first to handle password update properly
+        const customer = await Customer.findOne(filter);
         if (!customer) {
             return next(new AppError('Customer not found', 404));
         }
+
+        // Update basic fields
+        Object.assign(customer, updateData);
+
+        // Handle portal access changes
+        if (typeof enablePortal !== 'undefined') {
+            customer.isPortalActive = enablePortal;
+        }
+
+        // Update password only if a new one is provided
+        if (portalPassword && portalPassword.length >= 6) {
+            customer.password = portalPassword; // Will be hashed by pre-save hook
+        }
+
+        await customer.save();
 
         res.json({
             success: true,
