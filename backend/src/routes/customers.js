@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const customerController = require('../controllers/customerController');
+const { activatePortal, deactivatePortal } = require('../controllers/customerAuthController');
 const { validateCustomer } = require('../middleware/validation');
 
 // List customers with pagination & search
@@ -17,5 +18,9 @@ router.put('/:id', customerController.updateCustomer);
 
 // Delete customer (soft delete)
 router.delete('/:id', customerController.deleteCustomer);
+
+// Portal activation routes (lender-controlled)
+router.post('/:id/activate-portal', activatePortal);
+router.post('/:id/deactivate-portal', deactivatePortal);
 
 module.exports = router;
