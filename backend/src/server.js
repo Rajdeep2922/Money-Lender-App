@@ -64,7 +64,13 @@ app.get('/api/health', (req, res) => {
 // Auth routes (public)
 app.use('/api/auth', require('./routes/auth'));
 
-// Protected routes - require authentication
+// Customer portal auth (public)
+app.use('/api/customer-auth', require('./routes/customerAuth'));
+
+// Public loan calculator (no auth required)
+app.use('/api/calculator', require('./routes/calculator'));
+
+// Protected routes - require lender authentication
 const { protect } = require('./middleware/auth');
 app.use('/api/customers', protect, require('./routes/customers'));
 app.use('/api/loans', protect, require('./routes/loans'));
@@ -73,6 +79,9 @@ app.use('/api/lender', protect, require('./routes/lender'));
 app.use('/api/stats', protect, require('./routes/stats'));
 app.use('/api/invoices', protect, require('./routes/invoices'));
 app.use('/api/export', protect, require('./routes/export'));
+
+// Customer portal routes (customer authentication)
+app.use('/api/portal', require('./routes/customerPortal'));
 
 // Root endpoint
 app.get('/', (req, res) => {
