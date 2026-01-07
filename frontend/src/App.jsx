@@ -23,6 +23,13 @@ const Register = lazy(() => import('./pages/Auth/Register'));
 const SignOut = lazy(() => import('./pages/Auth/SignOut'));
 const Settings = lazy(() => import('./pages/Settings'));
 const InvoiceList = lazy(() => import('./pages/Invoices/InvoiceList'));
+// Public pages (no auth required)
+const LoanCalculator = lazy(() => import('./pages/Public/LoanCalculator'));
+// Customer Portal pages
+const CustomerPortalLayout = lazy(() => import('./components/layouts/CustomerPortalLayout'));
+const CustomerDashboard = lazy(() => import('./pages/CustomerPortal/CustomerDashboard'));
+const CustomerLoanDetails = lazy(() => import('./pages/CustomerPortal/CustomerLoanDetails'));
+const CustomerPayments = lazy(() => import('./pages/CustomerPortal/CustomerPayments'));
 
 // Create React Query client with optimized defaults
 const queryClient = new QueryClient({
@@ -47,12 +54,14 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Public Route component (redirect to home if already authenticated)
+// Public Route component (redirect to appropriate dashboard if already authenticated)
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, role } = useAuthStore();
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    // Redirect based on role
+    const redirectTo = role === 'customer' ? '/portal' : '/';
+    return <Navigate to={redirectTo} replace />;
   }
 
   return children;
@@ -73,6 +82,9 @@ function App() {
                 <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
                 <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
                 <Route path="/signout" element={<SignOut />} />
+
+                {/* Public Routes (No auth required, no layout) */}
+                <Route path="/calculator" element={<LoanCalculator />} />
 
                 {/* Protected Routes with Layout */}
                 <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
@@ -100,6 +112,14 @@ function App() {
 
                   {/* Settings */}
                   <Route path="/settings" element={<Settings />} />
+                </Route>
+
+                {/* Customer Portal Routes */}
+                <Route path="/portal" element={<CustomerPortalLayout />}>
+                  <Route index element={<CustomerDashboard />} />
+                  <Route path="loans" element={<Navigate to="/portal" replace />} />
+                  <Route path="loans/:id" element={<CustomerLoanDetails />} />
+                  <Route path="payments" element={<CustomerPayments />} />
                 </Route>
               </Routes>
             </Suspense>
