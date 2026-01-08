@@ -9,6 +9,8 @@ import toast from 'react-hot-toast';
 import { useCustomers } from '../../hooks/useCustomers';
 import { useCreateLoan } from '../../hooks/useLoans';
 import { formatCurrency } from '../../utils/formatters';
+// Import from shared calculation module - SINGLE SOURCE OF TRUTH
+import { calculateMonthlyEMI, calculateCompoundEMI } from '../../../../shared/loanCalculations.js';
 
 const loanSchema = z.object({
     customerId: z.string().min(1, 'Customer is required'),
@@ -19,22 +21,6 @@ const loanSchema = z.object({
     interestType: z.enum(['simple', 'compound']),
     notes: z.string().optional(),
 });
-
-// Calculate EMI using Flat Rate method (Simple Interest)
-const calculateSimpleEMI = (principal, rate, months) => {
-    const monthlyInterest = principal * (rate / 100) * months;
-    const totalAmount = principal + monthlyInterest;
-    return Math.round((totalAmount / months) * 100) / 100;
-};
-
-// Calculate EMI using Reducing Balance method (Compound Interest)
-const calculateCompoundEMI = (principal, rate, months) => {
-    const r = rate / 100;
-    if (r === 0) return Math.round((principal / months) * 100) / 100;
-    const factor = Math.pow(1 + r, months);
-    const emi = (principal * r * factor) / (factor - 1);
-    return Math.round(emi * 100) / 100;
-};
 
 // Reverse calculate interest rate from EMI (Simple Interest)
 // Formula: EMI = (P + P*r*n) / n => r = (EMI*n - P) / (P*n)
@@ -113,7 +99,7 @@ export const CreateLoan = () => {
         } else if (monthlyInterestRate) {
             const emi = interestType === 'compound'
                 ? calculateCompoundEMI(principal, monthlyInterestRate, loanDurationMonths)
-                : calculateSimpleEMI(principal, monthlyInterestRate, loanDurationMonths);
+                : calculateMonthlyEMI(principal, monthlyInterestRate, loanDurationMonths);
             const totalPayable = emi * loanDurationMonths;
             const totalInterest = totalPayable - principal;
             return { emi, totalPayable, totalInterest, calculatedRate: null };
