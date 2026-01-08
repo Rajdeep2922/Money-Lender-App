@@ -20,8 +20,10 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await loginMutation.mutateAsync(formData);
-            navigate('/');
+            const response = await loginMutation.mutateAsync(formData);
+            // Use redirectTo from server response for role-based navigation
+            const redirectTo = response.data?.redirectTo || '/';
+            navigate(redirectTo);
         } catch (error) {
             // Error handled by mutation onError
         }
