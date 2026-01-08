@@ -10,6 +10,8 @@ import { useCustomers } from '../../hooks/useCustomers';
 import { useLoan, useUpdateLoan } from '../../hooks/useLoans';
 import { formatCurrency } from '../../utils/formatters';
 import { PageLoader } from '../../components/common/LoadingSpinner';
+// Import from shared calculation module - SINGLE SOURCE OF TRUTH
+import { calculateMonthlyEMI, calculateCompoundEMI } from '../../../../shared/loanCalculations.js';
 
 const loanSchema = z.object({
     customerId: z.string().min(1, 'Customer is required'),
@@ -21,21 +23,7 @@ const loanSchema = z.object({
     notes: z.string().optional(),
 });
 
-// Calculate EMI using Flat Rate method (Simple Interest)
-const calculateSimpleEMI = (principal, rate, months) => {
-    const monthlyInterest = principal * (rate / 100) * months;
-    const totalAmount = principal + monthlyInterest;
-    return Math.round((totalAmount / months) * 100) / 100;
-};
 
-// Calculate EMI using Reducing Balance method (Compound Interest)
-const calculateCompoundEMI = (principal, rate, months) => {
-    const r = rate / 100;
-    if (r === 0) return Math.round((principal / months) * 100) / 100;
-    const factor = Math.pow(1 + r, months);
-    const emi = (principal * r * factor) / (factor - 1);
-    return Math.round(emi * 100) / 100;
-};
 
 const EditLoan = () => {
     const { id } = useParams();
@@ -80,7 +68,7 @@ const EditLoan = () => {
         if (!principal || !monthlyInterestRate || !loanDurationMonths) return null;
         const emi = interestType === 'compound'
             ? calculateCompoundEMI(principal, monthlyInterestRate, loanDurationMonths)
-            : calculateSimpleEMI(principal, monthlyInterestRate, loanDurationMonths);
+            : calculateMonthlyEMI(principal, monthlyInterestRate, loanDurationMonths);
         const totalPayable = emi * loanDurationMonths;
         const totalInterest = totalPayable - principal;
         return { emi, totalPayable, totalInterest };
