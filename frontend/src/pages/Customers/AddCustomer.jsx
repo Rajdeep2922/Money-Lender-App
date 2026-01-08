@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FiArrowLeft, FiSave, FiTrash2, FiUpload, FiFileText, FiImage } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiTrash2, FiUpload, FiFileText, FiImage, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useCreateCustomer, useUpdateCustomer, useCustomer } from '../../hooks/useCustomers';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 
@@ -23,6 +23,9 @@ const customerSchema = z.object({
     notes: z.string().optional(),
     signature: z.string().optional(),
     photo: z.string().optional(),
+    // Portal access fields
+    enablePortal: z.boolean().optional(),
+    portalPassword: z.string().min(6, 'Password must be at least 6 characters').optional().or(z.literal('')),
 });
 
 export const AddCustomer = () => {
@@ -41,11 +44,15 @@ export const AddCustomer = () => {
             address: { country: 'India' },
             signature: '',
             photo: '',
+            enablePortal: false,
+            portalPassword: '',
         },
     });
 
     const signatureValue = watch('signature');
     const photoValue = watch('photo');
+    const enablePortal = watch('enablePortal');
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleFileChange = (e, field) => {
         const file = e.target.files[0];
@@ -85,6 +92,8 @@ export const AddCustomer = () => {
                 notes: customer.notes || '',
                 signature: customer.signature || '',
                 photo: customer.photo || '',
+                enablePortal: customer.isPortalActive || false,
+                portalPassword: '', // Never show existing password
             });
         }
     }, [isEditMode, customer, reset]);
@@ -198,30 +207,83 @@ export const AddCustomer = () => {
                     <textarea {...register('notes')} rows={3} className="input" />
                 </div>
 
+                {/* Portal Access Section */}
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <FiLock className="text-blue-600" />
+                        Portal Access
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Enable portal access so this customer can log in to view their loans and payment history.
+                        Their login email will be the email address above.
+                    </p>
+
+                    <div className="space-y-4">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                {...register('enablePortal')}
+                                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Enable customer portal access
+                            </span>
+                        </label>
+
+                        {enablePortal && (
+                            <div className="form-group">
+                                <label className="label">Portal Password *</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        {...register('portalPassword')}
+                                        placeholder={isEditMode ? 'Leave empty to keep existing password' : 'Set customer password'}
+                                        className={`input pr-10 ${errors.portalPassword ? 'input-error' : ''}`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    >
+                                        {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                {errors.portalPassword && <p className="error-text">{errors.portalPassword.message}</p>}
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Customer will use their email + this password to log in.
+                                    {isEditMode && ' Leave empty to keep existing password.'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* Passport Photo Section */}
                 <div>
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                         Passport Size Photo
                     </h2>
                     <div className="space-y-4">
-                        <div className="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => handleFileChange(e, 'photo')}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                title="Upload Passport Photo"
-                            />
-                            <div className="flex flex-col items-center justify-center text-center">
-                                <FiImage className="w-8 h-8 text-gray-400 mb-2" />
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Click to upload photo
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Supports PNG, JPG (Max 100KB)
-                                </p>
+                        {!photoValue && (
+                            <div className="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileChange(e, 'photo')}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    title="Upload Passport Photo"
+                                />
+                                <div className="flex flex-col items-center justify-center text-center">
+                                    <FiImage className="w-8 h-8 text-gray-400 mb-2" />
+                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Click to upload photo
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Supports PNG, JPG (Max 100KB)
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {photoValue && (
                             <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800">
@@ -254,24 +316,26 @@ export const AddCustomer = () => {
                         Upload Signature Record
                     </h2>
                     <div className="space-y-4">
-                        <div className="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                            <input
-                                type="file"
-                                accept="image/*,application/pdf"
-                                onChange={(e) => handleFileChange(e, 'signature')}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                title="Upload signature (PDF or Image)"
-                            />
-                            <div className="flex flex-col items-center justify-center text-center">
-                                <FiUpload className="w-8 h-8 text-gray-400 mb-2" />
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Click to upload signature
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Supports PDF, PNG, JPG (Max 100KB)
-                                </p>
+                        {!signatureValue && (
+                            <div className="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <input
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    onChange={(e) => handleFileChange(e, 'signature')}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    title="Upload signature (PDF or Image)"
+                                />
+                                <div className="flex flex-col items-center justify-center text-center">
+                                    <FiUpload className="w-8 h-8 text-gray-400 mb-2" />
+                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Click to upload signature
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Supports PDF, PNG, JPG (Max 100KB)
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {signatureValue && (
                             <div className="flex items-center justify-between p-4 bg-teal-50 dark:bg-teal-900/10 rounded-xl border border-teal-100 dark:border-teal-800">
