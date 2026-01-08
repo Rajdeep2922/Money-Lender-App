@@ -40,76 +40,61 @@ const generateLoanAgreement = async (loan, lender) => {
                 margin: [0, 0, 0, 15]
             },
 
-            // Parties Section - Premium Table Layout
+            // Parties Section - Two-Column Layout with Borders
             {
                 table: {
-                    widths: ['*', 20, '*'],
-                    body: [
-                        [
-                            // Lender Column
-                            {
-                                stack: [
-                                    { text: 'LENDER DETAILS', fontSize: 9, bold: true, color: '#0d9488', margin: [0, 0, 0, 5] },
-                                    { text: businessName, fontSize: 11, bold: true, color: '#111827', margin: [0, 0, 0, 2] },
-                                    { text: lender?.address || 'N/A', fontSize: 9, color: '#4b5563' },
-                                    { text: `Phone: ${lender?.phone || 'N/A'}`, fontSize: 9, color: '#4b5563', margin: [0, 2, 0, 0] },
-                                    { text: `Email: ${lender?.email || 'N/A'}`, fontSize: 9, color: '#4b5563' }
-                                ],
-                                fillColor: '#f0fdfa', // Teal-50
-                                margin: [10, 10, 10, 10],
-                                border: [true, true, true, true],
-                                borderColor: ['#ccfbf1', '#ccfbf1', '#ccfbf1', '#ccfbf1']
-                            },
-                            // Proper Spacer
-                            { text: '', border: [false, false, false, false] },
-                            // Borrower Column
-                            {
-                                stack: [
-                                    { text: 'BORROWER DETAILS', fontSize: 9, bold: true, color: '#6b7280', margin: [0, 0, 0, 5] },
-                                    {
-                                        table: {
-                                            widths: ['*', 110], // Increased column width for larger photo
-                                            body: [
-                                                [
-                                                    {
-                                                        stack: [
-                                                            { text: `${customer.firstName} ${customer.lastName}`, fontSize: 13, bold: true, color: '#111827', margin: [0, 0, 0, 3] }, // Increased name size
-                                                            { text: `Phone: ${customer.phone}`, fontSize: 10, color: '#4b5563', margin: [0, 0, 0, 2] },
-                                                            { text: `Email: ${customer.email || 'N/A'}`, fontSize: 10, color: '#4b5563', margin: [0, 0, 0, 2] },
-                                                            { text: customer.address?.city ? `${customer.address.city}, ${customer.address.state}` : '', fontSize: 9, color: '#6b7280' }
-                                                        ],
-                                                        border: [false, false, false, false],
-                                                        verticalAlignment: 'middle', // Vertically center text
-                                                        margin: [0, 5, 0, 5]
-                                                    },
-                                                    {
-                                                        // Photo Cell
-                                                        stack: [
-                                                            customer.photo ? {
-                                                                image: customer.photo,
-                                                                fit: [90, 110], // Significantly larger photo
-                                                                alignment: 'right'
-                                                            } : { text: 'No Photo', fontSize: 8, color: '#9ca3af', alignment: 'right' }
-                                                        ],
-                                                        border: [false, false, false, false],
-                                                        verticalAlignment: 'middle', // Vertically center photo
-                                                        margin: [0, 0, 5, 0] // Right margin
-                                                    }
-                                                ]
+                    widths: ['*', 10, '*'],
+                    body: [[
+                        // Lender Box
+                        {
+                            stack: [
+                                { text: 'LENDER DETAILS', fontSize: 9, bold: true, color: '#0d9488', margin: [0, 0, 0, 8] },
+                                { text: businessName, fontSize: 12, bold: true, color: '#111827', margin: [0, 0, 0, 4] },
+                                { text: lender?.address || 'Address: N/A', fontSize: 9, color: '#4b5563', margin: [0, 0, 0, 3] },
+                                { text: `Phone: ${lender?.phone || 'N/A'}`, fontSize: 9, color: '#4b5563', margin: [0, 0, 0, 2] },
+                                { text: `Email: ${lender?.email || 'N/A'}`, fontSize: 9, color: '#4b5563' }
+                            ],
+                            fillColor: '#f0fdfa',
+                            margin: [10, 10, 10, 10]
+                        },
+                        // Spacer (no border)
+                        { text: '', border: [false, false, false, false] },
+                        // Borrower Box
+                        {
+                            stack: [
+                                { text: 'BORROWER DETAILS', fontSize: 9, bold: true, color: '#6b7280', margin: [0, 0, 0, 8] },
+                                {
+                                    columns: [
+                                        {
+                                            width: '*',
+                                            stack: [
+                                                { text: `${customer.firstName} ${customer.lastName}`, fontSize: 12, bold: true, color: '#111827', margin: [0, 0, 0, 4] },
+                                                { text: `Phone: ${customer.phone || 'N/A'}`, fontSize: 9, color: '#4b5563', margin: [0, 0, 0, 2] },
+                                                { text: `Email: ${customer.email || 'N/A'}`, fontSize: 9, color: '#4b5563', margin: [0, 0, 0, 2] },
+                                                customer.address?.city ? { text: `${customer.address.city}, ${customer.address.state || ''}`, fontSize: 9, color: '#6b7280' } : { text: '' }
                                             ]
-                                        }
-                                    }
-                                ],
-                                fillColor: '#f9fafb', // Gray-50
-                                margin: [10, 10, 10, 10],
-                                border: [true, true, true, true],
-                                borderColor: ['#e5e7eb', '#e5e7eb', '#e5e7eb', '#e5e7eb']
-                            }
-                        ]
-                    ]
+                                        },
+                                        customer.photo ? {
+                                            width: 70,
+                                            stack: [{ image: customer.photo, fit: [60, 75], alignment: 'center' }]
+                                        } : { width: 0, text: '' }
+                                    ]
+                                }
+                            ],
+                            fillColor: '#f9fafb',
+                            margin: [10, 10, 10, 10]
+                        }
+                    ]]
                 },
                 layout: {
-                    defaultBorder: false,
+                    hLineWidth: (i) => 1,
+                    vLineWidth: (i) => (i === 1 || i === 2) ? 0 : 1, // No border on spacer
+                    hLineColor: () => '#d1d5db',
+                    vLineColor: () => '#d1d5db',
+                    paddingLeft: () => 0,
+                    paddingRight: () => 0,
+                    paddingTop: () => 0,
+                    paddingBottom: () => 0
                 },
                 margin: [0, 0, 0, 20]
             },
