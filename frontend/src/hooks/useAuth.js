@@ -3,7 +3,7 @@ import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 
-// Login mutation
+// Login mutation - handles unified login for both lenders and customers
 export const useLogin = () => {
     const { login } = useAuthStore();
     const queryClient = useQueryClient();
@@ -14,7 +14,9 @@ export const useLogin = () => {
             return data;
         },
         onSuccess: (data) => {
-            login(data.data.user, data.data.token);
+            // Pass role to auth store
+            const role = data.data.role || 'lender';
+            login(data.data.user, data.data.token, role);
             queryClient.invalidateQueries();
             toast.success('Login successful!');
         },
