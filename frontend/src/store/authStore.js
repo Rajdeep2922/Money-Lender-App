@@ -6,13 +6,15 @@ const useAuthStore = create(
         (set, get) => ({
             user: null,
             token: null,
+            role: null, // 'lender' or 'customer'
             isAuthenticated: false,
 
-            // Set user and token after login
-            login: (user, token) => {
+            // Set user, token, and role after login
+            login: (user, token, role = 'lender') => {
                 set({
                     user,
                     token,
+                    role,
                     isAuthenticated: true
                 });
             },
@@ -22,6 +24,7 @@ const useAuthStore = create(
                 set({
                     user: null,
                     token: null,
+                    role: null,
                     isAuthenticated: false
                 });
             },
@@ -33,12 +36,19 @@ const useAuthStore = create(
 
             // Get current token
             getToken: () => get().token,
+
+            // Check if user is a lender
+            isLender: () => get().role === 'lender',
+
+            // Check if user is a customer
+            isCustomer: () => get().role === 'customer',
         }),
         {
             name: 'auth-storage', // localStorage key
             partialize: (state) => ({
                 user: state.user,
                 token: state.token,
+                role: state.role,
                 isAuthenticated: state.isAuthenticated
             }),
         }
@@ -46,3 +56,4 @@ const useAuthStore = create(
 );
 
 export default useAuthStore;
+
