@@ -122,4 +122,31 @@ export const exportAPI = {
     payments: () => api.get('/export/payments', { responseType: 'blob' }),
 };
 
+// Customer Portal Auth API (separate from lender auth)
+export const customerAuthAPI = {
+    login: (data) => api.post('/customer-auth/login', data),
+    getProfile: () => api.get('/customer-auth/me'),
+};
+
+// Customer Portal API (for authenticated customers)
+export const customerPortalAPI = {
+    getLoans: () => api.get('/portal/loans'),
+    getLoanDetails: (id) => api.get(`/portal/loans/${id}`),
+    getLoanSchedule: (id) => api.get(`/portal/loans/${id}/schedule`),
+    getPayments: () => api.get('/portal/payments'),
+};
+
+// Public Loan Calculator API (no auth required)
+export const calculatorAPI = {
+    estimate: (data) => api.post('/calculator/estimate', data),
+    getSchedule: (data) => api.post('/calculator/schedule', data),
+};
+
+// Customer management (lender-side portal activation)
+export const customerPortalManagementAPI = {
+    activatePortal: (customerId, password) => api.post(`/customers/${customerId}/activate-portal`, { password }),
+    deactivatePortal: (customerId) => api.post(`/customers/${customerId}/deactivate-portal`),
+};
+
 export default api;
+
