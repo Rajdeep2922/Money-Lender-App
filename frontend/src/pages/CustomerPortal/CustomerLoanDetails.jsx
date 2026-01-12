@@ -394,7 +394,7 @@ const CustomerLoanDetails = () => {
                                         <FiCheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 dark:text-green-400" />
                                     </div>
                                     <div>
-                                        <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{formatCurrency(payment.amount)}</p>
+                                        <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{formatCurrency(payment.amountPaid)}</p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">
                                             {formatDate(payment.paymentDate)}
                                         </p>
