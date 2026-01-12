@@ -63,7 +63,7 @@ const CustomerPayments = () => {
         doc.setFont('helvetica', 'normal');
 
         const details = [
-            ['Amount Paid:', formatCurrency(payment.amount).replace('₹', 'Rs. ')],
+            ['Amount Paid:', formatCurrency(payment.amountPaid).replace('₹', 'Rs. ')],
             ['Payment Method:', payment.paymentMethod || 'Cash'],
             ['Loan Reference:', payment.loanId?.loanNumber || 'N/A'],
             ['Principal Amount:', formatCurrency(payment.loanId?.principal || 0).replace('₹', 'Rs. ')],
@@ -167,7 +167,7 @@ const CustomerPayments = () => {
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-semibold text-gray-900 dark:text-white">
-                                            {formatCurrency(payment.amount)}
+                                            {formatCurrency(payment.amountPaid)}
                                         </p>
                                         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
                                             <span className="flex items-center gap-1">
