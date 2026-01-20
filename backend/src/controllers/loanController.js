@@ -245,7 +245,7 @@ exports.getAmortizationSchedule = async (req, res, next) => {
 
         // Generate schedule dynamically based on interest type
         let schedule;
-        const startDate = loan.disbursementDate || loan.createdAt;
+        const startDate = loan.startDate || loan.disbursementDate || loan.createdAt;
 
         if (loan.interestType === 'compound') {
             schedule = generateCompoundAmortizationSchedule(
