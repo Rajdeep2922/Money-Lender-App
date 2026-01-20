@@ -224,7 +224,7 @@ const generateLoanStatement = async (loan, lender, payments) => {
             margin: [40, 20, 40, 0],
             columns: [
                 { text: businessName.toUpperCase(), style: 'headerBusinessName' },
-                { text: 'STATEMENT OF ACCOUNT', style: 'headerDocTitle', alignment: 'right' }
+                { text: loan.loanNumber, style: 'headerDocTitle', alignment: 'right' }
             ]
         },
         content: [
@@ -291,6 +291,29 @@ const generateLoanStatement = async (loan, lender, payments) => {
                     hLineColor: () => '#e5e7eb'
                 }
             },
+
+            // Loan Fully Paid Banner (for completed/closed loans)
+            (loan.status === 'completed' || loan.status === 'closed' || loan.remainingBalance <= 0) ? {
+                margin: [0, 20, 0, 0],
+                table: {
+                    widths: ['*'],
+                    body: [[{
+                        stack: [
+                            { text: 'LOAN FULLY PAID', fontSize: 14, bold: true, color: '#16a34a', alignment: 'center' },
+                            { text: 'This loan has been completely settled. No outstanding balance remains.', fontSize: 9, color: '#4b5563', alignment: 'center', margin: [0, 5, 0, 0] },
+                            { text: `Completion Date: ${new Date().toLocaleDateString()}`, fontSize: 8, color: '#6b7280', alignment: 'center', margin: [0, 3, 0, 0] }
+                        ],
+                        fillColor: '#f0fdf4',
+                        margin: [15, 15, 15, 15]
+                    }]]
+                },
+                layout: {
+                    hLineWidth: () => 2,
+                    vLineWidth: () => 2,
+                    hLineColor: () => '#16a34a',
+                    vLineColor: () => '#16a34a'
+                }
+            } : null,
 
             // Footer Stamp
             {
