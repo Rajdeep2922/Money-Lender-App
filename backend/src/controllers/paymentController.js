@@ -222,7 +222,7 @@ exports.recordPayment = async (req, res, next) => {
             console.log(`[Payment] No pending invoice found for Loan ${loan.loanNumber}. Auto-generating receipt.`);
 
             const newInvoice = new Invoice({
-                invoiceNumber: `INV-${new Date().getFullYear()}-${String(paymentNumber).padStart(4, '0')}`, // Fallback numbering
+                invoiceNumber: `INV-${loan.loanNumber}-${paymentNumber}-${Date.now()}`, // Unique: includes loan + payment + timestamp
                 customerId: loan.customerId._id,
                 loanId: loan._id,
                 amountDue: amountPaid, // For receipt, due matches paid
@@ -329,12 +329,6 @@ exports.updatePayment = async (req, res, next) => {
             return next(new AppError('Payment not found', 404));
         }
 
-        // Only allow updates within 24 hours
-        const hoursSincePayment = (Date.now() - new Date(payment.createdAt)) / (1000 * 60 * 60);
-        if (hoursSincePayment > 24) {
-            return next(new AppError('Payments can only be modified within 24 hours', 400));
-        }
-
         Object.assign(payment, req.body);
         await payment.save();
 
@@ -357,12 +351,6 @@ exports.deletePayment = async (req, res, next) => {
 
         if (!payment) {
             return next(new AppError('Payment not found', 404));
-        }
-
-        // Only allow deletion within 24 hours
-        const hoursSincePayment = (Date.now() - new Date(payment.createdAt)) / (1000 * 60 * 60);
-        if (hoursSincePayment > 24) {
-            return next(new AppError('Payments can only be deleted within 24 hours', 400));
         }
 
         // Revert loan balance
