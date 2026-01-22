@@ -203,6 +203,7 @@ const LoanDetails = () => {
 
     const handleMarkPaidConfirm = async () => {
         if (!paymentModal.emiItem) return;
+        if (recordPayment.isPending) return; // Prevent double submission
         const emiItem = paymentModal.emiItem;
         const toastId = toast.loading('Recording payment...');
         try {
