@@ -70,9 +70,9 @@ const generateAmortizationSchedule = (principal, monthlyRate, tenure, emi, start
 
         remainingBalance = Math.round((remainingBalance - principalPayment) * 100) / 100;
 
-        // Calculate due date
+        // Calculate due date (first EMI on start date, subsequent EMIs monthly after)
         const dueDate = new Date(start);
-        dueDate.setMonth(dueDate.getMonth() + month);
+        dueDate.setMonth(dueDate.getMonth() + (month - 1));
 
         schedule.push({
             month,
@@ -115,8 +115,9 @@ const generateCompoundAmortizationSchedule = (principal, monthlyRate, tenure, em
 
         balance = Math.round((balance - principalPayment) * 100) / 100;
 
+        // Calculate due date (first EMI on start date, subsequent EMIs monthly after)
         const dueDate = new Date(start);
-        dueDate.setMonth(dueDate.getMonth() + month);
+        dueDate.setMonth(dueDate.getMonth() + (month - 1));
 
         schedule.push({
             month,
