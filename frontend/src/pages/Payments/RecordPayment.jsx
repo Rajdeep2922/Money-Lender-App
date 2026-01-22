@@ -26,9 +26,9 @@ export const RecordPayment = () => {
 
     const paymentMethod = watch('paymentMethod');
 
-
     const onSubmit = async (data) => {
         if (!selectedLoan) return;
+        if (recordPayment.isPending) return; // Prevent double submission
         const toastId = toast.loading('Recording payment...');
         try {
             const response = await recordPayment.mutateAsync({
