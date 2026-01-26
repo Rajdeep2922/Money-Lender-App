@@ -72,10 +72,22 @@ const lenderSchema = new mongoose.Schema({
     timestamps: true,
 });
 
-// Ensure only one lender record exists
-lenderSchema.statics.getLender = async function () {
-    let lender = await this.findOne();
+// Get lender by ID, or get the most recently updated one
+lenderSchema.statics.getLender = async function (lenderId = null) {
+    let lender;
+
+    if (lenderId) {
+        // If lenderId provided, find that specific lender
+        lender = await this.findById(lenderId);
+    }
+
     if (!lender) {
+        // Fallback: find the most recently updated lender
+        lender = await this.findOne().sort({ updatedAt: -1 });
+    }
+
+    if (!lender) {
+        // Create default if none exists
         lender = await this.create({
             businessName: 'Your Finance Company',
             ownerName: 'Owner Name',
