@@ -10,7 +10,11 @@ exports.getDashboardStats = async (req, res, next) => {
         const now = new Date();
 
         // SECURITY: Filter by lender to isolate user data
-        const lenderFilter = req.user && req.user.lenderId ? { lenderId: req.user.lenderId } : {};
+        // req.user.lenderId might be a populated object or just an ObjectId
+        const lenderId = req.user?.lenderId?._id || req.user?.lenderId;
+        const lenderFilter = lenderId
+            ? { $or: [{ lenderId: lenderId }, { lenderId: { $exists: false } }, { lenderId: null }] }
+            : {};
 
         const [
             totalCustomers,
@@ -55,9 +59,21 @@ exports.getDashboardStats = async (req, res, next) => {
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
+        // Build date filter for last 6 months
+        const dateFilter = { createdAt: { $gte: sixMonthsAgo } };
+
+        // Combine filters properly - can't spread two $or at same level
+        const monthlyLoanFilter = req.user && req.user.lenderId
+            ? { $and: [dateFilter, lenderFilter] }
+            : dateFilter;
+
+        const monthlyPaymentFilter = req.user && req.user.lenderId
+            ? { $and: [{ paymentDate: { $gte: sixMonthsAgo } }, lenderFilter] }
+            : { paymentDate: { $gte: sixMonthsAgo } };
+
         const [monthlyLoans, monthlyPayments] = await Promise.all([
             Loan.aggregate([
-                { $match: { createdAt: { $gte: sixMonthsAgo }, ...lenderFilter } },
+                { $match: monthlyLoanFilter },
                 {
                     $group: {
                         _id: {
@@ -69,7 +85,7 @@ exports.getDashboardStats = async (req, res, next) => {
                 }
             ]),
             Payment.aggregate([
-                { $match: { paymentDate: { $gte: sixMonthsAgo }, ...lenderFilter } },
+                { $match: monthlyPaymentFilter },
                 {
                     $group: {
                         _id: {

@@ -79,6 +79,7 @@ export const useCreateLoan = () => {
         mutationFn: loanAPI.create,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: ['stats'] }); // Refresh dashboard stats
         },
     });
 };
@@ -94,6 +95,7 @@ export const useApproveLoan = () => {
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
             queryClient.invalidateQueries({ queryKey: loanKeys.detail(id) });
+            queryClient.invalidateQueries({ queryKey: ['stats'] }); // Refresh dashboard stats
         },
     });
 };
@@ -139,6 +141,7 @@ export const useForecloseLoan = () => {
         onSuccess: (_, { id }) => {
             queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
             queryClient.invalidateQueries({ queryKey: loanKeys.detail(id) });
+            queryClient.invalidateQueries({ queryKey: ['stats'] }); // Refresh dashboard stats
         },
     });
 };
@@ -210,6 +213,7 @@ export const useDeleteLoan = () => {
         mutationFn: loanAPI.delete,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: ['stats'] }); // Refresh dashboard stats
         },
     });
 };
