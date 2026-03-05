@@ -39,7 +39,7 @@ exports.generateMonthlyInvoices = async (req, res, next) => {
         });
 
         let generatedCount = 0;
-        const lender = await Lender.getLender();
+        const lender = await Lender.getLender(req.user?.lenderId);
 
         for (const loan of loans) {
             // Get the next due EMI from amortization schedule
@@ -108,7 +108,7 @@ exports.downloadInvoice = async (req, res, next) => {
             .populate('customerId', 'firstName lastName email phone address signature')
             .populate('paymentId'); // Populate payment details including bank info
 
-        const lender = await Lender.findOne();
+        const lender = await Lender.findById(req.user?.lenderId);
 
         if (!invoice) {
             return next(new AppError('Invoice not found', 404));

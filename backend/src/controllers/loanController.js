@@ -126,7 +126,7 @@ exports.createLoan = async (req, res, next) => {
         }
 
         // Get lender for prefix
-        const lender = await Lender.getLender();
+        const lender = await Lender.getLender(req.user?.lenderId);
 
         console.log('createLoan received:', { manualEMI, interestType, monthlyInterestRate, principal, loanDurationMonths });
 
@@ -419,7 +419,7 @@ exports.downloadAgreement = async (req, res, next) => {
             return next(new AppError('Loan not found', 404));
         }
 
-        const lender = await Lender.getLender();
+        const lender = await Lender.getLender(req.user?.lenderId);
 
         const pdfDoc = await generateLoanAgreement(loan, lender);
 
@@ -444,7 +444,7 @@ exports.downloadStatement = async (req, res, next) => {
             return next(new AppError('Loan not found', 404));
         }
 
-        const lender = await Lender.getLender();
+        const lender = await Lender.getLender(req.user?.lenderId);
         const payments = await Payment.find({ loanId: loan._id }).sort({ paymentDate: -1 });
 
         const pdfDoc = await generateLoanStatement(loan, lender, payments);
@@ -540,7 +540,7 @@ exports.downloadNOC = async (req, res, next) => {
             return next(new AppError('NOC can only be generated for closed or completed loans', 400));
         }
 
-        const lender = await Lender.getLender();
+        const lender = await Lender.getLender(req.user?.lenderId);
         const pdfDoc = await generateLoanClosureNOC(loan, lender);
 
         res.setHeader('Content-Type', 'application/pdf');

@@ -405,7 +405,7 @@ exports.downloadReceipt = async (req, res, next) => {
             return next(new AppError('Payment not found', 404));
         }
 
-        const lender = await Lender.findOne();
+        const lender = await Lender.findById(req.user?.lenderId);
         if (!lender) {
             return next(new AppError('Lender details not configured', 400));
         }
