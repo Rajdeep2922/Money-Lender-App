@@ -8,6 +8,11 @@ const useAuthStore = create(
             token: null,
             role: null, // 'lender' or 'customer'
             isAuthenticated: false,
+            _hasHydrated: false,
+
+            setHasHydrated: (state) => {
+                set({ _hasHydrated: state });
+            },
 
             // Set user, token, and role after login
             login: (user, token, role = 'lender') => {
@@ -51,6 +56,9 @@ const useAuthStore = create(
                 role: state.role,
                 isAuthenticated: state.isAuthenticated
             }),
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true);
+            },
         }
     )
 );

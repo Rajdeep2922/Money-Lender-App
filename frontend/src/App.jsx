@@ -45,7 +45,11 @@ const queryClient = new QueryClient({
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
+
+  if (!_hasHydrated) {
+    return <PageLoader />;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -56,7 +60,11 @@ const ProtectedRoute = ({ children }) => {
 
 // Public Route component (redirect to appropriate dashboard if already authenticated)
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, role } = useAuthStore();
+  const { isAuthenticated, role, _hasHydrated } = useAuthStore();
+
+  if (!_hasHydrated) {
+    return <PageLoader />;
+  }
 
   if (isAuthenticated) {
     // Redirect based on role
