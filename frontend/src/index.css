@@ -75,10 +75,14 @@ body {
 
   button,
   [role="button"],
-  .btn,
-  a {
+  .btn {
     min-height: 44px;
     min-width: 44px;
+  }
+
+  /* Only apply centering to standalone buttons, not layout links */
+  button:not([class*="flex"]),
+  .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;

@@ -18,7 +18,6 @@ import { PageLoader } from '../components/common/LoadingSpinner';
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('profile');
-    const [isDark, setIsDark] = useState(false); // Mock state for now
 
     const containerVariants = {
         hidden: { opacity: 0, y: 20 },
@@ -96,7 +95,7 @@ const Settings = () => {
                 <div className="flex-1 min-w-0">
                     <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
                         {activeTab === 'profile' && <ProfileSettings />}
-                        {activeTab === 'preferences' && <PreferenceSettings isDark={isDark} setIsDark={setIsDark} />}
+                        {activeTab === 'preferences' && <PreferenceSettings />}
                         {activeTab === 'notifications' && <NotificationSettings />}
                         {activeTab === 'security' && <SecuritySettings />}
                     </div>
@@ -368,7 +367,11 @@ const ProfileSettings = () => {
             </div>
 
             <div className="flex justify-end pt-4">
-                <button type="submit" disabled={updateLender.isPending} className="btn btn-primary gap-2">
+                <button
+                    type="submit"
+                    disabled={updateLender.isPending}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
                     <Save className="w-4 h-4" />
                     {updateLender.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -377,25 +380,9 @@ const ProfileSettings = () => {
     );
 };
 
-const PreferenceSettings = ({ isDark, setIsDark }) => {
+const PreferenceSettings = () => {
     const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'INR');
     const [dateFormat, setDateFormat] = useState(() => localStorage.getItem('dateFormat') || 'DD/MM/YYYY');
-    const [darkMode, setDarkMode] = useState(() => {
-        const saved = localStorage.getItem('darkMode');
-        if (saved !== null) return saved === 'true';
-        return document.documentElement.classList.contains('dark');
-    });
-
-    const toggleDarkMode = (enabled) => {
-        setDarkMode(enabled);
-        localStorage.setItem('darkMode', enabled);
-        if (enabled) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        toast.success(enabled ? 'Dark mode enabled' : 'Light mode enabled');
-    };
 
     const handleCurrencyChange = (e) => {
         const value = e.target.value;
