@@ -30,10 +30,10 @@ const Navbar = () => {
     const location = useLocation();
     const displayName = lender?.ownerName || authUser?.username || '';
     const user = authUser ? { username: displayName } : null;
-    const businessName = lender?.businessName || 'MoneyLender';
+    const businessName = lender?.businessName || '';
 
     const getInitials = (name) => {
-        if (!name) return 'ML';
+        if (!name) return '';
         const words = name.trim().split(/\s+/);
         return words.length >= 2
             ? (words[0][0] + words[1][0]).toUpperCase()
