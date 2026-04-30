@@ -1,6 +1,8 @@
 import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
-import { FiHome, FiLogOut, FiCreditCard } from 'react-icons/fi';
+import { FiHome, FiLogOut, FiCreditCard, FiSearch, FiFileText } from 'react-icons/fi';
 import useAuthStore from '../../store/authStore';
+import useNotificationStore from '../../store/notificationStore';
+import NotificationBadge from '../notifications/NotificationBadge';
 
 /**
  * Customer Portal Layout - Mobile Optimized
@@ -8,6 +10,8 @@ import useAuthStore from '../../store/authStore';
 const CustomerPortalLayout = () => {
     const { isAuthenticated, role, user } = useAuthStore();
     const location = useLocation();
+    const { unreadChats } = useNotificationStore();
+    const totalUnreadChats = Object.values(unreadChats).reduce((s, n) => s + n, 0);
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
@@ -19,7 +23,7 @@ const CustomerPortalLayout = () => {
 
     const customerName = user?.firstName || user?.fullName || user?.email?.split('@')[0] || 'Customer';
 
-    const isActive = (path) => location.pathname === path;
+    const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-16 sm:pb-0">
@@ -61,6 +65,40 @@ const CustomerPortalLayout = () => {
                 </div>
             </header>
 
+            {/* Desktop Sub-nav tabs */}
+            <div className="hidden sm:block border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-14 sm:top-16 z-30">
+                <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                    <div className="flex gap-0 overflow-x-auto">
+                        {[
+                            { to: '/portal', label: '🏠 Home', exact: true },
+                            { to: '/portal/lenders', label: '🏦 Find Lenders' },
+                            { to: '/portal/loan-requests', label: '📋 My Requests', badge: totalUnreadChats },
+                            { to: '/portal/payments', label: '💳 Payments' },
+                        ].map(({ to, label, exact, badge }) => {
+                            const active = exact
+                                ? location.pathname === to
+                                : location.pathname.startsWith(to + '/') || location.pathname === to;
+                            return (
+                                <Link
+                                    key={to}
+                                    to={to}
+                                    className={`relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                                        active
+                                            ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:border-gray-300'
+                                    }`}
+                                >
+                                    {label}
+                                    {badge > 0 && (
+                                        <NotificationBadge count={badge} />
+                                    )}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
             {/* Main Content */}
             <main className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-7xl mx-auto">
                 <Outlet />
@@ -71,16 +109,31 @@ const CustomerPortalLayout = () => {
                 <div className="flex justify-around items-center h-16">
                     <Link
                         to="/portal"
-                        className={`flex flex-col items-center justify-center flex-1 h-full ${isActive('/portal') ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'
-                            }`}
+                        className={`flex flex-col items-center justify-center flex-1 h-full ${isActive('/portal') && location.pathname === '/portal' ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`}
                     >
                         <FiHome className="w-6 h-6" />
                         <span className="text-xs mt-1">Home</span>
                     </Link>
                     <Link
+                        to="/portal/lenders"
+                        className={`flex flex-col items-center justify-center flex-1 h-full ${isActive('/portal/lenders') ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`}
+                    >
+                        <FiSearch className="w-6 h-6" />
+                        <span className="text-xs mt-1">Lenders</span>
+                    </Link>
+                    <Link
+                        to="/portal/loan-requests"
+                        className={`relative flex flex-col items-center justify-center flex-1 h-full ${isActive('/portal/loan-requests') ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`}
+                    >
+                        <FiFileText className="w-6 h-6" />
+                        <span className="text-xs mt-1">Requests</span>
+                        {totalUnreadChats > 0 && (
+                            <NotificationBadge count={totalUnreadChats} className="absolute top-1 right-3" />
+                        )}
+                    </Link>
+                    <Link
                         to="/portal/payments"
-                        className={`flex flex-col items-center justify-center flex-1 h-full ${isActive('/portal/payments') ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'
-                            }`}
+                        className={`flex flex-col items-center justify-center flex-1 h-full ${isActive('/portal/payments') ? 'text-teal-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`}
                     >
                         <FiCreditCard className="w-6 h-6" />
                         <span className="text-xs mt-1">Payments</span>

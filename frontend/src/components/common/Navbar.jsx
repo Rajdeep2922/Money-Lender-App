@@ -11,9 +11,12 @@ import {
     LogOut,
     Menu,
     X,
+    Inbox,
 } from 'lucide-react';
 import { useLender } from '../../hooks/useLender';
 import useAuthStore from '../../store/authStore';
+import useNotificationStore from '../../store/notificationStore';
+import NotificationBadge from '../notifications/NotificationBadge';
 
 const navLinks = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, matchExact: true },
@@ -21,6 +24,7 @@ const navLinks = [
     { to: '/loans', label: 'Loans', icon: HandCoins },
     { to: '/payments', label: 'Payments', icon: CreditCard },
     { to: '/invoices', label: 'Invoices', icon: FileText },
+    { to: '/loan-requests', label: 'Requests', icon: Inbox, badgeKey: 'requests' },
     { to: '/calculator', label: 'Calculator', icon: Calculator, public: true },
 ];
 
@@ -28,9 +32,15 @@ const Navbar = () => {
     const { data: lender } = useLender();
     const { user: authUser } = useAuthStore();
     const location = useLocation();
+    const { unreadRequests } = useNotificationStore();
     const displayName = lender?.ownerName || authUser?.username || '';
     const user = authUser ? { username: displayName } : null;
     const businessName = lender?.businessName || '';
+
+    const getBadgeCount = (link) => {
+        if (link.badgeKey === 'requests') return unreadRequests;
+        return 0;
+    };
 
     const getInitials = (name) => {
         if (!name) return '';
@@ -86,17 +96,21 @@ const Navbar = () => {
                                 {visibleLinks.map(link => {
                                     const Icon = link.icon;
                                     const active = checkActive(link);
+                                    const badge = getBadgeCount(link);
                                     return (
                                         <Link
                                             key={link.to}
                                             to={link.to}
-                                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${active
+                                            className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${active
                                                 ? 'bg-white dark:bg-gray-700 text-teal-700 dark:text-teal-300 shadow-sm'
                                                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                                                 }`}
                                         >
                                             <Icon className={`w-4 h-4 ${active ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400 dark:text-gray-500'}`} strokeWidth={1.8} />
                                             <span className="hidden lg:inline">{link.label}</span>
+                                            {badge > 0 && (
+                                                <NotificationBadge count={badge} className="absolute -top-1.5 -right-1.5" />
+                                            )}
                                         </Link>
                                     );
                                 })}
@@ -178,11 +192,12 @@ const Navbar = () => {
                                 {visibleLinks.map(link => {
                                     const Icon = link.icon;
                                     const active = checkActive(link);
+                                    const badge = getBadgeCount(link);
                                     return (
                                         <Link
                                             key={link.to}
                                             to={link.to}
-                                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-medium transition-colors ${active
+                                            className={`relative flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-medium transition-colors ${active
                                                 ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300'
                                                 : 'text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800'
                                                 }`}
@@ -192,6 +207,9 @@ const Navbar = () => {
                                                 strokeWidth={1.8}
                                             />
                                             {link.label}
+                                            {badge > 0 && (
+                                                <NotificationBadge count={badge} className="ml-auto" />
+                                            )}
                                         </Link>
                                     );
                                 })}

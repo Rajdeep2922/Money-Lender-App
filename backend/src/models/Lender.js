@@ -39,6 +39,29 @@ const lenderSchema = new mongoose.Schema({
         ifscCode: { type: String, trim: true, uppercase: true },
         bankName: { type: String, trim: true },
     },
+    // Lender Discovery fields
+    interestRate: {
+        type: Number,
+        default: 12, // percent per annum
+        min: 0,
+        max: 100,
+    },
+    rating: {
+        type: Number,
+        default: 4.0,
+        min: 0,
+        max: 5,
+    },
+    description: {
+        type: String,
+        trim: true,
+        default: 'Trusted money lending services.',
+    },
+    isPublic: {
+        type: Boolean,
+        default: true,
+        index: true,
+    },
     logo: {
         type: String, // URL or Base64
     },

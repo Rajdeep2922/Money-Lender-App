@@ -30,6 +30,15 @@ const CustomerPortalLayout = lazy(() => import('./components/layouts/CustomerPor
 const CustomerDashboard = lazy(() => import('./pages/CustomerPortal/CustomerDashboard'));
 const CustomerLoanDetails = lazy(() => import('./pages/CustomerPortal/CustomerLoanDetails'));
 const CustomerPayments = lazy(() => import('./pages/CustomerPortal/CustomerPayments'));
+// ── NEW: Lender Discovery + Loan Requests + Chat ──────────────────────────
+const LenderDiscovery = lazy(() => import('./pages/CustomerPortal/LenderDiscovery'));
+const MyLoanRequests = lazy(() => import('./pages/CustomerPortal/MyLoanRequests'));
+const CustomerChatRoom = lazy(() => import('./pages/CustomerPortal/ChatRoom'));
+const IncomingRequests = lazy(() => import('./pages/LoanRequests/IncomingRequests'));
+const LenderChatRoom = lazy(() => import('./pages/LoanRequests/LenderChatRoom'));
+const CustomerLogin = lazy(() => import('./pages/Auth/CustomerLogin'));
+// ─────────────────────────────────────────────────────────────────────────
+
 
 // Create React Query client with optimized defaults
 const queryClient = new QueryClient({
@@ -76,63 +85,75 @@ const PublicRoute = ({ children }) => {
 };
 
 import { HelmetProvider } from 'react-helmet-async';
+import { SocketProvider } from './contexts/SocketContext';
 
 function App() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <Toaster position="top-right" />
-        <GlobalErrorBoundary>
-          <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* Auth Routes (No Layout) - Public only */}
-                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-                <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-                <Route path="/signout" element={<SignOut />} />
+        <SocketProvider>
+          <Toaster position="top-right" />
+          <GlobalErrorBoundary>
+            <BrowserRouter>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* Auth Routes (No Layout) - Public only */}
+                  <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+                  <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+                  <Route path="/customer-login" element={<PublicRoute><CustomerLogin /></PublicRoute>} />
+                  <Route path="/signout" element={<SignOut />} />
 
-                {/* Public Routes (No auth required, no layout) */}
-                <Route path="/calculator" element={<LoanCalculator />} />
+                  {/* Public Routes (No auth required, no layout) */}
+                  <Route path="/calculator" element={<LoanCalculator />} />
 
-                {/* Protected Routes with Layout */}
-                <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                  {/* Dashboard */}
-                  <Route path="/" element={<Dashboard />} />
+                  {/* Protected Routes with Layout */}
+                  <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                    {/* Dashboard */}
+                    <Route path="/" element={<Dashboard />} />
 
-                  {/* Customers */}
-                  <Route path="/customers" element={<CustomerList />} />
-                  <Route path="/customers/new" element={<AddCustomer />} />
-                  <Route path="/customers/:id" element={<CustomerDetails />} />
-                  <Route path="/customers/:id/edit" element={<AddCustomer />} />
+                    {/* Customers */}
+                    <Route path="/customers" element={<CustomerList />} />
+                    <Route path="/customers/new" element={<AddCustomer />} />
+                    <Route path="/customers/:id" element={<CustomerDetails />} />
+                    <Route path="/customers/:id/edit" element={<AddCustomer />} />
 
-                  {/* Loans */}
-                  <Route path="/loans" element={<LoanList />} />
-                  <Route path="/loans/new" element={<CreateLoan />} />
-                  <Route path="/loans/:id/edit" element={<EditLoan />} />
-                  <Route path="/loans/:id" element={<LoanDetails />} />
+                    {/* Loans */}
+                    <Route path="/loans" element={<LoanList />} />
+                    <Route path="/loans/new" element={<CreateLoan />} />
+                    <Route path="/loans/:id/edit" element={<EditLoan />} />
+                    <Route path="/loans/:id" element={<LoanDetails />} />
 
-                  {/* Payments */}
-                  <Route path="/payments" element={<PaymentList />} />
-                  <Route path="/payments/new" element={<RecordPayment />} />
+                    {/* Payments */}
+                    <Route path="/payments" element={<PaymentList />} />
+                    <Route path="/payments/new" element={<RecordPayment />} />
 
-                  {/* Invoices */}
-                  <Route path="/invoices" element={<InvoiceList />} />
+                    {/* Invoices */}
+                    <Route path="/invoices" element={<InvoiceList />} />
 
-                  {/* Settings */}
-                  <Route path="/settings" element={<Settings />} />
-                </Route>
+                    {/* Settings */}
+                    <Route path="/settings" element={<Settings />} />
 
-                {/* Customer Portal Routes */}
-                <Route path="/portal" element={<CustomerPortalLayout />}>
-                  <Route index element={<CustomerDashboard />} />
-                  <Route path="loans" element={<Navigate to="/portal" replace />} />
-                  <Route path="loans/:id" element={<CustomerLoanDetails />} />
-                  <Route path="payments" element={<CustomerPayments />} />
-                </Route>
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </GlobalErrorBoundary>
+                    {/* ── NEW: Lender — Loan Requests & Chat */}
+                    <Route path="/loan-requests" element={<IncomingRequests />} />
+                    <Route path="/loan-requests/:id/chat" element={<LenderChatRoom />} />
+                  </Route>
+
+                  {/* Customer Portal Routes */}
+                  <Route path="/portal" element={<CustomerPortalLayout />}>
+                    <Route index element={<CustomerDashboard />} />
+                    <Route path="loans" element={<Navigate to="/portal" replace />} />
+                    <Route path="loans/:id" element={<CustomerLoanDetails />} />
+                    <Route path="payments" element={<CustomerPayments />} />
+                    {/* ── NEW: Customer — Discovery + Requests + Chat */}
+                    <Route path="lenders" element={<LenderDiscovery />} />
+                    <Route path="loan-requests" element={<MyLoanRequests />} />
+                    <Route path="loan-requests/:id/chat" element={<CustomerChatRoom />} />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </GlobalErrorBoundary>
+        </SocketProvider>
       </QueryClientProvider>
     </HelmetProvider>
   );

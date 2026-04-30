@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { FiDollarSign, FiCalendar, FiCreditCard, FiAlertCircle, FiChevronRight } from 'react-icons/fi';
+import { FiDollarSign, FiCalendar, FiCreditCard, FiAlertCircle, FiChevronRight, FiSearch, FiFileText } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import { customerPortalAPI } from '../../services/api';
+import { customerPortalAPI, loanRequestAPI } from '../../services/api';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import useAuthStore from '../../store/authStore';
 
@@ -47,6 +47,42 @@ const CustomerDashboard = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                     View your loans and payments
                 </p>
+            </motion.div>
+
+            {/* ── Quick Actions ── */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 }}
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+            >
+                <Link
+                    to="/portal/lenders"
+                    className="group flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30 hover:-translate-y-0.5 transition-all"
+                >
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                        <FiSearch className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm sm:text-base">Browse Lenders</p>
+                        <p className="text-teal-100 text-xs mt-0.5">Find a lender and request a loan</p>
+                    </div>
+                    <FiChevronRight className="w-5 h-5 text-white/70 group-hover:translate-x-1 transition-transform" />
+                </Link>
+
+                <Link
+                    to="/portal/loan-requests"
+                    className="group flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-teal-400 dark:hover:border-teal-500 hover:-translate-y-0.5 transition-all shadow-sm"
+                >
+                    <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
+                        <FiFileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">My Loan Requests</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5">Track status &amp; open chats</p>
+                    </div>
+                    <FiChevronRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                </Link>
             </motion.div>
 
             {/* Error Display */}

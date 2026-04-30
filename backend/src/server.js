@@ -1,16 +1,22 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const connectDB = require('./config/database');
 const initSchedulers = require('./utils/scheduler');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
+const { initSocketManager } = require('./socket/socketManager');
 
 // Initialize express app
 const app = express();
+
+// Create HTTP server (required for Socket.IO)
+const httpServer = http.createServer(app);
 
 // Connect to MongoDB
 connectDB();
@@ -29,16 +35,14 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-
-
 // CORS
-// CORS
-app.use(cors({
+const corsOptions = {
     origin: process.env.NODE_ENV === 'production'
         ? (process.env.FRONTEND_URL || 'http://localhost:5173')
-        : true, // Allow any origin in development (enables mobile testing)
+        : true,
     credentials: true,
-}));
+};
+app.use(cors(corsOptions));
 
 // Compression
 app.use(compression());
@@ -83,36 +87,62 @@ app.use('/api/export', protect, require('./routes/export'));
 // Customer portal routes (customer authentication)
 app.use('/api/portal', require('./routes/customerPortal'));
 
+// ── NEW: Lender Discovery, Loan Requests, Chat, File Upload ───────────────
+app.use('/api/lenders', require('./routes/lenders'));
+app.use('/api/loan-request', require('./routes/loanRequests'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/upload', require('./routes/upload'));
+// ── PUBLIC (no auth) — guest loan requests & tracking ─────────────────────
+app.use('/api/public', require('./routes/public'));
+// ─────────────────────────────────────────────────────────────────────────
+
 // Root endpoint
 app.get('/', (req, res) => {
     res.json({
         message: 'Loan Lender API',
-        version: '1.0.0',
+        version: '2.0.0',
         endpoints: {
             auth: '/api/auth',
             customers: '/api/customers',
             loans: '/api/loans',
             payments: '/api/payments',
             lender: '/api/lender',
+            lenders: '/api/lenders',
+            loanRequests: '/api/loan-request',
+            chat: '/api/chat',
+            upload: '/api/upload',
             stats: '/api/stats',
             health: '/api/health',
         },
     });
 });
 
-
 // Error handling
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
+// ── Socket.IO Initialization ────────────────────────────────────────────
+const io = new Server(httpServer, {
+    cors: corsOptions,
+    pingTimeout: 60000,
+    pingInterval: 25000,
+});
+
+// Make io accessible in route controllers via app locals
+app.set('io', io);
+
+initSocketManager(io);
+// ────────────────────────────────────────────────────────────────────────
+
+// Start server (use httpServer, not app.listen)
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════════════╗
-║     Loan Lender API Server                     ║
+║     Loan Lender API Server v2.0                ║
 ║     Running on port ${PORT}                        ║
 ║     Environment: ${process.env.NODE_ENV || 'development'}               ║
+║     WebSocket: Socket.IO enabled               ║
 ╚════════════════════════════════════════════════╝
   `);
 });

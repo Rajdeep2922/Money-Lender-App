@@ -148,5 +148,29 @@ export const customerPortalManagementAPI = {
     deactivatePortal: (customerId) => api.post(`/customers/${customerId}/deactivate-portal`),
 };
 
+// ── NEW: Lender Discovery ─────────────────────────────────────────────────
+export const lenderDiscoveryAPI = {
+    getAll: () => api.get('/lenders'),
+    getById: (id) => api.get(`/lenders/${id}`),
+};
+
+// ── NEW: Loan Request ─────────────────────────────────────────────────────
+export const loanRequestAPI = {
+    create: (data) => api.post('/loan-request', data),
+    list: (params = {}) => api.get('/loan-request', { params }),
+    getById: (id) => api.get(`/loan-request/${id}`),
+    respond: (id, status) => api.post(`/loan-request/${id}/respond`, { status }),
+};
+
+// ── NEW: Chat ─────────────────────────────────────────────────────────────
+export const chatAPI = {
+    getMessages: (loanRequestId, params = {}) =>
+        api.get(`/chat/${loanRequestId}/messages`, { params }),
+    upload: (loanRequestId, formData) =>
+        api.post(`/upload?loanRequestId=${loanRequestId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        }),
+};
+
 export default api;
 
