@@ -4,6 +4,7 @@ import { chatAPI } from '../../services/api';
 import { useSocket } from '../../contexts/SocketContext';
 import useNotificationStore from '../../store/notificationStore';
 import MessageBubble from './MessageBubble';
+import { Paperclip, SendHorizonal } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 /**
@@ -34,7 +35,8 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
         queryKey: ['chat-messages', loanRequestId],
         queryFn: () => chatAPI.getMessages(loanRequestId).then((r) => r.data.data),
         enabled: !!loanRequestId && !disabled,
-        staleTime: 30_000,
+        staleTime: 0,          // always fetch fresh on mount
+        refetchOnMount: true,
     });
 
     const [messages, setMessages] = useState([]);
@@ -194,7 +196,7 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
                         <MessageBubble
                             key={msg._id}
                             message={msg}
-                            isSelf={msg.senderId === currentUserId}
+                            isSelf={msg.senderType === currentRole}
                         />
                     ))
                 )}
@@ -224,10 +226,10 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
                     className="flex-shrink-0 w-9 h-9 rounded-xl bg-slate-800 border border-slate-600 text-slate-400 hover:text-violet-400 hover:border-violet-500 transition-all disabled:opacity-40 flex items-center justify-center"
                     title="Attach file"
                 >
-                    {uploading ? (
+                {uploading ? (
                         <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
                     ) : (
-                        <span className="text-base">📎</span>
+                        <Paperclip className="w-4 h-4" />
                     )}
                 </button>
                 <input
@@ -257,7 +259,7 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
                     className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center active:scale-95"
                     title="Send message"
                 >
-                    <span className="text-base">➤</span>
+                    <SendHorizonal className="w-4 h-4" />
                 </button>
             </div>
         </div>

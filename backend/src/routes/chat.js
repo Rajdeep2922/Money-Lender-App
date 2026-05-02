@@ -3,19 +3,35 @@ const router = express.Router();
 const { getMessages } = require('../controllers/chatController');
 
 /**
- * Dual-auth middleware (same as in loanRequests.js)
- * Accepts either lender or customer JWT
+ * Dual-auth middleware
+ * Accepts:
+ *   1. Authorization: Bearer <JWT>  — lender or portal customer
+ *   2. X-Tracking-Token: <token>    — guest customer (no account)
  */
 const protectBoth = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ success: false, message: 'Not authorized. Please login.' });
-    }
-
     const jwt = require('jsonwebtoken');
     const { JWT_SECRET } = require('../middleware/auth');
     const User = require('../models/User');
     const Customer = require('../models/Customer');
+    const LoanRequest = require('../models/LoanRequest');
+
+    // ── Mode 1: trackingToken header (guest) ────────────────────────────
+    const trackingToken = req.headers['x-tracking-token'];
+    if (trackingToken) {
+        // Quick existence check — full validation happens inside verifyAcceptedAccess
+        const exists = await LoanRequest.exists({ trackingToken });
+        if (!exists) {
+            return res.status(401).json({ success: false, message: 'Invalid tracking token' });
+        }
+        req.guestTrackingToken = trackingToken;
+        return next();
+    }
+
+    // ── Mode 2: JWT Bearer token ─────────────────────────────────────────
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, message: 'Not authorized. Please login.' });
+    }
 
     try {
         const token = authHeader.split(' ')[1];
@@ -43,7 +59,7 @@ const protectBoth = async (req, res, next) => {
     }
 };
 
-// GET /api/chat/:loanRequestId/messages — message history (participant + accepted only)
+// GET /api/chat/:loanRequestId/messages — message history
 router.get('/:loanRequestId/messages', protectBoth, getMessages);
 
 module.exports = router;
