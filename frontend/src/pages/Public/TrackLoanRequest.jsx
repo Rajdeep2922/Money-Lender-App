@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Loader2, CheckCircle, Clock, XCircle, MessageSquare, Send, Paperclip, ArrowLeft } from 'lucide-react';
+import { Search, Loader2, CheckCircle, Clock, XCircle, MessageSquare, Send, Paperclip, ArrowLeft, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 import api from '../../services/api';
 import { formatDistanceToNow } from '../../utils/dateUtils';
@@ -14,34 +14,30 @@ const STATUS_CONFIG = {
     rejected: { icon: XCircle,       color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/30',    label: 'Rejected' },
 };
 
+const STORAGE_KEY = 'ml_last_tracked_phone';
+
 /**
  * TrackLoanRequest — public page, no login required.
  * Customer enters phone number → sees all requests → if accepted, chat opens.
+ * Remembers the last phone number used so results auto-load next time.
  */
 const TrackLoanRequest = ({ onClose, initialPhone }) => {
-    const [phone, setPhone] = useState(initialPhone || '');
+    const savedPhone = localStorage.getItem(STORAGE_KEY) || '';
+    const [phone, setPhone] = useState(initialPhone || savedPhone);
     const [requests, setRequests] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [activeChat, setActiveChat] = useState(null); // { request, trackingToken }
+    const [activeChat, setActiveChat] = useState(null);
 
-    // Listen for open-track-request event (fired from PublicLoanFlow success screen)
-    useEffect(() => {
-        const handler = (e) => {
-            if (e.detail?.phone) setPhone(e.detail.phone);
-        };
-        window.addEventListener('open-track-request', handler);
-        return () => window.removeEventListener('open-track-request', handler);
-    }, []);
-
-    const handleTrack = async () => {
-        const cleaned = phone.trim();
-        if (!cleaned) { setError('Enter your phone number'); return; }
+    const doTrack = async (phoneNumber) => {
+        const cleaned = phoneNumber.trim();
+        if (!cleaned) return;
         setLoading(true);
         setError(null);
         try {
             const res = await api.get(`/public/loan-request/track?phone=${cleaned}`);
             setRequests(res.data.data);
+            localStorage.setItem(STORAGE_KEY, cleaned); // remember for next time
         } catch (err) {
             setError(err.response?.data?.message || 'No requests found for this number.');
             setRequests(null);
@@ -49,6 +45,28 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
             setLoading(false);
         }
     };
+
+    const handleTrack = () => doTrack(phone);
+
+    // Auto-load if we already have a saved/initial phone
+    useEffect(() => {
+        const autoPhone = initialPhone || savedPhone;
+        if (autoPhone) doTrack(autoPhone);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Listen for open-track-request event (fired from PublicLoanFlow success screen)
+    useEffect(() => {
+        const handler = (e) => {
+            if (e.detail?.phone) {
+                setPhone(e.detail.phone);
+                doTrack(e.detail.phone);
+            }
+        };
+        window.addEventListener('open-track-request', handler);
+        return () => window.removeEventListener('open-track-request', handler);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -62,7 +80,11 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         {activeChat && (
-                            <button onClick={() => setActiveChat(null)} className="w-8 h-8 rounded-lg bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center">
+                            <button
+                                onClick={() => setActiveChat(null)}
+                                className="w-8 h-8 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 flex items-center justify-center transition-colors"
+                                title="Back"
+                            >
                                 <ArrowLeft className="w-4 h-4" />
                             </button>
                         )}
@@ -71,7 +93,13 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
                             {!activeChat && <p className="text-gray-500 text-xs">Enter your phone number to check status</p>}
                         </div>
                     </div>
-                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center text-lg transition-colors">×</button>
+                    <button
+                        onClick={onClose}
+                        className="w-8 h-8 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 flex items-center justify-center transition-colors"
+                        title="Close"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto min-h-0">
@@ -177,12 +205,11 @@ const GuestChatWindow = ({ request, trackingToken }) => {
     const [text, setText] = useState('');
     const [joined, setJoined] = useState(false);
     const [connected, setConnected] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const socketRef = useRef(null);
     const endRef = useRef(null);
+    const fileInputRef = useRef(null);
     const loanRequestId = request._id;
-
-    // My "userId" is the requestId (set by socketManager for guests)
-    const myId = loanRequestId;
 
     useEffect(() => {
         const socket = io(SOCKET_URL, {
@@ -201,10 +228,12 @@ const GuestChatWindow = ({ request, trackingToken }) => {
 
         socket.on('auth_error', ({ message }) => toast.error(message));
 
-        // Load history
-        api.get(`/chat/${loanRequestId}/messages`)
+        // Load message history — send trackingToken in header so backend can auth without JWT
+        api.get(`/chat/${loanRequestId}/messages`, {
+            headers: { 'X-Tracking-Token': trackingToken },
+        })
             .then(r => setMessages(r.data.data || []))
-            .catch(() => {});
+            .catch(err => console.warn('History load failed:', err.response?.data?.message || err.message));
 
         socket.on('new_message', (msg) => {
             setMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
@@ -224,6 +253,31 @@ const GuestChatWindow = ({ request, trackingToken }) => {
         setText('');
     };
 
+    const handleFileUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file || !joined) return;
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await api.post(`/upload?loanRequestId=${loanRequestId}`, formData, {
+                headers: {
+                    'X-Tracking-Token': trackingToken,
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            const { fileUrl, fileType } = res.data.data;
+            socketRef.current?.emit('send_message', { loanRequestId, fileUrl, fileType }, (ack) => {
+                if (!ack?.success) toast.error(ack?.message || 'Failed to send file');
+            });
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'File upload failed');
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
     return (
         <div className="flex flex-col h-[480px]">
             {/* Messages */}
@@ -238,14 +292,21 @@ const GuestChatWindow = ({ request, trackingToken }) => {
                     </div>
                 )}
                 {messages.map(msg => {
-                    const isSelf = msg.senderId === myId || msg.senderType === 'customer';
+                    // customer = me (guest), lender = them
+                    const isSelf = msg.senderType === 'customer';
                     return (
                         <div key={msg._id} className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
                             <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${isSelf ? 'bg-gradient-to-br from-teal-600 to-cyan-600 text-white rounded-br-sm' : 'bg-gray-800 text-gray-100 border border-gray-700 rounded-bl-sm'}`}>
                                 {!isSelf && <p className="text-teal-400 text-xs font-semibold mb-1">Lender</p>}
                                 {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
                                 {msg.fileUrl && (
-                                    <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="underline text-xs opacity-80">📎 View attachment</a>
+                                    msg.fileType === 'image'
+                                        ? <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
+                                            <img src={msg.fileUrl} alt="attachment" className="max-w-full rounded-lg max-h-40 object-cover mt-1" />
+                                          </a>
+                                        : <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="underline text-xs opacity-80 flex items-center gap-1 mt-1">
+                                            <Paperclip className="w-3 h-3" /> View attachment
+                                          </a>
                                 )}
                                 <p className="text-[10px] opacity-60 mt-1 text-right">{formatDistanceToNow(msg.createdAt)}</p>
                             </div>
@@ -255,8 +316,27 @@ const GuestChatWindow = ({ request, trackingToken }) => {
                 <div ref={endRef} />
             </div>
 
-            {/* Input */}
+            {/* Input bar */}
             <div className="border-t border-gray-700 p-3 flex gap-2 items-end">
+                {/* File upload */}
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading || !joined}
+                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-teal-400 hover:border-teal-500 transition-all disabled:opacity-40 flex items-center justify-center"
+                    title="Attach file"
+                >
+                    {uploading
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Paperclip className="w-4 h-4" />}
+                </button>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx"
+                    onChange={handleFileUpload}
+                />
+
                 <textarea
                     value={text}
                     onChange={e => setText(e.target.value)}
@@ -269,7 +349,7 @@ const GuestChatWindow = ({ request, trackingToken }) => {
                 <button
                     onClick={send}
                     disabled={!text.trim() || !joined}
-                    className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all"
+                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all"
                 >
                     <Send className="w-4 h-4" />
                 </button>

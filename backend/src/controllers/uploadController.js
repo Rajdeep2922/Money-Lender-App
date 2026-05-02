@@ -51,9 +51,22 @@ const upload = multer({
 });
 
 /**
- * Dual-auth middleware
+ * Dual-auth middleware — JWT or trackingToken
  */
 const protectBoth = async (req, res, next) => {
+    const LoanRequestModel = require('../models/LoanRequest');
+
+    // Mode 1: trackingToken header (guest)
+    const trackingToken = req.headers['x-tracking-token'];
+    if (trackingToken) {
+        const loanReq = await LoanRequestModel.findOne({ trackingToken });
+        if (!loanReq) return res.status(401).json({ success: false, message: 'Invalid tracking token' });
+        req.guestTrackingToken = trackingToken;
+        req.guestLoanRequestId = loanReq._id.toString();
+        return next();
+    }
+
+    // Mode 2: JWT Bearer
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ success: false, message: 'Not authorized' });
@@ -104,18 +117,27 @@ const verifyUploadAccess = async (req, res, next) => {
         });
     }
 
+    // Guest: verify trackingToken matches this request
+    if (req.guestTrackingToken) {
+        if (loanRequest.trackingToken !== req.guestTrackingToken) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        req.loanRequest = loanRequest;
+        return next();
+    }
+
+    // JWT user: verify participant
     let userId;
     if (req.customer) {
         userId = req.customer._id.toString();
     } else if (req.user) {
-        userId = (req.user.lenderId?._id || req.user.lenderId)?.toString();
+        userId = req.user._id.toString(); // User account ID
     }
 
-    const isParticipant =
-        loanRequest.customerId.toString() === userId ||
-        loanRequest.lenderId.toString() === userId;
+    const isCustomer = loanRequest.customerId && loanRequest.customerId.toString() === userId;
+    const isLender = loanRequest.lenderId.toString() === (req.user?.lenderId?._id || req.user?.lenderId)?.toString();
 
-    if (!isParticipant) {
+    if (!isCustomer && !isLender) {
         return res.status(403).json({ success: false, message: 'Access denied' });
     }
 

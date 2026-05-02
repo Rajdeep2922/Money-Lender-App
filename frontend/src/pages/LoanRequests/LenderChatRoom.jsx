@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import { loanRequestAPI } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import ChatWindow from '../../components/chat/ChatWindow';
@@ -21,8 +22,9 @@ const LenderChatRoom = () => {
     const customer = loanRequest?.customerId;
     const isAccepted = loanRequest?.status === 'accepted';
 
-    // Lender's identity for socket is their lender profile ID
-    const lenderProfileId = user?.lenderId?._id || user?.lenderId;
+    // currentUserId must be user._id (User account ID) — this is what the socket
+    // uses as senderId when saving messages, NOT the lenderProfileId
+    const currentUserId = user?._id?.toString();
 
     return (
         <div className="flex flex-col h-[calc(100vh-8rem)]">
@@ -31,8 +33,9 @@ const LenderChatRoom = () => {
                 <button
                     onClick={() => navigate('/loan-requests')}
                     className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors flex items-center justify-center"
+                    title="Back to Requests"
                 >
-                    ←
+                    <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div className="flex-1">
                     {isLoading ? (
@@ -83,7 +86,7 @@ const LenderChatRoom = () => {
             <div className="flex-1 min-h-0">
                 <ChatWindow
                     loanRequestId={loanRequestId}
-                    currentUserId={lenderProfileId?.toString()}
+                    currentUserId={currentUserId}
                     currentRole="lender"
                     disabled={!isAccepted}
                 />
