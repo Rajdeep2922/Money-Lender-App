@@ -138,6 +138,15 @@ const initSocketManager = (io) => {
             }
         });
 
+        // ── Leave Chat Room ───────────────────────────────────────────────
+        // IMPORTANT: must be called on ChatWindow unmount so future messages
+        // correctly trigger notifications when the user is no longer viewing the chat.
+        socket.on('leave_room', ({ loanRequestId }) => {
+            if (!loanRequestId) return;
+            socket.leave(loanRequestId);
+            console.log(`[Socket] ${currentUser.role} left room ${loanRequestId}`);
+        });
+
         // ── Send Message ──────────────────────────────────────────────────
         socket.on('send_message', async ({ loanRequestId, text, fileUrl, fileType }, callback) => {
             try {
@@ -169,13 +178,76 @@ const initSocketManager = (io) => {
                     createdAt: message.createdAt,
                 };
 
+                // Broadcast to everyone in the chat room (both users get real-time update)
                 io.to(loanRequestId).emit('new_message', payload);
                 if (callback) callback({ success: true, message: payload });
+
+                // ── Push notification to receiver if they are NOT in the room ──
+                try {
+                    let receiverId = null;
+                    let senderName = 'Someone';
+
+                    if (currentUser.role === 'lender') {
+                        // Sender = lender → receiver = customer or guest
+                        if (loanRequest.customerId) {
+                            receiverId = loanRequest.customerId.toString();
+                        } else {
+                            // Guest: their socket userId = loanRequest._id
+                            receiverId = loanRequest._id.toString();
+                        }
+                        senderName = currentUser.entity.lenderId?.businessName
+                            || currentUser.entity.name
+                            || 'Lender';
+                    } else {
+                        // Sender = customer or guest → receiver = lender (User account)
+                        const lenderUser = await User.findOne({ lenderId: loanRequest.lenderId }).select('_id');
+                        receiverId = lenderUser?._id?.toString();
+
+                        if (currentUser.isGuest) {
+                            senderName = loanRequest.guestName || 'Guest Customer';
+                        } else {
+                            const c = currentUser.entity;
+                            senderName = [c.firstName, c.lastName].filter(Boolean).join(' ') || 'Customer';
+                        }
+                    }
+
+                    if (receiverId) {
+                        // Check if receiver's socket is currently inside this chat room
+                        const roomSockets = io.sockets.adapter.rooms.get(loanRequestId);
+                        const receiverSocketId = userSocketMap.get(receiverId);
+                        const receiverIsInRoom = !!(receiverSocketId && roomSockets?.has(receiverSocketId));
+
+                        if (!receiverIsInRoom) {
+                            const preview = text
+                                ? (text.length > 50 ? `${text.slice(0, 50)}…` : text)
+                                : fileType === 'image'
+                                    ? '📷 Sent an image'
+                                    : '📎 Sent an attachment';
+
+                            emitToUser(io, receiverId, 'message_notification', {
+                                loanRequestId,
+                                senderName,
+                                preview,
+                                timestamp: message.createdAt,
+                                unread: true,
+                            });
+
+                            console.log(`[Socket] Notification → ${receiverId} (not in room)`);
+                        } else {
+                            console.log(`[Socket] Receiver ${receiverId} is in room — no toast needed`);
+                        }
+                    }
+                } catch (notifErr) {
+                    // Notification failure must never break the message delivery
+                    console.warn('[Socket] Notification error:', notifErr.message);
+                }
+
             } catch (err) {
                 console.warn(`[Socket] send_message error: ${err.message}`);
                 if (callback) callback({ success: false, message: err.message });
             }
         });
+
 
         // ── Typing ────────────────────────────────────────────────────────
         socket.on('typing', ({ loanRequestId, isTyping }) => {
