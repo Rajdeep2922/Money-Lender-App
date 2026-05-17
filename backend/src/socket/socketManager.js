@@ -182,7 +182,7 @@ const initSocketManager = (io) => {
                 io.to(loanRequestId).emit('new_message', payload);
                 if (callback) callback({ success: true, message: payload });
 
-                // ── Push notification to receiver if they are NOT in the room ──
+                // ── Push notification to receiver (always — frontend suppresses if viewing chat) ──
                 try {
                     let receiverId = null;
                     let senderName = 'Someone';
@@ -212,30 +212,23 @@ const initSocketManager = (io) => {
                     }
 
                     if (receiverId) {
-                        // Check if receiver's socket is currently inside this chat room
-                        const roomSockets = io.sockets.adapter.rooms.get(loanRequestId);
-                        const receiverSocketId = userSocketMap.get(receiverId);
-                        const receiverIsInRoom = !!(receiverSocketId && roomSockets?.has(receiverSocketId));
+                        const preview = text
+                            ? (text.length > 50 ? `${text.slice(0, 50)}…` : text)
+                            : fileType === 'image'
+                                ? '📷 Sent an image'
+                                : '📎 Sent an attachment';
 
-                        if (!receiverIsInRoom) {
-                            const preview = text
-                                ? (text.length > 50 ? `${text.slice(0, 50)}…` : text)
-                                : fileType === 'image'
-                                    ? '📷 Sent an image'
-                                    : '📎 Sent an attachment';
+                        // Always emit — frontend decides whether to show toast
+                        // (suppressed if receiver is currently viewing this chat room's URL)
+                        emitToUser(io, receiverId, 'message_notification', {
+                            loanRequestId,
+                            senderName,
+                            preview,
+                            timestamp: message.createdAt,
+                            unread: true,
+                        });
 
-                            emitToUser(io, receiverId, 'message_notification', {
-                                loanRequestId,
-                                senderName,
-                                preview,
-                                timestamp: message.createdAt,
-                                unread: true,
-                            });
-
-                            console.log(`[Socket] Notification → ${receiverId} (not in room)`);
-                        } else {
-                            console.log(`[Socket] Receiver ${receiverId} is in room — no toast needed`);
-                        }
+                        console.log(`[Socket] Notification → ${receiverId}`);
                     }
                 } catch (notifErr) {
                     // Notification failure must never break the message delivery

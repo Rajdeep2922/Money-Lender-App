@@ -109,14 +109,18 @@ export const SocketProvider = ({ children }) => {
             );
         });
 
-        // Chat message — used by ChatWindow to append in real-time.
-        // Badge increment is handled by message_notification (only fires when user is NOT in the room).
+        // Chat message — ChatWindow handles real-time appending via its own listener
         socket.on('new_message', () => {
             // intentionally empty — ChatWindow handles appending; badge handled below
         });
 
-        // Fired by backend ONLY when receiver is outside the chat room
+        // Fired by backend on EVERY message to the receiver.
+        // Frontend suppresses it only if the user is currently viewing that chat's URL.
         socket.on('message_notification', (data) => {
+            // Suppress toast + badge if user is actively viewing this specific chat room
+            const isViewingChat = window.location.pathname.includes(data.loanRequestId);
+            if (isViewingChat) return;
+
             incrementUnreadChat(data.loanRequestId);
             toast.custom(
                 (t) => (
