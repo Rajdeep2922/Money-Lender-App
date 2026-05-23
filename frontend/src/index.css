@@ -2,6 +2,11 @@
 
 @import "tailwindcss";
 
+/* Connect v3-format tailwind.config.js to Tailwind v4.
+   Without this directive, darkMode:'selector', custom colors,
+   and font extensions are completely ignored in production. */
+@config "../tailwind.config.js";
+
 /* CSS Variables for theming */
 :root {
   --color-primary: #0d9488;
@@ -35,12 +40,42 @@
   --shadow-glow: 0 0 25px rgba(13, 148, 136, 0.2);
 }
 
+/* ── Cross-environment normalization ─────────────────────────────────────────
+   Ensures localhost and Vercel production render identically.
+   Without explicit html font-size, rem values can drift between
+   Vite dev server and Vercel's production build environment.
+──────────────────────────────────────────────────────────────────────────── */
+html {
+  /* Lock base rem to exactly 16px — prevents any browser/OS/environment drift */
+  font-size: 16px;
+  /* Prevent iOS/mobile from auto-scaling text after orientation change */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Consistent scroll */
+  scroll-behavior: smooth;
+  /* Prevent layout shift from scrollbar appearing/disappearing */
+  overflow-x: hidden;
+}
+
+/* Consistent box model across all elements */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 /* Base styles */
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;        /* explicitly 16px, not inherited from UA stylesheet */
+  line-height: 1.5;
   background-color: var(--color-background);
   color: var(--color-text);
   min-height: 100vh;
+  /* Prevent content from expanding beyond screen width */
+  overflow-x: hidden;
+  /* Consistent font rendering across macOS/Windows/Linux */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Mobile Optimizations - Performance */
