@@ -109,9 +109,36 @@ export const SocketProvider = ({ children }) => {
             );
         });
 
-        // Chat message in a room
-        socket.on('new_message', (data) => {
+        // Chat message — ChatWindow handles real-time appending via its own listener
+        socket.on('new_message', () => {
+            // intentionally empty — ChatWindow handles appending; badge handled below
+        });
+
+        // Fired by backend on EVERY message to the receiver.
+        // Frontend suppresses it only if the user is currently viewing that chat's URL.
+        socket.on('message_notification', (data) => {
+            // Suppress toast + badge if user is actively viewing this specific chat room
+            const isViewingChat = window.location.pathname.includes(data.loanRequestId);
+            if (isViewingChat) return;
+
             incrementUnreadChat(data.loanRequestId);
+            toast.custom(
+                (t) => (
+                    <div
+                        className={`flex items-start gap-3 bg-slate-800 border border-violet-500/50 rounded-xl p-4 shadow-2xl max-w-sm ${t.visible ? 'animate-enter' : 'animate-leave'}`}
+                    >
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            {data.senderName?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-white text-sm">{data.senderName}</p>
+                            <p className="text-slate-300 text-xs mt-0.5 truncate">{data.preview}</p>
+                        </div>
+                        <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0 mt-1" />
+                    </div>
+                ),
+                { duration: 5000, position: 'top-right' }
+            );
         });
 
         socket.on('disconnect', (reason) => {

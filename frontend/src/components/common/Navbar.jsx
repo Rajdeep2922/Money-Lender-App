@@ -32,13 +32,14 @@ const Navbar = () => {
     const { data: lender } = useLender();
     const { user: authUser } = useAuthStore();
     const location = useLocation();
-    const { unreadRequests } = useNotificationStore();
+    const { unreadRequests, unreadChats } = useNotificationStore();
+    const totalUnreadChats = Object.values(unreadChats).reduce((s, n) => s + n, 0);
     const displayName = lender?.ownerName || authUser?.username || '';
     const user = authUser ? { username: displayName } : null;
     const businessName = lender?.businessName || '';
 
     const getBadgeCount = (link) => {
-        if (link.badgeKey === 'requests') return unreadRequests;
+        if (link.badgeKey === 'requests') return unreadRequests + totalUnreadChats;
         return 0;
     };
 

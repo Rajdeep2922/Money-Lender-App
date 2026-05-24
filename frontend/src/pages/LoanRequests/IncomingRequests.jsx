@@ -18,7 +18,7 @@ const STATUS_CONFIG = {
 const IncomingRequests = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { clearUnreadRequests } = useNotificationStore();
+    const { clearUnreadRequests, unreadChats, clearUnreadChat } = useNotificationStore();
 
     // Clear badge on mount
     useEffect(() => { clearUnreadRequests(); }, [clearUnreadRequests]);
@@ -134,10 +134,18 @@ const IncomingRequests = () => {
                                             </>
                                         ) : req.status === 'accepted' ? (
                                             <button
-                                                onClick={() => navigate(`/loan-requests/${req._id}/chat`)}
-                                                className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                                                onClick={() => {
+                                                    clearUnreadChat(req._id);
+                                                    navigate(`/loan-requests/${req._id}/chat`);
+                                                }}
+                                                className="relative bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all active:scale-95"
                                             >
                                                 💬 Chat
+                                                {(unreadChats[req._id] > 0) && (
+                                                    <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                                                        {unreadChats[req._id] > 99 ? '99+' : unreadChats[req._id]}
+                                                    </span>
+                                                )}
                                             </button>
                                         ) : null}
                                     </div>

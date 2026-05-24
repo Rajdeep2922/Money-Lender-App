@@ -84,6 +84,10 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
         return () => {
             socket.off('new_message', handleNewMessage);
             socket.off('user_typing', handleTyping);
+            // Leave the room so future messages trigger notifications
+            // (backend uses room membership to decide whether to send message_notification)
+            socket.emit('leave_room', { loanRequestId });
+            setJoined(false);
         };
     }, [disabled, loanRequestId, getSocket, currentUserId, clearUnreadChat]);
 
