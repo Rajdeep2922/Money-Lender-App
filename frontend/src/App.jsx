@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/common/Layout';
 import { GlobalErrorBoundary } from './components/common/GlobalErrorBoundary';
 import { PageLoader } from './components/common/LoadingSpinner';
+import ScrollToTop from './components/common/ScrollToTop';
 import useAuthStore from './store/authStore';
 
 // Lazy Load Pages
@@ -25,6 +26,9 @@ const Settings = lazy(() => import('./pages/Settings'));
 const InvoiceList = lazy(() => import('./pages/Invoices/InvoiceList'));
 // Public pages (no auth required)
 const LoanCalculator = lazy(() => import('./pages/Public/LoanCalculator'));
+const LandingPage = lazy(() => import('./pages/Landing/LandingPage'));
+const PrivacyPolicy = lazy(() => import('./pages/Legal/PrivacyPolicy'));
+const AboutUs = lazy(() => import('./pages/Landing/AboutUs'));
 // Customer Portal pages
 const CustomerPortalLayout = lazy(() => import('./components/layouts/CustomerPortalLayout'));
 const CustomerDashboard = lazy(() => import('./pages/CustomerPortal/CustomerDashboard'));
@@ -61,7 +65,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -77,7 +81,7 @@ const PublicRoute = ({ children }) => {
 
   if (isAuthenticated) {
     // Redirect based on role
-    const redirectTo = role === 'customer' ? '/portal' : '/';
+    const redirectTo = role === 'customer' ? '/portal' : '/dashboard';
     return <Navigate to={redirectTo} replace />;
   }
 
@@ -87,7 +91,19 @@ const PublicRoute = ({ children }) => {
 import { HelmetProvider } from 'react-helmet-async';
 import { SocketProvider } from './contexts/SocketContext';
 
+// Root route: authenticated → dashboard, guest → landing page
+const RootRoute = () => {
+  const { isAuthenticated, role, _hasHydrated } = useAuthStore();
+  if (!_hasHydrated) return <PageLoader />;
+  if (isAuthenticated) {
+    const redirectTo = role === 'customer' ? '/portal' : '/dashboard';
+    return <Navigate to={redirectTo} replace />;
+  }
+  return <LandingPage />;
+};
+
 function App() {
+
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
@@ -95,9 +111,18 @@ function App() {
           <Toaster position="top-right" />
           <GlobalErrorBoundary>
             <BrowserRouter>
+              <ScrollToTop />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-                  {/* Auth Routes (No Layout) - Public only */}
+                  {/* Landing Page (public) */}
+                  <Route path="/landing" element={<LandingPage />} />
+                  {/* Legal Pages */}
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/about" element={<AboutUs />} />
+                  {/* Root: redirect authenticated users to dashboard, else landing */}
+                  <Route path="/" element={<RootRoute />} />
+
+
                   <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
                   <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
                   <Route path="/customer-login" element={<PublicRoute><CustomerLogin /></PublicRoute>} />
@@ -109,7 +134,7 @@ function App() {
                   {/* Protected Routes with Layout */}
                   <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                     {/* Dashboard */}
-                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
 
                     {/* Customers */}
                     <Route path="/customers" element={<CustomerList />} />

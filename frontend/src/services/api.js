@@ -44,8 +44,11 @@ api.interceptors.response.use(
         // Handle 401 Unauthorized - clear auth and redirect to login
         if (error.response?.status === 401) {
             localStorage.removeItem('auth-storage');
-            // Only redirect if not already on login page
-            if (!window.location.pathname.includes('/login')) {
+            // Public pages that should NOT be redirected to /login
+            const publicPaths = ['/', '/landing', '/login', '/register', '/calculator', '/customer-login'];
+            const isPublicPage = publicPaths.some(p => window.location.pathname === p)
+                || window.location.pathname.startsWith('/landing');
+            if (!isPublicPage) {
                 window.location.href = '/login';
             }
         }

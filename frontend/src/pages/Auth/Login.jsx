@@ -21,7 +21,7 @@ const Login = () => {
         e.preventDefault();
         try {
             const response = await loginMutation.mutateAsync(formData);
-            const redirectTo = response.data?.redirectTo || '/';
+            const redirectTo = response.data?.redirectTo || '/dashboard';
             navigate(redirectTo);
         } catch (error) {
             // handled by mutation
