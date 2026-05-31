@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { api } from '../services/api';
 
 export const invoiceKeys = {
@@ -14,8 +14,9 @@ export const useInvoices = (params = {}) => {
             const { data } = await api.get('/invoices', { params });
             return data;
         },
-        staleTime: 0, // Always fetch fresh data
-        refetchOnWindowFocus: true,
+        placeholderData: keepPreviousData,
+        staleTime: 5 * 60 * 1000, // 5 minutes — prevents re-fetch on every page visit
+        refetchOnWindowFocus: false,
     });
 };
 

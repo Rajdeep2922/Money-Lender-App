@@ -5,13 +5,36 @@ import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInvoices, useGenerateInvoices, useDownloadInvoice, useDeleteInvoice, invoiceKeys } from '../../hooks/useInvoices';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { PageLoader } from '../../components/common/LoadingSpinner';
 import { TableSkeleton, CardSkeleton } from '../../components/common/Skeletons';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 
+// Defined outside component to prevent recreation on every render (matches PaymentList pattern)
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.06,
+            delayChildren: 0.05,
+        },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.25,
+            ease: [0.25, 0.46, 0.45, 0.94],
+        },
+    },
+};
+
 const InvoiceList = () => {
     const queryClient = useQueryClient();
-    const { data, isLoading, isFetching } = useInvoices();
+    const { data, isLoading, error } = useInvoices();
     const generateInvoices = useGenerateInvoices();
     const downloadInvoice = useDownloadInvoice();
     const deleteInvoice = useDeleteInvoice();
@@ -42,8 +65,8 @@ const InvoiceList = () => {
         }
     };
 
-    // Custom loading state using skeletons
-    if (isLoading) {
+    // Only show skeleton on true first load (no cached data) — matches PaymentList pattern
+    if (isLoading && !data) {
         return (
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
@@ -60,7 +83,9 @@ const InvoiceList = () => {
         );
     }
 
-    // Filter to show ONLY paid/partial invoices (Receipts) as requested
+    if (error) return <div className="text-red-500 text-center p-8">Error: {error.message}</div>;
+
+    // Filter to show ONLY paid/partial invoices (Receipts)
     const invoices = (data?.invoices || []).filter(inv => inv.amountPaid > 0 || inv.status === 'paid');
 
     const getStatusIcon = (status) => {
@@ -71,16 +96,6 @@ const InvoiceList = () => {
         }
     };
 
-    const containerVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.1 } }
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 10 },
-        visible: { opacity: 1, y: 0 }
-    };
-
     return (
         <motion.div
             variants={containerVariants}
@@ -88,9 +103,10 @@ const InvoiceList = () => {
             animate="visible"
             className="space-y-6"
         >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Header */}
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Billing & Invoices</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Billing &amp; Invoices</h1>
                     <p className="text-gray-500 dark:text-gray-400">Manage monthly EMI billing for your customers</p>
                 </div>
                 <button
@@ -101,18 +117,12 @@ const InvoiceList = () => {
                     <FiRefreshCw className={`w-4 h-4 ${generateInvoices.isPending ? 'animate-spin' : ''}`} />
                     {generateInvoices.isPending ? 'Generating...' : 'Generate Monthly Invoices'}
                 </button>
-            </div>
+            </motion.div>
 
-
-
-            {/* Mobile View (Cards) */}
-            <div className="grid grid-cols-1 gap-4 md:hidden">
+            {/* Mobile View (Cards) — whole section animates as one item */}
+            <motion.div variants={itemVariants} className="grid grid-cols-1 gap-4 md:hidden">
                 {invoices.map((invoice) => (
-                    <motion.div
-                        key={invoice._id}
-                        variants={itemVariants}
-                        className="card p-4 space-y-3"
-                    >
+                    <div key={invoice._id} className="card p-4 space-y-3">
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="font-semibold text-teal-600">{invoice.invoiceNumber}</p>
@@ -159,17 +169,17 @@ const InvoiceList = () => {
                                 </button>
                             </div>
                         </div>
-                    </motion.div>
+                    </div>
                 ))}
                 {invoices.length === 0 && (
                     <div className="text-center py-10 text-gray-500">
                         <p>No invoices found.</p>
                     </div>
                 )}
-            </div>
+            </motion.div>
 
-            {/* Desktop View (Table) */}
-            <div className="card overflow-hidden hidden md:block">
+            {/* Desktop View (Table) — whole section animates as one item */}
+            <motion.div variants={itemVariants} className="card overflow-hidden hidden md:block">
                 <div className="overflow-x-auto">
                     <table className="table">
                         <thead>
@@ -185,9 +195,8 @@ const InvoiceList = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {invoices.map((invoice) => (
-                                <motion.tr
+                                <tr
                                     key={invoice._id}
-                                    variants={itemVariants}
                                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                                 >
                                     <td className="font-semibold text-teal-600">{invoice.invoiceNumber}</td>
@@ -227,7 +236,7 @@ const InvoiceList = () => {
                                             <FiTrash2 className="w-5 h-5" />
                                         </button>
                                     </td>
-                                </motion.tr>
+                                </tr>
                             ))}
                             {invoices.length === 0 && (
                                 <tr>
@@ -246,7 +255,7 @@ const InvoiceList = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Delete Confirmation Modal */}
             <ConfirmModal

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Zap, Twitter, Github, Linkedin } from 'lucide-react';
+import { Zap, Github, Linkedin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const cols = [
@@ -61,13 +61,26 @@ export default function Footer() {
               Smart lending for growing businesses. Manage your portfolio with confidence.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              {[Twitter, Github, Linkedin].map((Icon, i) => (
-                <a key={i} href="#" style={{ width: 34, height: 34, borderRadius: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: 'all 0.2s', textDecoration: 'none' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = '#22d3ee'; e.currentTarget.style.borderColor = 'rgba(34,211,238,0.3)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}>
-                  <Icon size={15} />
-                </a>
-              ))}
+              <a
+                href="https://github.com/Rajdeep2922"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ width: 34, height: 34, borderRadius: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: 'all 0.2s', textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#22d3ee'; e.currentTarget.style.borderColor = 'rgba(34,211,238,0.3)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+              >
+                <Github size={15} />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/rajdeep-singh-3900b12b9/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ width: 34, height: 34, borderRadius: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: 'all 0.2s', textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#22d3ee'; e.currentTarget.style.borderColor = 'rgba(34,211,238,0.3)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+              >
+                <Linkedin size={15} />
+              </a>
             </div>
           </div>
 
