@@ -37,19 +37,18 @@ function SectionCard({ id, num, title, icon: Icon, iconColor = '#22d3ee', iconBg
     <div
       id={id}
       style={{
-        background: 'rgba(15,23,42,0.65)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(15,23,42,0.92)',       /* opaque — no backdrop-filter needed */
         border: '1px solid rgba(255,255,255,0.07)',
         borderRadius: '1.25rem',
         padding: 'clamp(1.5rem,4vw,2.25rem)',
         marginBottom: '1.5rem',
         scrollMarginTop: '5rem',
+        transform: 'translate3d(0,0,0)',          /* GPU compositing layer */
         transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
       }}
       onMouseEnter={e => {
         e.currentTarget.style.borderColor = 'rgba(34,211,238,0.18)';
-        e.currentTarget.style.boxShadow = '0 0 40px rgba(6,182,212,0.06)';
+        e.currentTarget.style.boxShadow = '0 0 30px rgba(6,182,212,0.05)';
       }}
       onMouseLeave={e => {
         e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
@@ -63,10 +62,8 @@ function SectionCard({ id, num, title, icon: Icon, iconColor = '#22d3ee', iconBg
           borderRadius: '0.875rem',
           background: iconBg,
           border: `1px solid ${iconBorder}`,
-          backdropFilter: 'blur(8px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
-          boxShadow: `0 0 20px ${iconBg}`,
         }}>
           <Icon size={20} color={iconColor} strokeWidth={1.75} />
         </div>
@@ -91,7 +88,6 @@ function SectionCard({ id, num, title, icon: Icon, iconColor = '#22d3ee', iconBg
 export default function PrivacyPolicy() {
   const [activeSection, setActiveSection] = useState('collect');
 
-  // Highlight ToC item based on scroll position
   useEffect(() => {
     const handleScroll = () => {
       for (let i = sections.length - 1; i >= 0; i--) {
@@ -115,7 +111,12 @@ export default function PrivacyPolicy() {
     <div style={{ background: '#020617', minHeight: '100vh', color: '#f1f5f9', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
       {/* ── Top nav bar ── */}
-      <div style={{ background: 'rgba(2,6,23,0.9)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '1rem 1.5rem', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+      <div style={{
+        background: 'rgba(2,6,23,0.96)',   /* opaque — no backdrop-filter */
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        padding: '1rem 1.5rem',
+        position: 'sticky', top: 0, zIndex: 50,
+      }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <Link
@@ -144,17 +145,17 @@ export default function PrivacyPolicy() {
         <main>
           {/* Hero header card */}
           <div style={{
-            background: 'linear-gradient(135deg,rgba(6,182,212,0.1),rgba(16,185,129,0.06))',
+            background: 'rgba(6,182,212,0.07)',
             border: '1px solid rgba(34,211,238,0.18)',
             borderRadius: '1.5rem',
             padding: 'clamp(2rem,5vw,3rem)',
             marginBottom: '2rem',
             position: 'relative',
             overflow: 'hidden',
-            boxShadow: '0 0 60px rgba(6,182,212,0.07)',
+            transform: 'translate3d(0,0,0)',
           }}>
-            {/* BG glow blob */}
-            <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'rgba(34,211,238,0.08)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+            {/* Decorative corner — no filter:blur */}
+            <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'rgba(34,211,238,0.05)', pointerEvents: 'none' }} />
 
             <div style={{ position: 'relative', zIndex: 1 }}>
               {/* Badge */}
@@ -164,16 +165,15 @@ export default function PrivacyPolicy() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
-                {/* Large shield icon */}
+                {/* Large shield icon — no backdropFilter */}
                 <div style={{
                   width: '5rem', height: '5rem',
                   borderRadius: '1.25rem',
-                  background: 'linear-gradient(135deg,rgba(6,182,212,0.2),rgba(16,185,129,0.12))',
+                  background: 'rgba(6,182,212,0.18)',
                   border: '1px solid rgba(34,211,238,0.3)',
-                  backdropFilter: 'blur(8px)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0,
-                  boxShadow: '0 0 36px rgba(6,182,212,0.22), inset 0 1px 0 rgba(255,255,255,0.06)',
+                  boxShadow: '0 0 30px rgba(6,182,212,0.18)',
                 }}>
                   <ShieldCheck size={36} color="#22d3ee" strokeWidth={1.6} />
                 </div>
@@ -226,7 +226,7 @@ export default function PrivacyPolicy() {
                 { label: 'Legal Requirements', desc: 'When required by law, court order, or governmental authority' },
                 { label: 'Business Transfers', desc: 'In connection with a merger, acquisition, or sale of assets' },
               ].map(item => (
-                <li key={item.label} style={{ display: 'flex', gap: '0.75rem', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '0.75rem', padding: '0.875rem 1rem' }}>
+                <li key={item.label} style={{ display: 'flex', gap: '0.75rem', background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '0.75rem', padding: '0.875rem 1rem' }}>
                   <CheckCircle2 size={15} color="#34d399" strokeWidth={2} style={{ marginTop: '0.18rem', flexShrink: 0 }} />
                   <span style={{ fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.75 }}>
                     <strong style={{ color: '#e2e8f0' }}>{item.label}:</strong>{' '}{item.desc}
@@ -286,9 +286,7 @@ export default function PrivacyPolicy() {
         {/* ── Sticky ToC sidebar ── */}
         <aside style={{ position: 'sticky', top: '5.5rem', alignSelf: 'flex-start' }}>
           <div style={{
-            background: 'rgba(15,23,42,0.7)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
+            background: 'rgba(15,23,42,0.95)',    /* opaque — no backdrop-filter */
             border: '1px solid rgba(255,255,255,0.07)',
             borderRadius: '1.25rem',
             padding: '1.5rem',
@@ -315,7 +313,7 @@ export default function PrivacyPolicy() {
                       padding: '0.5rem 0.625rem',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      transition: 'all 0.2s ease',
+                      transition: 'background 0.2s ease, color 0.2s ease, border-color 0.2s ease',
                       color: isActive ? '#22d3ee' : '#64748b',
                     }}
                     onMouseEnter={e => {
@@ -355,12 +353,13 @@ export default function PrivacyPolicy() {
         </p>
       </div>
 
-      {/* Responsive: hide sidebar on mobile */}
+      {/* Responsive: collapse to single column on mobile */}
       <style>{`
         @media (max-width: 768px) {
           main + aside { display: none !important; }
           div[style*="grid-template-columns: 1fr 260px"] {
             grid-template-columns: 1fr !important;
+            padding: 1.5rem 1rem 3rem !important;
           }
         }
       `}</style>

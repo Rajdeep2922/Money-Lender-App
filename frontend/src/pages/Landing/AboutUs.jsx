@@ -11,9 +11,10 @@ import Footer from '../Landing/sections/Footer';
 import '../Landing/landing.css';
 
 /* ── Animation variants ────────────────────────────── */
-const fadeUp   = { hidden: { opacity: 0, y: 28 }, show: { opacity: 1, y: 0 } };
-const fadeLeft = { hidden: { opacity: 0, x: -28 }, show: { opacity: 1, x: 0 } };
-const fadeRight= { hidden: { opacity: 0, x: 28 },  show: { opacity: 1, x: 0 } };
+const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
+// Use fadeUp for all directions on mobile — x-axis animations cause jitter
+const fadeLeft  = fadeUp;
+const fadeRight = fadeUp;
 
 /* ── Why-choose card data ──────────────────────────── */
 const whyCards = [
@@ -135,7 +136,7 @@ export default function AboutUs() {
       <section className="section" style={{ background: 'linear-gradient(180deg,#020617 0%,#071129 100%)' }}>
         <div className="container">
           {/* Section header */}
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} transition={{ duration: 0.5 }}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.5 }}
             style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <h2 style={{ fontSize: 'clamp(1.75rem,4vw,2.5rem)', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.02em', marginBottom: '0.875rem' }}>
               The <span className="grad-text">Problem & Solution</span>
@@ -149,7 +150,7 @@ export default function AboutUs() {
           {/* Two-card grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '1.5rem' }}>
             {/* Challenge card */}
-            <motion.div variants={fadeLeft} initial="hidden" whileInView="show" viewport={{ once: true }} transition={{ duration: 0.6 }}
+            <motion.div variants={fadeLeft} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.6 }}
               className="glass-card"
               style={{ padding: '2rem', borderColor: 'rgba(248,113,113,0.12)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.5rem' }}>
@@ -173,7 +174,7 @@ export default function AboutUs() {
             </motion.div>
 
             {/* Solution card */}
-            <motion.div variants={fadeRight} initial="hidden" whileInView="show" viewport={{ once: true }} transition={{ duration: 0.6 }}
+            <motion.div variants={fadeRight} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.6 }}
               className="glass-card"
               style={{ padding: '2rem', borderColor: 'rgba(52,211,153,0.15)', background: 'rgba(15,23,42,0.8)', boxShadow: '0 0 40px rgba(52,211,153,0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', marginBottom: '1.5rem' }}>
@@ -204,7 +205,7 @@ export default function AboutUs() {
       ══════════════════════════════════════════════ */}
       <section className="section" style={{ background: '#020617' }}>
         <div className="container">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} transition={{ duration: 0.5 }}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.5 }}
             style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <h2 style={{ fontSize: 'clamp(1.75rem,4vw,2.5rem)', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.02em', marginBottom: '0.875rem' }}>
               The <span className="grad-text">Person Behind It</span>
@@ -212,7 +213,7 @@ export default function AboutUs() {
             <div className="section-divider" />
           </motion.div>
 
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} transition={{ duration: 0.6 }}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.6 }}
             style={{ maxWidth: 760, margin: '0 auto' }}>
             <div
               className="glass-card"
@@ -224,8 +225,8 @@ export default function AboutUs() {
                 position: 'relative',
                 overflow: 'hidden',
               }}>
-              {/* Blob */}
-              <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: 'rgba(34,211,238,0.07)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+              {/* Decorative inner glow — no filter:blur to avoid mobile jank */}
+              <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: 'rgba(34,211,238,0.05)', pointerEvents: 'none' }} />
 
               <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: '2rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 {/* Avatar */}
@@ -263,14 +264,14 @@ export default function AboutUs() {
                     What started as a <strong style={{ color: '#e2e8f0' }}>learning journey in web development</strong> gradually evolved into a complete lending management platform. Driven by a passion for building practical software that solves real-world problems, Rajdeep built Money Lenders from the ground up — focused on usability, reliability, and continuous improvement.
                   </p>
 
-                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '0.625rem', flexWrap: 'wrap' }}>
                     <a
                       href="https://github.com/Rajdeep2922"
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.625rem', padding: '0.5rem 1rem', fontSize: '0.82rem', color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, transition: 'all 0.2s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '0.625rem', padding: '0.55rem 1.1rem', fontSize: '0.85rem', color: '#e2e8f0', textDecoration: 'none', fontWeight: 600, transition: 'background 0.2s, border-color 0.2s', lineHeight: 1 }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; }}
                     >
                       <Github size={15} strokeWidth={1.75} /> GitHub
                     </a>
@@ -278,8 +279,9 @@ export default function AboutUs() {
                       href="https://www.linkedin.com/in/rajdeep-singh-3900b12b9/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-glow"
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', gap: '0.45rem' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', border: '1px solid transparent', borderRadius: '0.625rem', padding: '0.55rem 1.1rem', fontSize: '0.85rem', color: '#fff', textDecoration: 'none', fontWeight: 600, boxShadow: '0 0 18px rgba(6,182,212,0.35)', transition: 'box-shadow 0.2s', lineHeight: 1 }}
+                      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 28px rgba(6,182,212,0.55)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 18px rgba(6,182,212,0.35)'; }}
                     >
                       <Linkedin size={15} strokeWidth={1.75} /> LinkedIn
                     </a>
@@ -309,7 +311,7 @@ export default function AboutUs() {
       ══════════════════════════════════════════════ */}
       <section className="section" style={{ background: 'linear-gradient(180deg,#020617 0%,#071129 100%)' }}>
         <div className="container">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} transition={{ duration: 0.5 }}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.5 }}
             style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <h2 style={{ fontSize: 'clamp(1.75rem,4vw,2.5rem)', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.02em', marginBottom: '0.875rem' }}>
               Why Choose <span className="grad-text">Money Lenders</span>
@@ -328,7 +330,7 @@ export default function AboutUs() {
                   key={c.title}
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, margin: '-60px' }}
                   transition={{ delay: i * 0.1, duration: 0.5 }}
                   className="glass-card"
                   style={{ padding: '1.75rem', transition: 'all 0.3s ease', cursor: 'default' }}
@@ -357,7 +359,7 @@ export default function AboutUs() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.7 }}
           >
             <div
