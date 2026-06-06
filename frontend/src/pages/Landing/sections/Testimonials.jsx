@@ -29,7 +29,7 @@ const reviews = [
 
 export default function Testimonials() {
   return (
-    <section id="pricing" className="section" style={{ background: '#020617' }}>
+    <section id="pricing" className="section hide-mobile" style={{ background: '#020617' }}>
       <div className="container">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
           style={{ textAlign: 'center', marginBottom: '3.5rem' }}>

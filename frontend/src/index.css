@@ -64,14 +64,17 @@ html {
 }
 
 /* Consistent box model across all elements */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 /* Base styles */
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 1rem;        /* explicitly 16px, not inherited from UA stylesheet */
+  font-size: 1rem;
+  /* explicitly 16px, not inherited from UA stylesheet */
   line-height: 1.5;
   background-color: var(--color-background);
   color: var(--color-text);
@@ -87,13 +90,11 @@ body {
 /* Mobile Optimizations - Performance */
 @media (max-width: 640px) {
 
-  /* Disable heavy animations on mobile for performance */
+  /* Keep animations fast but visible on mobile */
   *,
   *::before,
   *::after {
-    animation-duration: 0.1s !important;
     animation-delay: 0s !important;
-    transition-duration: 0.15s !important;
   }
 
   /* Hardware acceleration for smooth scrolling */

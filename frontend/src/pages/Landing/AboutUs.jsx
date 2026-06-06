@@ -13,7 +13,7 @@ import '../Landing/landing.css';
 /* ── Animation variants ────────────────────────────── */
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 // Use fadeUp for all directions on mobile — x-axis animations cause jitter
-const fadeLeft  = fadeUp;
+const fadeLeft = fadeUp;
 const fadeRight = fadeUp;
 
 /* ── Why-choose card data ──────────────────────────── */
@@ -82,7 +82,7 @@ export default function AboutUs() {
       ══════════════════════════════════════════════ */}
       <section style={{ minHeight: '82vh', display: 'flex', alignItems: 'center', paddingTop: '6rem', position: 'relative', overflow: 'hidden' }}>
         {/* Background blobs */}
-        <div className="blob blob-cyan"    style={{ width: 700, height: 700, top: -200, left: -200, opacity: 0.5 }} />
+        <div className="blob blob-cyan" style={{ width: 700, height: 700, top: -200, left: -200, opacity: 0.5 }} />
         <div className="blob blob-emerald" style={{ width: 500, height: 500, bottom: -100, right: -150, opacity: 0.4 }} />
 
         <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
