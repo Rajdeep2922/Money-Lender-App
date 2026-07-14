@@ -1,5 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { loanRequestAPI } from '../../services/api';
 import { formatDistanceToNow } from '../../utils/dateUtils';
 import useNotificationStore from '../../store/notificationStore';
@@ -10,6 +11,30 @@ const STATUS_CONFIG = {
     pending: { label: 'Pending', className: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30', icon: '⏳' },
     accepted: { label: 'Accepted', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', icon: '✅' },
     rejected: { label: 'Rejected', className: 'bg-red-500/15 text-red-400 border-red-500/30', icon: '❌' },
+};
+
+// Defined outside component — stable references, no recreation on re-render
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.06,
+            delayChildren: 0.05,
+        },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.25,
+            ease: [0.25, 0.46, 0.45, 0.94],
+        },
+    },
 };
 
 /**
@@ -27,6 +52,8 @@ const IncomingRequests = () => {
         queryKey: ['incoming-loan-requests'],
         queryFn: () => loanRequestAPI.list().then((r) => r.data.data),
         staleTime: 30_000,
+        placeholderData: keepPreviousData,
+        refetchOnWindowFocus: false,
     });
 
     const respondMutation = useMutation({
@@ -41,38 +68,57 @@ const IncomingRequests = () => {
 
     const requests = data || [];
 
-    return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-white">Loan Requests</h1>
-                <p className="text-slate-400 text-sm mt-1">Incoming loan requests from customers.</p>
-            </div>
-
-            {/* Content */}
-            {isLoading ? (
+    // Only show skeleton on true first load (no cached data)
+    if (isLoading && !data) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <div className="h-8 bg-slate-700/50 rounded w-48 animate-pulse mb-2" />
+                    <div className="h-4 bg-slate-700/30 rounded w-72 animate-pulse" />
+                </div>
                 <div className="space-y-3">
                     {[...Array(4)].map((_, i) => (
                         <div key={i} className="bg-slate-800/40 rounded-2xl h-32 animate-pulse" />
                     ))}
                 </div>
-            ) : isError ? (
-                <div className="flex flex-col items-center gap-3 py-16 text-center">
-                    <span className="text-4xl">⚠️</span>
-                    <p className="text-slate-400">Failed to load requests.</p>
-                    <button onClick={refetch} className="text-violet-400 hover:text-violet-300 text-sm underline">Retry</button>
-                </div>
-            ) : requests.length === 0 ? (
-                <div className="flex flex-col items-center gap-4 py-20 text-center">
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center gap-3 py-16 text-center">
+                <span className="text-4xl">⚠️</span>
+                <p className="text-slate-400">Failed to load requests.</p>
+                <button onClick={refetch} className="text-violet-400 hover:text-violet-300 text-sm underline">Retry</button>
+            </div>
+        );
+    }
+
+    return (
+        <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-6"
+        >
+            {/* Header */}
+            <motion.div variants={itemVariants}>
+                <h1 className="text-2xl font-bold text-white">Loan Requests</h1>
+                <p className="text-slate-400 text-sm mt-1">Incoming loan requests from customers.</p>
+            </motion.div>
+
+            {/* Content */}
+            {requests.length === 0 ? (
+                <motion.div variants={itemVariants} className="flex flex-col items-center gap-4 py-20 text-center">
                     <span className="text-5xl">📭</span>
                     <p className="text-slate-300 font-medium">No loan requests yet</p>
                     <p className="text-slate-500 text-sm">Customers will appear here when they send you a request.</p>
-                </div>
+                </motion.div>
             ) : (
-                <div className="space-y-3">
+                <motion.div variants={itemVariants} className="space-y-3">
                     {requests.map((req) => {
                         const status = STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
-                        const customer = req.customerId;
                         const isPending = req.status === 'pending';
                         const isResponding = respondMutation.isPending && respondMutation.variables?.id === req._id;
 
@@ -153,9 +199,9 @@ const IncomingRequests = () => {
                             </div>
                         );
                     })}
-                </div>
+                </motion.div>
             )}
-        </div>
+        </motion.div>
     );
 };
 

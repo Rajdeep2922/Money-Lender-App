@@ -1,0 +1,375 @@
+.landing-root {
+  background: #020617;
+  color: #f1f5f9;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  /* filter:blur is only applied on desktop via media query below */
+}
+
+@media (min-width: 769px) {
+  .blob {
+    filter: blur(80px);
+  }
+}
+
+.blob-cyan {
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.blob-emerald {
+  background: rgba(52, 211, 153, 0.10);
+}
+
+/* Glass card — desktop uses backdrop-filter, mobile uses solid bg */
+.glass-card {
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 1.25rem;
+}
+
+@media (min-width: 769px) {
+  .glass-card {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+}
+
+/* Gradient text */
+.grad-text {
+  background: linear-gradient(135deg, #22d3ee, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow button */
+.btn-glow {
+  background: linear-gradient(135deg, #06b6d4, #10b981);
+  color: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btn-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 35px rgba(6, 182, 212, 0.55);
+}
+
+/* Ghost button */
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(34, 211, 238, 0.35);
+  color: #22d3ee;
+}
+
+/* Section padding */
+.section {
+  padding: 5rem 0;
+  position: relative;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Badge */
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  color: #22d3ee;
+  border-radius: 9999px;
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Divider line */
+.section-divider {
+  width: 3rem;
+  height: 3px;
+  background: linear-gradient(90deg, #22d3ee, #34d399);
+  border-radius: 9999px;
+  margin: 1rem auto 0;
+}
+
+/* Icon box */
+.icon-box {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.875rem;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(16, 185, 129, 0.15));
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22d3ee;
+  flex-shrink: 0;
+}
+
+/* Star */
+.stars {
+  color: #fbbf24;
+  letter-spacing: 2px;
+}
+
+/* ─── Responsive helpers ─────────────────────────── */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-mobile {
+    display: none !important;
+  }
+}
+
+/* ─── MOBILE OVERRIDES (≤ 768px) ─────────────────── */
+@media (max-width: 768px) {
+
+  /* General */
+  .section {
+    padding: 3rem 0;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  /* ── Nuclear GPU fix: kill ALL filter/blur/compositing on mobile ── */
+  .blob {
+    filter: none !important;
+    opacity: 0.08 !important;
+    display: none !important;
+  }
+
+  .glass-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(15, 23, 42, 0.96); /* no !important — inline styles override this */
+  }
+
+  /* Kill will-change on mobile — every will-change = a GPU layer */
+  * {
+    will-change: auto !important;
+  }
+
+  /* Mobile animations: opacity-only fade (no transform = no repaint).
+     Elements start invisible and fade in when IntersectionObserver fires. */
+  .anim-ready {
+    opacity: 0;
+    transform: none !important;
+    transition: opacity 0.5s ease !important;
+  }
+  .anim-ready.in-view {
+    opacity: 1 !important;
+  }
+  .anim-stagger > .anim-item {
+    opacity: 0;
+    transform: none !important;
+    transition: opacity 0.45s ease !important;
+  }
+  .anim-stagger.in-view > .anim-item {
+    opacity: 1 !important;
+  }
+
+  /* No hover transforms on touch */
+  .btn-glow:hover {
+    transform: none;
+  }
+
+  .btn-ghost:hover {
+    transform: none;
+  }
+
+  /* Buttons full width */
+  .btn-glow,
+  .btn-ghost {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Hero */
+  .hero-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2.5rem !important;
+  }
+
+  .hero-text {
+    text-align: center;
+  }
+
+  .hero-text .badge-pill {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-text p {
+    max-width: 100% !important;
+  }
+
+  .hero-cta {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .hero-trust {
+    justify-content: center !important;
+  }
+
+  .hero-dashboard {
+    display: none !important;
+  }
+
+  /* Footer */
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+  }
+
+  .footer-newsletter-form {
+    flex-direction: column !important;
+  }
+
+  .footer-newsletter-form input,
+  .footer-newsletter-form button {
+    width: 100% !important;
+  }
+
+  .footer-bottom {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Security card */
+  .security-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .security-card .btn-glow {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* FinalCTA */
+  .cta-buttons {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  /* ── Hero mobile ── */
+  section#features {
+    min-height: auto !important;
+    padding-top: 5.5rem !important;
+    padding-bottom: 1rem !important;
+    align-items: flex-start !important;
+  }
+
+  /* ── Section headings tighter on mobile ── */
+  .section {
+    padding: 2.5rem 0 !important;
+  }
+
+  /* ── Features mobile: remove grid gap ── */
+  #features-section .container>div:last-child {
+    gap: 0.875rem;
+  }
+
+  /* ── How It Works heading ── */
+  #how-it-works h2 {
+    font-size: 1.5rem !important;
+  }
+
+  /* ── Pricing (testimonials) — fully hidden via hide-mobile class ── */
+
+  /* ── Mobile: opacity-only animations (zero repaint) ── */
+  /* Remove translateY from scroll animations — opacity is compositor-only */
+  .anim-ready {
+    transform: none !important;
+    opacity: 0;
+    transition: opacity 0.4s ease !important;
+  }
+  .anim-ready.in-view {
+    opacity: 1;
+    transform: none !important;
+  }
+  .anim-stagger > .anim-item {
+    transform: none !important;
+    opacity: 0;
+    transition: opacity 0.35s ease !important;
+  }
+  .anim-stagger.in-view > .anim-item {
+    opacity: 1;
+    transform: none !important;
+  }
+
+  /* Hero mount: fade-only (no translate = no composite layer promotion) */
+  @keyframes heroFadeUp {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes heroDashIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .hero-enter  { animation-duration: 0.5s !important; }
+  .hero-dash-in { animation: none !important; opacity: 1 !important; }
+
+  /* Override Navbar backdrop-filter */
+  nav, header {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(2, 6, 23, 0.98) !important;
+  }
+
+  /* Kill any remaining inline box-shadow glows that cause compositing */
+  .anim-stagger > .anim-item { box-shadow: none !important; }
+}

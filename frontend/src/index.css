@@ -7,6 +7,12 @@
    and font extensions are completely ignored in production. */
 @config "../tailwind.config.js";
 
+/* Tailwind v4 class-based dark mode.
+   tailwind.config.js 'darkMode: selector' is a v3 option and is silently
+   ignored by the v4 PostCSS plugin in production. This @custom-variant
+   is the v4-correct way to enable .dark class toggling. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* CSS Variables for theming */
 :root {
   --color-primary: #0d9488;
@@ -58,14 +64,17 @@ html {
 }
 
 /* Consistent box model across all elements */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 /* Base styles */
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 1rem;        /* explicitly 16px, not inherited from UA stylesheet */
+  font-size: 1rem;
+  /* explicitly 16px, not inherited from UA stylesheet */
   line-height: 1.5;
   background-color: var(--color-background);
   color: var(--color-text);
@@ -81,13 +90,11 @@ body {
 /* Mobile Optimizations - Performance */
 @media (max-width: 640px) {
 
-  /* Disable heavy animations on mobile for performance */
+  /* Keep animations fast but visible on mobile */
   *,
   *::before,
   *::after {
-    animation-duration: 0.1s !important;
     animation-delay: 0s !important;
-    transition-duration: 0.15s !important;
   }
 
   /* Hardware acceleration for smooth scrolling */
@@ -439,6 +446,16 @@ body {
   .dark .badge-info {
     background: linear-gradient(135deg, rgba(30, 64, 175, 0.4) 0%, rgba(37, 99, 235, 0.3) 100%);
     color: #60a5fa;
+  }
+
+  .badge-secondary {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    color: #475569;
+  }
+
+  .dark .badge-secondary {
+    background: linear-gradient(135deg, rgba(71, 85, 105, 0.4) 0%, rgba(51, 65, 85, 0.3) 100%);
+    color: #94a3b8;
   }
 
   /* Pending badge with pulse */
