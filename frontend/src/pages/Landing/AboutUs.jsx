@@ -333,11 +333,11 @@ export default function AboutUs() {
                   viewport={{ once: true, margin: '-60px' }}
                   transition={{ delay: i * 0.1, duration: 0.5 }}
                   className="glass-card"
-                  style={{ padding: '1.75rem', transition: 'all 0.3s ease', cursor: 'default' }}
+                  style={{ padding: '1.75rem', transition: 'border-color 0.3s, transform 0.3s, box-shadow 0.3s', cursor: 'default' }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = c.iconBorder; e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 0 32px ${c.glow}`; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
                 >
-                  <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '1rem', background: c.iconBg, border: `1px solid ${c.iconBorder}`, backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem', boxShadow: `0 0 24px ${c.glow}` }}>
+                  <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '1rem', background: c.iconBg, border: `1px solid ${c.iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem', boxShadow: `0 0 24px ${c.glow}` }}>
                     <Icon size={22} color={c.iconColor} strokeWidth={1.75} />
                   </div>
                   <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#f1f5f9', marginBottom: '0.625rem' }}>{c.title}</h3>
@@ -353,15 +353,9 @@ export default function AboutUs() {
           VISION
       ══════════════════════════════════════════════ */}
       <section className="section" style={{ background: 'linear-gradient(180deg,#071129 0%,#020617 100%)', position: 'relative', overflow: 'hidden' }}>
-        <div className="blob blob-cyan" style={{ width: 500, height: 500, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', opacity: 0.35 }} />
+        {/* No blob here — filter:blur causes mobile jitter */}
 
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.7 }}
-          >
             <div
               className="glass-card"
               style={{
@@ -371,10 +365,10 @@ export default function AboutUs() {
                 textAlign: 'center',
                 background: 'linear-gradient(135deg,rgba(6,182,212,0.09),rgba(16,185,129,0.05))',
                 borderColor: 'rgba(34,211,238,0.18)',
-                boxShadow: '0 0 80px rgba(6,182,212,0.09)',
+                boxShadow: '0 0 40px rgba(6,182,212,0.08)',
               }}>
-              {/* Icon */}
-              <div style={{ width: '4.5rem', height: '4.5rem', borderRadius: '1.25rem', background: 'linear-gradient(135deg,rgba(6,182,212,0.2),rgba(16,185,129,0.12))', border: '1px solid rgba(34,211,238,0.3)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.75rem', boxShadow: '0 0 36px rgba(6,182,212,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+              {/* Icon — no backdropFilter, higher opacity bg instead */}
+              <div style={{ width: '4.5rem', height: '4.5rem', borderRadius: '1.25rem', background: 'linear-gradient(135deg,rgba(6,182,212,0.28),rgba(16,185,129,0.2))', border: '1px solid rgba(34,211,238,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.75rem', boxShadow: '0 0 28px rgba(6,182,212,0.2)' }}>
                 <Target size={30} color="#22d3ee" strokeWidth={1.6} />
               </div>
 
@@ -400,7 +394,6 @@ export default function AboutUs() {
                 </Link>
               </div>
             </div>
-          </motion.div>
         </div>
       </section>
 

@@ -189,7 +189,7 @@
   .glass-card {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    background: rgba(15, 23, 42, 0.96) !important;
+    background: rgba(15, 23, 42, 0.96); /* no !important — inline styles override this */
   }
 
   /* Kill will-change on mobile — every will-change = a GPU layer */
