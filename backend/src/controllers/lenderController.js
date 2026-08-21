@@ -92,3 +92,68 @@ exports.updateLender = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Get lender's configurable loan policy defaults
+ */
+exports.getLoanPolicy = async (req, res, next) => {
+    try {
+        const lenderId = req.user?.lenderId;
+        if (!lenderId) return next(new AppError('Lender not found', 404));
+
+        const lender = await Lender.findById(lenderId).select('loanPolicy');
+        if (!lender) return next(new AppError('Lender not found', 404));
+
+        res.json({
+            success: true,
+            loanPolicy: lender.loanPolicy || {},
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Update lender's configurable loan policy defaults
+ */
+exports.updateLoanPolicy = async (req, res, next) => {
+    try {
+        const lenderId = req.user?.lenderId;
+        if (!lenderId) return next(new AppError('Lender not found', 404));
+
+        const allowedFields = [
+            'defaultInterestRate',
+            'defaultGracePeriodDays',
+            'defaultLateFeeType',
+            'defaultLateFeeValue',
+            'defaultForeclosurePolicy',
+            'defaultMaxTenureMonths',
+            'defaultPaymentMethods',
+            'interestCalculationType',
+        ];
+
+        const update = {};
+        allowedFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                update[`loanPolicy.${field}`] = req.body[field];
+            }
+        });
+
+        const lender = await Lender.findByIdAndUpdate(
+            lenderId,
+            { $set: update },
+            { new: true, runValidators: true }
+        );
+
+        if (!lender) return next(new AppError('Lender not found', 404));
+
+        res.json({
+            success: true,
+            message: 'Loan policy updated successfully',
+            loanPolicy: lender.loanPolicy,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+

@@ -68,13 +68,36 @@ const lenderSchema = new mongoose.Schema({
     companyStamp: {
         type: String, // URL or Base64 for digital stamp
     },
-    termsAndConditions: {
-        type: String, // Default T&C for contracts
-        default: `1. The borrower agrees to repay the loan amount along with interest as per the agreed schedule.
-2. Late payment will attract additional charges as specified in the agreement.
-3. Prepayment is allowed without any penalty.
-4. The lender reserves the right to recall the loan in case of default.
-5. All disputes shall be subject to local jurisdiction.`,
+    activePolicies: {
+        termsId: { type: mongoose.Schema.Types.ObjectId, ref: 'LegalPolicy' },
+        loanAgreementId: { type: mongoose.Schema.Types.ObjectId, ref: 'LegalPolicy' },
+        interestId: { type: mongoose.Schema.Types.ObjectId, ref: 'LegalPolicy' },
+        emiPaymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'LegalPolicy' },
+        foreclosureId: { type: mongoose.Schema.Types.ObjectId, ref: 'LegalPolicy' },
+        defaultOverdueId: { type: mongoose.Schema.Types.ObjectId, ref: 'LegalPolicy' },
+        privacyId: { type: mongoose.Schema.Types.ObjectId, ref: 'LegalPolicy' },
+        contactId: { type: mongoose.Schema.Types.ObjectId, ref: 'LegalPolicy' },
+    },
+    loanPolicy: {
+        defaultInterestRate: { type: Number, default: 12 },
+        defaultGracePeriodDays: { type: Number, enum: [0, 3, 5, 7, 15, 30], default: 0 },
+        defaultLateFeeType: { type: String, enum: ['none', 'fixed', 'percentage'], default: 'none' },
+        defaultLateFeeValue: { type: Number, default: 0 },
+        defaultForeclosurePolicy: {
+            type: String,
+            enum: ['NOT_ALLOWED', 'WITHOUT_DISCOUNT', 'MANUAL_DISCOUNT'],
+            default: 'WITHOUT_DISCOUNT'
+        },
+        defaultMaxTenureMonths: { type: Number, default: 360 },
+        defaultPaymentMethods: {
+            type: [String],
+            default: ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE', 'IMPS', 'NEFT']
+        },
+        interestCalculationType: {
+            type: String,
+            enum: ['SIMPLE', 'FLAT', 'REDUCING_BALANCE'],
+            default: 'SIMPLE'
+        },
     },
     invoicePrefix: {
         type: String,

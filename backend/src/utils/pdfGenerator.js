@@ -13,196 +13,307 @@ const fonts = {
 const printer = new PdfPrinter(fonts);
 
 /**
- * Generate Loan Agreement PDF
+ * Generate Personal Loan Agreement PDF
+ * @param {Object} loan       - Populated Loan document (customerId populated)
+ * @param {Object} lender     - Lender document
+ * @param {Object} [snapshot] - Immutable agreementSnapshot embedded in the loan.
+ *                              If absent, falls back gracefully. Never fetches live policies.
  */
-const generateLoanAgreement = async (loan, lender) => {
+const generateLoanAgreement = async (loan, lender, snapshot = {}) => {
     const businessName = lender?.businessName || 'MoneyLender';
     const customer = loan.customerId;
-    const termsAndConditions = lender?.termsAndConditions || '1. The borrower shall pay the EMI on time.\n2. Late payments will incur penalties.';
 
-    // Debug: Check if lender has companyStamp
-    console.log('PDF Generation - Lender has companyStamp:', !!lender?.companyStamp);
+    // ── Resolve snapshot metadata (immutable record only, never fetched live) ──
+    const s = snapshot || {};
+    const agreementVersion  = s.agreementVersion  || 'v1.0';
+    const termsVersion      = s.termsVersion      || 'v1.0';
+
+    // ── Helpers ───────────────────────────────────────────────────────────────────
+    const fmt = (n) => `Rs. ${(n || 0).toLocaleString('en-IN')}`;
+    const fmtDate = (d) => d
+        ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        : 'N/A';
+
+    // ── Foreclosure — user-friendly wording ───────────────────────────────────────
+    const foreclosurePolicyStr = (() => {
+        const p = loan.foreclosurePolicy || 'WITHOUT_DISCOUNT';
+        if (p === 'NOT_ALLOWED')      return 'Not Allowed';
+        if (p === 'WITHOUT_DISCOUNT') return 'Allowed – No Discount';
+        if (p === 'MANUAL_DISCOUNT')  return 'Manual Discount Allowed';
+        return p;
+    })();
+
+    // ── Grace / late fee summary ──────────────────────────────────────────────────
+    const graceDays = loan.gracePeriodDays || 0;
+    const lateFeeStr = (() => {
+        const t = loan.lateFeeType || 'none';
+        if (t === 'fixed')      return `Rs. ${loan.lateFeeValue || 0} (fixed) after grace`;
+        if (t === 'percentage') return `${loan.lateFeeValue || 0}% of EMI after grace`;
+        return 'None';
+    })();
+
+    // ── Lender address ────────────────────────────────────────────────────────────
+    const lenderAddr = lender?.address
+        ? [lender.address.street, lender.address.city, lender.address.state].filter(Boolean).join(', ')
+        : '';
+
+    // ── Agreement date line ───────────────────────────────────────────────────────
+    const agreementDate = fmtDate(loan.agreementGeneratedAt || new Date());
+
+    // ── Legal Center URL (dynamic — reads FRONTEND_URL from environment) ─────────
+    // IMPORTANT: Set FRONTEND_URL in your deployment environment variables.
+    // If not set in production, the agreement PDF will show localhost — set it!
+    const frontendOrigin = (() => {
+        const url = process.env.FRONTEND_URL;
+        if (!url && process.env.NODE_ENV === 'production') {
+            console.error('[pdfGenerator] WARNING: FRONTEND_URL is not set. PDF will show localhost. Set FRONTEND_URL in your production environment.');
+        }
+        return (url || 'http://localhost:5173').replace(/\/$/, '');
+    })();
+    const legalCenterUrl = `${frontendOrigin}/legal`;
 
     const docDefinition = {
         pageSize: 'A4',
-        pageMargins: [40, 60, 40, 45],
+        pageMargins: [36, 52, 36, 36],
+
+        // ── No footer ─────────────────────────────────────────────────────────────
+        footer: null,
+
         header: {
-            margin: [40, 20, 40, 0],
+            margin: [36, 15, 36, 0],
             columns: [
-                { text: businessName.toUpperCase(), fontSize: 12, bold: true, color: '#0d9488' },
-                { text: 'LOAN AGREEMENT', fontSize: 12, bold: true, color: '#111827', alignment: 'right' }
+                { text: businessName.toUpperCase(), fontSize: 11, bold: true, color: '#0d9488' },
+                { text: 'PERSONAL LOAN AGREEMENT', fontSize: 11, bold: true, color: '#111827', alignment: 'right' }
             ]
         },
+
         content: [
-            // Decorative Line
+            // ── Teal rule ─────────────────────────────────────────────────────────
             {
-                canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 2, color: '#0d9488' }],
-                margin: [0, 0, 0, 15]
+                canvas: [{ type: 'rect', x: 0, y: 0, w: 523, h: 2, color: '#0d9488' }],
+                margin: [0, 0, 0, 10]
             },
 
-            // Parties Section - Two-Column Layout with Borders
+            // ── Parties (2-col) ───────────────────────────────────────────────────
             {
                 table: {
-                    widths: ['*', 10, '*'],
+                    widths: ['*', 8, '*'],
                     body: [[
-                        // Lender Box
                         {
                             stack: [
-                                { text: 'LENDER DETAILS', fontSize: 9, bold: true, color: '#0d9488', margin: [0, 0, 0, 8] },
-                                { text: businessName, fontSize: 12, bold: true, color: '#111827', margin: [0, 0, 0, 4] },
-                                { text: lender?.address || 'Address: N/A', fontSize: 9, color: '#4b5563', margin: [0, 0, 0, 3] },
-                                { text: `Phone: ${lender?.phone || 'N/A'}`, fontSize: 9, color: '#4b5563', margin: [0, 0, 0, 2] },
-                                { text: `Email: ${lender?.email || 'N/A'}`, fontSize: 9, color: '#4b5563' }
+                                { text: 'LENDER', fontSize: 7.5, bold: true, color: '#0d9488', margin: [0, 0, 0, 4] },
+                                { text: businessName, fontSize: 10, bold: true, color: '#111827', margin: [0, 0, 0, 2] },
+                                lenderAddr ? { text: lenderAddr, fontSize: 7.5, color: '#4b5563', margin: [0, 0, 0, 1] } : { text: '' },
+                                { text: `Ph: ${lender?.phone || 'N/A'}  |  ${lender?.email || 'N/A'}`, fontSize: 7.5, color: '#4b5563' },
+                                lender?.panNumber ? { text: `PAN: ${lender.panNumber}`, fontSize: 7.5, color: '#6b7280', margin: [0, 1, 0, 0] } : { text: '' },
                             ],
-                            fillColor: '#f0fdfa',
-                            margin: [10, 10, 10, 10]
+                            fillColor: '#f0fdfa', margin: [8, 7, 8, 7]
                         },
-                        // Spacer (no border)
                         { text: '', border: [false, false, false, false] },
-                        // Borrower Box
                         {
                             stack: [
-                                { text: 'BORROWER DETAILS', fontSize: 9, bold: true, color: '#6b7280', margin: [0, 0, 0, 8] },
+                                { text: 'BORROWER', fontSize: 7.5, bold: true, color: '#6b7280', margin: [0, 0, 0, 4] },
                                 {
                                     columns: [
                                         {
                                             width: '*',
                                             stack: [
-                                                { text: `${customer.firstName} ${customer.lastName}`, fontSize: 12, bold: true, color: '#111827', margin: [0, 0, 0, 4] },
-                                                { text: `Phone: ${customer.phone || 'N/A'}`, fontSize: 9, color: '#4b5563', margin: [0, 0, 0, 2] },
-                                                { text: `Email: ${customer.email || 'N/A'}`, fontSize: 9, color: '#4b5563', margin: [0, 0, 0, 2] },
-                                                customer.address?.city ? { text: `${customer.address.city}, ${customer.address.state || ''}`, fontSize: 9, color: '#6b7280' } : { text: '' }
+                                                { text: `${customer.firstName} ${customer.lastName}`, fontSize: 10, bold: true, color: '#111827', margin: [0, 0, 0, 2] },
+                                                { text: `Ph: ${customer.phone || 'N/A'}`, fontSize: 7.5, color: '#4b5563', margin: [0, 0, 0, 1] },
+                                                { text: `Email: ${customer.email || 'N/A'}`, fontSize: 7.5, color: '#4b5563', margin: [0, 0, 0, 1] },
+                                                customer.aadhaarNumber ? { text: `Aadhaar: ${customer.aadhaarNumber}`, fontSize: 7.5, color: '#6b7280' } : { text: '' },
                                             ]
                                         },
-                                        customer.photo ? {
-                                            width: 70,
-                                            stack: [{ image: customer.photo, fit: [60, 75], alignment: 'center' }]
-                                        } : { width: 0, text: '' }
+                                        customer.photo
+                                            ? { width: 52, stack: [{ image: customer.photo, fit: [48, 58], alignment: 'center' }] }
+                                            : { width: 0, text: '' }
                                     ]
                                 }
                             ],
-                            fillColor: '#f9fafb',
-                            margin: [10, 10, 10, 10]
+                            fillColor: '#f9fafb', margin: [8, 7, 8, 7]
                         }
                     ]]
                 },
                 layout: {
-                    hLineWidth: (i) => 1,
-                    vLineWidth: (i) => (i === 1 || i === 2) ? 0 : 1, // No border on spacer
+                    hLineWidth: () => 0.7,
+                    vLineWidth: (i) => (i === 1 || i === 2) ? 0 : 0.7,
                     hLineColor: () => '#d1d5db',
                     vLineColor: () => '#d1d5db',
-                    paddingLeft: () => 0,
-                    paddingRight: () => 0,
-                    paddingTop: () => 0,
-                    paddingBottom: () => 0
+                    paddingLeft: () => 0, paddingRight: () => 0,
+                    paddingTop: () => 0,  paddingBottom: () => 0
                 },
-                margin: [0, 0, 0, 20]
+                margin: [0, 0, 0, 10]
             },
 
-            // Date
-            { text: `Agreement Date: ${new Date().toLocaleDateString()}`, fontSize: 9, italics: true, color: '#6b7280', alignment: 'right', margin: [0, 0, 0, 15] },
+            // ── Agreement Information line ─────────────────────────────────────────
+            {
+                text: `Agreement Date: ${agreementDate}    |    Agreement Ref: ${agreementVersion}    |    Policy Ref: ${termsVersion}`,
+                fontSize: 7.5, italics: true, color: '#6b7280', alignment: 'right', margin: [0, 0, 0, 12]
+            },
 
-            // Loan Details Section
-            { text: 'KEY LOAN TERMS', fontSize: 10, bold: true, color: '#111827', margin: [0, 0, 0, 8] },
+            // ── Key Loan Terms ────────────────────────────────────────────────────
+            { text: 'KEY LOAN TERMS', fontSize: 9, bold: true, color: '#111827', margin: [0, 0, 0, 5] },
             {
                 table: {
-                    widths: ['*', '*'],
+                    widths: ['*', '*', '*', '*'],
                     body: [
                         [
-                            { text: 'Loan Number', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
-                            { text: loan.loanNumber, fontSize: 9, bold: true, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
+                            { text: 'Loan Number',    fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: loan.loanNumber,  fontSize: 7.5, bold: true, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] },
+                            { text: 'Principal',      fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: fmt(loan.principal), fontSize: 7.5, bold: true, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] }
                         ],
                         [
-                            { text: 'Principal Amount', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
-                            { text: `Rs. ${loan.principal.toLocaleString()}`, fontSize: 9, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
+                            { text: 'Interest Rate', fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: `${loan.monthlyInterestRate}%/mo (${loan.interestType === 'compound' ? 'Compound' : 'Simple'})`, fontSize: 7.5, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] },
+                            { text: 'Tenure',        fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: `${loan.loanDurationMonths} Months`, fontSize: 7.5, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] }
                         ],
                         [
-                            { text: 'Interest Rate', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
-                            { text: `${loan.monthlyInterestRate}% / month (${loan.interestType === 'compound' ? 'Compound' : 'Simple'})`, fontSize: 9, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
+                            { text: 'Monthly EMI',   fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: fmt(loan.monthlyEMI), fontSize: 7.5, bold: true, color: '#0d9488', alignment: 'right', margin: [0, 5, 4, 5] },
+                            { text: 'Total Payable', fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: fmt(loan.totalAmountPayable), fontSize: 7.5, bold: true, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] }
                         ],
                         [
-                            { text: 'Tenure', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
-                            { text: `${loan.loanDurationMonths} Months`, fontSize: 9, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
+                            { text: 'Start Date',   fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: fmtDate(loan.startDate), fontSize: 7.5, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] },
+                            { text: 'End Date',     fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: fmtDate(loan.endDate), fontSize: 7.5, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] }
                         ],
                         [
-                            { text: 'Monthly EMI', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
-                            { text: `Rs. ${loan.monthlyEMI.toLocaleString()}`, fontSize: 9, bold: true, color: '#0d9488', alignment: 'right', margin: [0, 6, 5, 6] }
+                            { text: 'Grace Period', fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: `${graceDays} day${graceDays !== 1 ? 's' : ''}`, fontSize: 7.5, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] },
+                            { text: 'Late Fee',     fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: lateFeeStr,     fontSize: 7.5, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] }
                         ],
                         [
-                            { text: 'Start Date', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
-                            { text: new Date(loan.startDate).toLocaleDateString(), fontSize: 9, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
-                        ],
-                        [
-                            { text: 'Total Payable', fontSize: 9, color: '#4b5563', margin: [5, 6, 0, 6] },
-                            { text: `Rs. ${loan.totalAmountPayable?.toLocaleString() || 'N/A'}`, fontSize: 9, bold: true, color: '#111827', alignment: 'right', margin: [0, 6, 5, 6] }
+                            { text: 'Foreclosure',    fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: foreclosurePolicyStr, fontSize: 7.5, color: '#111827', alignment: 'right', margin: [0, 5, 4, 5] },
+                            { text: 'Total Interest', fontSize: 7.5, color: '#4b5563', margin: [4, 5, 0, 5] },
+                            { text: fmt(loan.totalInterestAmount), fontSize: 7.5, color: '#b45309', alignment: 'right', margin: [0, 5, 4, 5] }
                         ],
                     ]
                 },
                 layout: {
-                    fillColor: (i) => (i % 2 === 0) ? '#f9fafb' : null,
+                    fillColor: (i) => i % 2 === 0 ? '#f9fafb' : null,
                     hLineWidth: () => 0.5,
-                    vLineWidth: () => 0,
-                    hLineColor: () => '#e5e7eb'
-                }
+                    vLineWidth: () => 0.5,
+                    hLineColor: () => '#e5e7eb',
+                    vLineColor: () => '#e5e7eb'
+                },
+                margin: [0, 0, 0, 14]
             },
 
-            // Terms and Conditions
-            { text: 'TERMS AND CONDITIONS', fontSize: 10, bold: true, color: '#111827', margin: [0, 15, 0, 8] },
+            // ── Key Legal Terms ───────────────────────────────────────────────────
+            { text: 'KEY LEGAL TERMS', fontSize: 9, bold: true, color: '#111827', margin: [0, 0, 0, 6] },
             {
-                text: termsAndConditions,
-                fontSize: 9,
-                lineHeight: 1.4,
-                color: '#374151',
-                alignment: 'justify'
+                table: {
+                    widths: ['*'],
+                    body: [[
+                        {
+                            stack: [
+                                {
+                                    text: 'This loan agreement is governed by the following important policies:',
+                                    fontSize: 7.5, color: '#374151', lineHeight: 1.4, margin: [0, 0, 0, 6]
+                                },
+                                {
+                                    ul: [
+                                        'Loan repayments must be made according to the agreed EMI schedule.',
+                                        'Interest, foreclosure options, grace periods and overdue charges are governed by the agreed loan terms.',
+                                        'Your personal information and loan records are securely maintained and used only for legitimate loan administration.',
+                                        'The terms and policies accepted at the time of signing remain applicable to this agreement even if future policy updates are published.',
+                                    ],
+                                    fontSize: 7.5, color: '#374151', lineHeight: 1.45,
+                                    markerColor: '#0d9488', margin: [4, 0, 0, 8]
+                                },
+                                {
+                                    text: [
+                                        {
+                                            text: 'For complete Terms & Conditions and all legal policies, please visit our ',
+                                            fontSize: 7.5, color: '#374151'
+                                        },
+                                        {
+                                            text: 'Legal Center',
+                                            fontSize: 7.5, color: '#0d9488', bold: true,
+                                            link: legalCenterUrl,
+                                            decoration: 'underline', decorationColor: '#0d9488'
+                                        },
+                                        {
+                                            text: '.',
+                                            fontSize: 7.5, color: '#374151'
+                                        },
+                                    ]
+                                },
+                            ],
+                            margin: [10, 8, 10, 8]
+                        }
+                    ]]
+                },
+                layout: {
+                    hLineWidth: () => 0.5,
+                    vLineWidth: () => 0.5,
+                    hLineColor: () => '#d1d5db',
+                    vLineColor: () => '#d1d5db',
+                    fillColor: () => '#fafafa'
+                },
+                margin: [0, 0, 0, 12]
             },
 
-            // Signatures
+            // ── Borrower Declaration ──────────────────────────────────────────────
+            { text: 'BORROWER DECLARATION', fontSize: 9, bold: true, color: '#111827', margin: [0, 0, 0, 5] },
             {
-                margin: [0, 25, 0, 0],
+                table: {
+                    widths: ['*'],
+                    body: [[
+                        {
+                            text: 'The borrower acknowledges receiving the loan amount stated in this agreement and confirms that they have read, understood, and voluntarily accepted the terms of this Personal Loan Agreement and the applicable legal policies referenced above.',
+                            fontSize: 7.5, color: '#374151', lineHeight: 1.5, margin: [10, 7, 10, 7]
+                        }
+                    ]]
+                },
+                layout: {
+                    hLineWidth: () => 0.5,
+                    vLineWidth: () => 0.5,
+                    hLineColor: () => '#d1d5db',
+                    vLineColor: () => '#d1d5db',
+                    fillColor: () => '#fffbeb'
+                },
+                margin: [0, 0, 0, 16]
+            },
+
+            // ── Signature Section ─────────────────────────────────────────────────
+            {
                 columns: [
                     {
                         width: '45%',
                         stack: [
-                            { text: 'LENDER SIGNATURE', fontSize: 8, bold: true, color: '#6b7280', decoration: 'underline', margin: [0, 0, 0, 5] },
-                            lender?.companyStamp ? {
-                                image: lender.companyStamp,
-                                width: 60,
-                                margin: [0, 5, 0, 5]
-                            } : { text: '\n\n', margin: [0, 15, 0, 15] },
-                            { text: '________________________', fontSize: 9, color: '#9ca3af' },
-                            { text: businessName, fontSize: 9, bold: true, margin: [0, 5, 0, 0] },
-                            { text: `PAN: ${lender?.panNumber || 'N/A'}`, fontSize: 7, color: '#6b7280' }
+                            { text: 'LENDER SIGNATURE', fontSize: 7.5, bold: true, color: '#6b7280', margin: [0, 0, 0, 4] },
+                            lender?.companyStamp
+                                ? { image: lender.companyStamp, width: 55, margin: [0, 3, 0, 3] }
+                                : { text: '\n\n', margin: [0, 12, 0, 12] },
+                            { text: '____________________________', fontSize: 8.5, color: '#9ca3af' },
+                            { text: businessName, fontSize: 8, bold: true, margin: [0, 4, 0, 0] },
+                            lender?.panNumber ? { text: `PAN: ${lender.panNumber}`, fontSize: 7, color: '#6b7280' } : { text: '' }
                         ]
                     },
-                    {
-                        width: '10%',
-                        text: ''
-                    },
+                    { width: '10%', text: '' },
                     {
                         width: '45%',
                         stack: [
-                            { text: 'BORROWER SIGNATURE', fontSize: 8, bold: true, color: '#6b7280', decoration: 'underline', margin: [0, 0, 0, 5] },
-                            customer.signature ? {
-                                image: customer.signature,
-                                width: 60,
-                                margin: [0, 5, 0, 5]
-                            } : { text: '\n\n', margin: [0, 15, 0, 15] },
-                            { text: '________________________', fontSize: 9, color: '#9ca3af' },
-                            { text: `${customer.firstName} ${customer.lastName}`, fontSize: 9, bold: true, margin: [0, 5, 0, 0] },
-                            { text: `Aadhaar: ${customer.aadhaarNumber || 'N/A'}`, fontSize: 7, color: '#6b7280' }
+                            { text: 'BORROWER SIGNATURE', fontSize: 7.5, bold: true, color: '#6b7280', margin: [0, 0, 0, 4] },
+                            customer.signature
+                                ? { image: customer.signature, width: 55, margin: [0, 3, 0, 3] }
+                                : { text: '\n\n', margin: [0, 12, 0, 12] },
+                            { text: '____________________________', fontSize: 8.5, color: '#9ca3af' },
+                            { text: `${customer.firstName} ${customer.lastName}`, fontSize: 8, bold: true, margin: [0, 4, 0, 0] },
+                            customer.aadhaarNumber ? { text: `Aadhaar: ${customer.aadhaarNumber}`, fontSize: 7, color: '#6b7280' } : { text: '' }
                         ]
                     }
                 ]
             }
-
         ],
-        footer: {
-            columns: [
-                { text: `Generated: ${new Date().toLocaleDateString()}`, fontSize: 7, color: '#9ca3af' },
-                { text: 'Page 1 of 1', fontSize: 7, color: '#9ca3af', alignment: 'right' }
-            ],
-            margin: [40, 10, 40, 0]
-        },
+
         defaultStyle: { font: 'Roboto' }
     };
 
@@ -210,9 +321,6 @@ const generateLoanAgreement = async (loan, lender) => {
 };
 
 
-/**
- * Generate Loan Statement PDF
- */
 const generateLoanStatement = async (loan, lender, payments) => {
     const businessName = lender?.businessName || 'MoneyLender';
     const customer = loan.customerId;

@@ -84,6 +84,11 @@ app.use('/api/stats', protect, require('./routes/stats'));
 app.use('/api/invoices', protect, require('./routes/invoices'));
 app.use('/api/export', protect, require('./routes/export'));
 
+// Legal: /public is open (for landing page Legal Center); all other routes are protected
+const { getPublicPolicies } = require('./controllers/legalController');
+app.get('/api/legal/public', getPublicPolicies);
+app.use('/api/legal', protect, require('./routes/legal'));
+
 // Customer portal routes (customer authentication)
 app.use('/api/portal', require('./routes/customerPortal'));
 

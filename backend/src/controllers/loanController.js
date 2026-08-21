@@ -3,7 +3,13 @@ const Customer = require('../models/Customer');
 const Lender = require('../models/Lender');
 const Payment = require('../models/Payment');
 const { AppError } = require('../middleware/errorHandler');
-const { PAGINATION, LOAN_STATUS } = require('../config/constants');
+const {
+    PAGINATION,
+    LOAN_STATUS,
+    LOAN_COMPLETION_TYPE,
+    FORECLOSURE_POLICY,
+    DISCOUNT_REASON,
+} = require('../config/constants');
 const {
     calculateMonthlyEMI,
     generateAmortizationSchedule,
@@ -18,6 +24,11 @@ const {
     generateLoanClosureNOC,
     generateSettlementCertificate
 } = require('../utils/pdfGenerator');
+const {
+    computeForeclosureSettlement,
+    computeLoanStage,
+} = require('../utils/loanCalculations');
+const { buildPolicySnapshot } = require('./legalController');
 
 
 /**
@@ -117,7 +128,21 @@ exports.getLoan = async (req, res, next) => {
  */
 exports.createLoan = async (req, res, next) => {
     try {
-        const { customerId, principal, monthlyInterestRate, loanDurationMonths, startDate, notes, interestType = 'simple', manualEMI } = req.body;
+        const {
+            customerId,
+            principal,
+            monthlyInterestRate,
+            loanDurationMonths,
+            startDate,
+            notes,
+            interestType = 'simple',
+            manualEMI,
+            // Per-loan policy overrides (fall back to lender defaults if not provided)
+            gracePeriodDays,
+            lateFeeType,
+            lateFeeValue,
+            foreclosurePolicy,
+        } = req.body;
 
         // Verify customer exists
         const customer = await Customer.findById(customerId);
@@ -172,6 +197,13 @@ exports.createLoan = async (req, res, next) => {
         const endDate = new Date(loanStartDate);
         endDate.setMonth(endDate.getMonth() + loanDurationMonths);
 
+        // Resolve per-loan policy: use provided overrides, else fall back to lender defaults
+        const lenderPolicy = lender.loanPolicy || {};
+        const resolvedGracePeriod   = (gracePeriodDays !== undefined) ? Number(gracePeriodDays)  : (lenderPolicy.defaultGracePeriodDays  || 0);
+        const resolvedLateFeeType   = lateFeeType   || lenderPolicy.defaultLateFeeType   || 'none';
+        const resolvedLateFeeValue  = (lateFeeValue  !== undefined) ? Number(lateFeeValue)   : (lenderPolicy.defaultLateFeeValue   || 0);
+        const resolvedForeclosure   = foreclosurePolicy || lenderPolicy.defaultForeclosurePolicy || FORECLOSURE_POLICY.WITHOUT_DISCOUNT;
+
         const loan = new Loan({
             customerId,
             loanNumber,
@@ -189,6 +221,11 @@ exports.createLoan = async (req, res, next) => {
             status: LOAN_STATUS.PENDING_APPROVAL,
             notes,
             lenderId: req.user && req.user.lenderId ? req.user.lenderId : undefined,
+            // Policy fields
+            gracePeriodDays:    resolvedGracePeriod,
+            lateFeeType:        resolvedLateFeeType,
+            lateFeeValue:       resolvedLateFeeValue,
+            foreclosurePolicy:  resolvedForeclosure,
         });
 
         await loan.save();
@@ -421,7 +458,21 @@ exports.downloadAgreement = async (req, res, next) => {
 
         const lender = await Lender.getLender(req.user?.lenderId);
 
-        const pdfDoc = await generateLoanAgreement(loan, lender);
+        // Build immutable snapshot if not yet generated (first download)
+        if (!loan.agreementSnapshot || !loan.agreementSnapshot.agreementVersion) {
+            const snapshot = await buildPolicySnapshot(req.user?.lenderId);
+            const existingLoanDocs = await Loan.countDocuments({ lenderId: req.user?.lenderId });
+            const agreementVersion = `v${existingLoanDocs}.0`;
+            loan.agreementSnapshot = {
+                ...snapshot,
+                agreementVersion,
+                generatedAt: new Date(),
+            };
+            loan.agreementGeneratedAt = new Date();
+            await loan.save();
+        }
+
+        const pdfDoc = await generateLoanAgreement(loan, lender, loan.agreementSnapshot);
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Agreement-${loan.loanNumber}.pdf`);
@@ -463,60 +514,84 @@ exports.downloadStatement = async (req, res, next) => {
  */
 exports.forecloseLoan = async (req, res, next) => {
     try {
-        const { settlementAmount, discount = 0, notes, paymentMethod = 'cash', bankDetails = {} } = req.body;
-        const loan = await Loan.findById(req.params.id);
+        const {
+            discount = 0,
+            discountReason,
+            remarks,
+            paymentMethod = 'CASH',
+            bankDetails = {},
+        } = req.body;
 
-        if (!loan) {
-            return next(new AppError('Loan not found', 404));
-        }
+        const loan = await Loan.findById(req.params.id);
+        if (!loan) return next(new AppError('Loan not found', 404));
 
         if (loan.status !== LOAN_STATUS.ACTIVE) {
             return next(new AppError('Only active loans can be foreclosed', 400));
         }
 
-        // Calculate final settlement
-        const originalBalance = loan.remainingBalance;
-        const finalAmount = settlementAmount || (originalBalance - Number(discount));
+        const policy = loan.foreclosurePolicy || FORECLOSURE_POLICY.WITHOUT_DISCOUNT;
 
-        // Record final settlement payment with all required fields
+        // Compute settlement using pure utility (validates policy, discount limits)
+        const { settlementAmount, discountApplied, error } = computeForeclosureSettlement(
+            loan.remainingBalance,
+            policy,
+            Number(discount)
+        );
+
+        if (error) return next(new AppError(error, 400));
+
+        // Validate discountReason when MANUAL_DISCOUNT
+        if (policy === FORECLOSURE_POLICY.MANUAL_DISCOUNT && discountApplied > 0) {
+            if (!discountReason || !Object.values(DISCOUNT_REASON).includes(discountReason)) {
+                return next(new AppError('A valid discount reason is required for manual discount foreclosure', 400));
+            }
+        }
+
+        const originalBalance = loan.remainingBalance;
+
+        // Record final settlement payment
         const payment = new Payment({
             loanId: loan._id,
             customerId: loan.customerId,
             paymentNumber: loan.paymentsReceived + 1,
-            amountPaid: finalAmount,
-            principalPortion: originalBalance, // Full principal paid off
-            interestPortion: 0, // No additional interest for settlement
-            balanceAfterPayment: 0, // Loan is fully closed
+            amountPaid: settlementAmount,
+            principalPortion: originalBalance,
+            interestPortion: 0,
+            balanceAfterPayment: 0,
             paymentDate: new Date(),
             paymentMethod,
-            notes: notes || 'Early Settlement / Loan Closure',
-            referenceId: `SETTLEMENT-${loan.loanNumber}`,
-            bankDetails: bankDetails
+            notes: remarks || 'Foreclosure / Early Settlement',
+            referenceId: `FORECLOSURE-${loan.loanNumber}`,
+            bankDetails,
         });
-
         await payment.save();
 
-
-
-        // Store settlement details and close loan
-        loan.status = LOAN_STATUS.CLOSED;
+        // Update loan to FORECLOSED
+        loan.status = LOAN_STATUS.FORECLOSED;
+        loan.completionType = LOAN_COMPLETION_TYPE.FORECLOSED;
+        loan.foreclosureDate = new Date();
+        loan.foreclosureDiscount = discountApplied;
+        loan.foreclosureSettlementAmount = settlementAmount;
+        loan.foreclosureRemarks = remarks || 'Foreclosure / Early Settlement';
+        loan.foreclosedBy = req.user?.name || req.user?.email || 'Lender';
+        if (discountReason) loan.discountReason = discountReason;
+        // Legacy settlement fields for backward compat
         loan.settlementBalance = originalBalance;
-        loan.settlementAmount = finalAmount;
-        loan.settlementDiscount = Number(discount) || 0;
+        loan.settlementAmount = settlementAmount;
+        loan.settlementDiscount = discountApplied;
         loan.settlementPaymentMethod = paymentMethod;
-        loan.settlementNotes = notes || 'Early Settlement / Loan Closure';
+        loan.settlementNotes = remarks || 'Foreclosure / Early Settlement';
         loan.settlementDate = new Date();
         loan.settlementBankDetails = bankDetails;
         loan.remainingBalance = 0;
-        loan.notes = `${loan.notes || ''}\n[SETTLED ${new Date().toLocaleDateString()}]`;
         await loan.save();
-
 
         res.json({
             success: true,
-            message: 'Loan settled and closed successfully',
-            settlementAmount: finalAmount,
-            loanId: loan._id
+            message: 'Loan foreclosed successfully',
+            settlementAmount,
+            discountApplied,
+            loanId: loan._id,
         });
     } catch (error) {
         next(error);
@@ -536,8 +611,8 @@ exports.downloadNOC = async (req, res, next) => {
             return next(new AppError('Loan not found', 404));
         }
 
-        if (loan.status !== LOAN_STATUS.CLOSED && loan.status !== LOAN_STATUS.COMPLETED) {
-            return next(new AppError('NOC can only be generated for closed or completed loans', 400));
+        if (![LOAN_STATUS.CLOSED, LOAN_STATUS.COMPLETED, LOAN_STATUS.FORECLOSED].includes(loan.status)) {
+            return next(new AppError('NOC can only be generated for closed, completed, or foreclosed loans', 400));
         }
 
         const lender = await Lender.getLender(req.user?.lenderId);
@@ -616,6 +691,36 @@ exports.deleteLoan = async (req, res, next) => {
         res.json({
             success: true,
             message: 'Loan deleted successfully',
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Mark loan as COMPLETED (all EMIs paid)
+ */
+exports.completeLoan = async (req, res, next) => {
+    try {
+        const loan = await Loan.findById(req.params.id);
+        if (!loan) return next(new AppError('Loan not found', 404));
+
+        if (loan.status !== LOAN_STATUS.ACTIVE) {
+            return next(new AppError('Only active loans can be marked as completed', 400));
+        }
+
+        if (loan.remainingBalance > 0) {
+            return next(new AppError('Cannot complete loan — outstanding balance remaining', 400));
+        }
+
+        loan.status = LOAN_STATUS.COMPLETED;
+        loan.completionType = LOAN_COMPLETION_TYPE.COMPLETED;
+        await loan.save();
+
+        res.json({
+            success: true,
+            message: 'Loan marked as completed',
+            loan,
         });
     } catch (error) {
         next(error);

@@ -16,6 +16,7 @@ router.post('/', validateLoan, loanController.createLoan);
 router.post('/:id/approve', loanController.approveLoan);
 router.post('/:id/cancel', loanController.cancelLoan);
 router.post('/:id/foreclose', loanController.forecloseLoan);
+router.post('/:id/complete', loanController.completeLoan);
 
 // Schedule and Balance
 router.get('/:id/amortization', loanController.getAmortizationSchedule);

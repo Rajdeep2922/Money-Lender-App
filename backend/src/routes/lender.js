@@ -9,4 +9,8 @@ router.get('/', lenderController.getLender);
 // Update lender details
 router.put('/', validateLender, lenderController.updateLender);
 
+// Loan Policy defaults
+router.get('/loan-policy', lenderController.getLoanPolicy);
+router.put('/loan-policy', lenderController.updateLoanPolicy);
+
 module.exports = router;

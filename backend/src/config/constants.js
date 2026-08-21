@@ -7,6 +7,58 @@ module.exports = {
         COMPLETED: 'completed',
         DEFAULTED: 'defaulted',
         CLOSED: 'closed',
+        FORECLOSED: 'foreclosed',
+        CANCELLED: 'cancelled',
+    },
+
+    LOAN_COMPLETION_TYPE: {
+        COMPLETED: 'completed',
+        FORECLOSED: 'foreclosed',
+    },
+
+    FORECLOSURE_POLICY: {
+        NOT_ALLOWED: 'NOT_ALLOWED',
+        WITHOUT_DISCOUNT: 'WITHOUT_DISCOUNT',
+        MANUAL_DISCOUNT: 'MANUAL_DISCOUNT',
+    },
+
+    LATE_FEE_TYPE: {
+        NONE: 'none',
+        FIXED: 'fixed',
+        PERCENTAGE: 'percentage',
+    },
+
+    INTEREST_CALC_TYPE: {
+        SIMPLE: 'SIMPLE',
+        FLAT: 'FLAT',
+        REDUCING_BALANCE: 'REDUCING_BALANCE',
+    },
+
+    LOAN_STAGE: {
+        UPCOMING: 'upcoming',
+        DUE_TODAY: 'due_today',
+        GRACE: 'grace',
+        OVERDUE: 'overdue',
+        DEFAULT: 'default',
+    },
+
+    LEGAL_POLICY_TYPE: {
+        TERMS: 'terms',
+        LOAN_AGREEMENT: 'loanAgreement',
+        INTEREST: 'interest',
+        EMI_PAYMENT: 'emiPayment',
+        FORECLOSURE: 'foreclosure',
+        DEFAULT_OVERDUE: 'defaultOverdue',
+        PRIVACY: 'privacy',
+        CONTACT: 'contact',
+    },
+
+    DISCOUNT_REASON: {
+        MANUAL: 'Manual',
+        LOYAL_CUSTOMER: 'Loyal Customer',
+        MEDICAL_EMERGENCY: 'Medical Emergency',
+        FESTIVAL_OFFER: 'Festival Offer',
+        OTHER: 'Other',
     },
 
     // Customer status options
@@ -18,11 +70,13 @@ module.exports = {
 
     // Payment methods
     PAYMENT_METHODS: {
-        CASH: 'cash',
-        BANK_TRANSFER: 'bank_transfer',
-        UPI: 'upi',
-        CHEQUE: 'cheque',
-        OTHER: 'other',
+        CASH: 'CASH',
+        BANK_TRANSFER: 'BANK_TRANSFER',
+        UPI: 'UPI',
+        CHEQUE: 'CHEQUE',
+        IMPS: 'IMPS',
+        NEFT: 'NEFT',
+        OTHER: 'OTHER',
     },
 
     // Invoice types
