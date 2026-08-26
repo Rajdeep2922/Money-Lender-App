@@ -69,6 +69,13 @@ export const Dashboard = () => {
         projectedInterest = 0,
         overdueLoans = 0,
         healthyLoans = 0,
+        completedLoans = 0,
+        foreclosedLoans = 0,
+        defaultedLoans = 0,
+        todaysDueEMIs = 0,
+        upcomingEMIs = 0,
+        collectionRate: collectionRateFromAPI = 0,
+        recoveryRate = 0,
         monthlyData = {}
     } = stats || {};
 
@@ -88,7 +95,8 @@ export const Dashboard = () => {
         return months;
     })();
 
-    const collectionRate = totalLent > 0 ? Math.round((totalReceived / totalLent) * 100) : 0;
+    const collectionRate = collectionRateFromAPI || (totalLent > 0 ? Math.round((totalReceived / totalLent) * 100) : 0);
+
 
     return (
         <div className="space-y-8">
@@ -195,6 +203,45 @@ export const Dashboard = () => {
                     </Link>
                 </motion.div>
             </div>
+
+            {/* Loan Status Stats */}
+            <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={5}>
+                <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Loan Status</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    {[
+                        { label: 'Active', value: activeLoans, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', link: '/loans?status=active' },
+                        { label: 'Completed', value: completedLoans, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', link: '/loans?status=completed' },
+                        { label: 'Foreclosed', value: foreclosedLoans, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', link: '/loans?status=foreclosed' },
+                        { label: 'Defaulted', value: defaultedLoans, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20', link: '/loans?status=defaulted' },
+                        { label: 'Overdue', value: overdueLoans, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20', link: '/loans' },
+                    ].map((item) => (
+                        <Link key={item.label} to={item.link} className="block group">
+                            <div className={`${item.bg} rounded-xl p-4 border border-transparent hover:border-current hover:border-opacity-20 transition-all`}>
+                                <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.label}</p>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            </motion.div>
+
+            {/* Collection Metrics */}
+            <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={6}>
+                <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Collection Metrics</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                        { label: "Today's Due EMIs", value: todaysDueEMIs, suffix: '', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+                        { label: 'Upcoming (7 days)', value: upcomingEMIs, suffix: '', color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/20' },
+                        { label: 'Collection Rate', value: collectionRate, suffix: '%', color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-900/20' },
+                        { label: 'Recovery Rate', value: recoveryRate, suffix: '%', color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-900/20' },
+                    ].map((item) => (
+                        <div key={item.label} className={`${item.bg} rounded-xl p-4`}>
+                            <p className={`text-2xl font-bold ${item.color}`}>{item.value}{item.suffix}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.label}</p>
+                        </div>
+                    ))}
+                </div>
+            </motion.div>
 
             {/* Chart + Recent Loans */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

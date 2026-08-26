@@ -28,6 +28,7 @@ const InvoiceList = lazy(() => import('./pages/Invoices/InvoiceList'));
 const LoanCalculator = lazy(() => import('./pages/Public/LoanCalculator'));
 const LandingPage = lazy(() => import('./pages/Landing/LandingPage'));
 const PrivacyPolicy = lazy(() => import('./pages/Legal/PrivacyPolicy'));
+const PublicLegalCenter = lazy(() => import('./pages/Legal/PublicLegalCenter'));
 const AboutUs = lazy(() => import('./pages/Landing/AboutUs'));
 // Customer Portal pages
 const CustomerPortalLayout = lazy(() => import('./components/layouts/CustomerPortalLayout'));
@@ -41,6 +42,7 @@ const CustomerChatRoom = lazy(() => import('./pages/CustomerPortal/ChatRoom'));
 const IncomingRequests = lazy(() => import('./pages/LoanRequests/IncomingRequests'));
 const LenderChatRoom = lazy(() => import('./pages/LoanRequests/LenderChatRoom'));
 const CustomerLogin = lazy(() => import('./pages/Auth/CustomerLogin'));
+const LegalPolicyEditor = lazy(() => import('./pages/Settings/LegalPolicyEditor'));
 // ─────────────────────────────────────────────────────────────────────────
 
 
@@ -118,6 +120,7 @@ function App() {
                   <Route path="/landing" element={<LandingPage />} />
                   {/* Legal Pages */}
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/legal" element={<PublicLegalCenter />} />
                   <Route path="/about" element={<AboutUs />} />
                   {/* Root: redirect authenticated users to dashboard, else landing */}
                   <Route path="/" element={<RootRoute />} />
@@ -157,6 +160,7 @@ function App() {
 
                     {/* Settings */}
                     <Route path="/settings" element={<Settings />} />
+                    <Route path="/settings/legal/:type" element={<LegalPolicyEditor />} />
 
                     {/* ── NEW: Lender — Loan Requests & Chat */}
                     <Route path="/loan-requests" element={<IncomingRequests />} />

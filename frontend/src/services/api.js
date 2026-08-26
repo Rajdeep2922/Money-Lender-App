@@ -77,6 +77,7 @@ export const loanAPI = {
     updateStatus: (id, status) => api.patch(`/loans/${id}/status`, { status }),
     cancel: (id) => api.post(`/loans/${id}/cancel`),
     foreclose: (id, data) => api.post(`/loans/${id}/foreclose`, data),
+    complete: (id) => api.post(`/loans/${id}/complete`),
     getAmortization: (id) => api.get(`/loans/${id}/amortization`),
     getBalance: (id) => api.get(`/loans/${id}/balance`),
     downloadAgreement: (id) => api.get(`/loans/${id}/agreement`, { responseType: 'blob' }),
@@ -111,6 +112,16 @@ export const paymentAPI = {
 export const lenderAPI = {
     get: () => api.get('/lender'),
     update: (data) => api.put('/lender', data),
+    getLoanPolicy: () => api.get('/lender/loan-policy'),
+    updateLoanPolicy: (data) => api.put('/lender/loan-policy', data),
+};
+
+// Legal Policy API
+export const legalAPI = {
+    getAllPolicies: () => api.get('/legal/policies'),
+    getActivePolicy: (type) => api.get(`/legal/policies/${type}`),
+    getPolicyHistory: (type) => api.get(`/legal/policies/${type}/history`),
+    publishPolicy: (type, content) => api.put(`/legal/policies/${type}`, { content }),
 };
 
 // stats API

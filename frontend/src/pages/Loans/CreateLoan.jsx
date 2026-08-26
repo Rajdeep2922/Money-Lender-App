@@ -1,13 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FiArrowLeft, FiSave, FiPercent, FiEdit3, FiZap } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiPercent, FiEdit3, FiZap, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useCustomers } from '../../hooks/useCustomers';
 import { useCreateLoan } from '../../hooks/useLoans';
+import { useLoanPolicy } from '../../hooks/useLender';
 import { formatCurrency } from '../../utils/formatters';
 // Import from shared calculation module - SINGLE SOURCE OF TRUTH
 import { calculateMonthlyEMI, calculateCompoundEMI } from '../../../../shared/loanCalculations.js';
@@ -59,9 +60,11 @@ export const CreateLoan = () => {
     const navigate = useNavigate();
     const [isManualEMI, setIsManualEMI] = useState(false);
     const [manualEMI, setManualEMI] = useState('');
+    const [policyExpanded, setPolicyExpanded] = useState(false);
 
     const { data: customersData } = useCustomers({ limit: 100 });
     const createLoan = useCreateLoan();
+    const { data: loanPolicy } = useLoanPolicy();
 
     const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(loanSchema),
@@ -71,6 +74,10 @@ export const CreateLoan = () => {
             loanDurationMonths: 12,
             startDate: new Date().toISOString().split('T')[0],
             interestType: 'simple',
+            gracePeriodDays: undefined,
+            lateFeeType: undefined,
+            lateFeeValue: undefined,
+            foreclosurePolicy: undefined,
         },
     });
 
@@ -117,20 +124,28 @@ export const CreateLoan = () => {
     const onSubmit = async (data) => {
         const toastId = toast.loading('Creating loan...');
         try {
-            // If manual EMI mode, include the manual EMI value
             const submitData = isManualEMI && manualEMI
                 ? { ...data, manualEMI: parseFloat(manualEMI) }
                 : data;
 
-            console.log('Submitting loan data:', submitData);
-            console.log('Manual EMI mode:', isManualEMI);
-            console.log('Manual EMI value:', manualEMI);
+            // Include per-loan policy overrides (undefined fields will be ignored by server; it uses lender defaults)
+            if (data.gracePeriodDays !== undefined && data.gracePeriodDays !== '') {
+                submitData.gracePeriodDays = Number(data.gracePeriodDays);
+            }
+            if (data.lateFeeType && data.lateFeeType !== '') {
+                submitData.lateFeeType = data.lateFeeType;
+            }
+            if (data.lateFeeValue !== undefined && data.lateFeeValue !== '') {
+                submitData.lateFeeValue = Number(data.lateFeeValue);
+            }
+            if (data.foreclosurePolicy && data.foreclosurePolicy !== '') {
+                submitData.foreclosurePolicy = data.foreclosurePolicy;
+            }
 
             await createLoan.mutateAsync(submitData);
             toast.success('Loan created successfully', { id: toastId });
             navigate('/loans');
         } catch (error) {
-            console.error('Error creating loan:', error);
             const errorMessage = error.response?.data?.message || error.message || 'Failed to create loan';
             toast.error(errorMessage, { id: toastId });
         }
@@ -322,6 +337,82 @@ export const CreateLoan = () => {
                         </div>
                     </motion.div>
                 )}
+
+                {/* Advanced Policy Overrides (Collapsible) */}
+                <div className="card overflow-hidden">
+                    <button
+                        type="button"
+                        onClick={() => setPolicyExpanded(v => !v)}
+                        className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                    >
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Advanced Policy</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">(optional — overrides lender defaults)</span>
+                        </div>
+                        {policyExpanded
+                            ? <FiChevronUp className="w-4 h-4 text-gray-400" />
+                            : <FiChevronDown className="w-4 h-4 text-gray-400" />}
+                    </button>
+                    <AnimatePresence>
+                        {policyExpanded && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="p-6 space-y-5">
+                                    {/* Grace Period */}
+                                    <div className="form-group">
+                                        <label className="label">Grace Period Days</label>
+                                        <select {...register('gracePeriodDays')} className="input">
+                                            <option value="">Use lender default ({loanPolicy?.defaultGracePeriodDays ?? 0} days)</option>
+                                            {[0, 3, 5, 7, 15, 30].map(d => (
+                                                <option key={d} value={d}>{d === 0 ? '0 Days (No Grace Period)' : `${d} Days`}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Late Fee */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="form-group">
+                                            <label className="label">Late Fee Type</label>
+                                            <select {...register('lateFeeType')} className="input">
+                                                <option value="">Use lender default ({loanPolicy?.defaultLateFeeType ?? 'none'})</option>
+                                                <option value="none">No Late Fee</option>
+                                                <option value="fixed">Fixed Amount (₹)</option>
+                                                <option value="percentage">Percentage of EMI (%)</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="label">Late Fee Value</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                placeholder={`Default: ${loanPolicy?.defaultLateFeeValue ?? 0}`}
+                                                {...register('lateFeeValue')}
+                                                className="input"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Foreclosure Policy */}
+                                    <div className="form-group">
+                                        <label className="label">Foreclosure Policy</label>
+                                        <select {...register('foreclosurePolicy')} className="input">
+                                            <option value="">Use lender default ({loanPolicy?.defaultForeclosurePolicy ?? 'WITHOUT_DISCOUNT'})</option>
+                                            <option value="NOT_ALLOWED">Not Allowed</option>
+                                            <option value="WITHOUT_DISCOUNT">Allowed — No Discount</option>
+                                            <option value="MANUAL_DISCOUNT">Allowed — Manual Discount</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3">

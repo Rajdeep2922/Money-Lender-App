@@ -23,6 +23,7 @@ const cols = [
     links: [
       { label: 'Help Center', href: '#', internal: false },
       { label: 'Privacy Policy', href: '/privacy-policy', internal: true },
+      { label: 'Legal Center', href: '/legal', internal: true },
     ],
   },
 ];
@@ -143,6 +144,10 @@ export default function Footer() {
             <Link to="/privacy-policy" style={{ fontSize: '0.8rem', color: '#334155', textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => e.target.style.color = '#22d3ee'}
               onMouseLeave={e => e.target.style.color = '#334155'}>Privacy Policy</Link>
+            <span style={{ fontSize: '0.8rem', color: '#1e293b' }}>·</span>
+            <Link to="/legal" style={{ fontSize: '0.8rem', color: '#334155', textDecoration: 'none', transition: 'color 0.2s' }}
+              onMouseEnter={e => e.target.style.color = '#22d3ee'}
+              onMouseLeave={e => e.target.style.color = '#334155'}>Legal Center</Link>
             <a href="#" style={{ fontSize: '0.8rem', color: '#334155', textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => e.target.style.color = '#22d3ee'}
               onMouseLeave={e => e.target.style.color = '#334155'}>Cookies</a>

@@ -10,11 +10,15 @@ import {
     Globe,
     Upload,
     CheckCircle,
-    Trash2
+    Trash2,
+    Scale,
+    ScrollText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLender, useUpdateLender } from '../hooks/useLender';
 import { PageLoader } from '../components/common/LoadingSpinner';
+import LoanPolicySettings from './Settings/LoanPolicySettings';
+import LegalCenter from './Settings/LegalCenter';
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -29,6 +33,8 @@ const Settings = () => {
         { id: 'preferences', label: 'Preferences', icon: Globe },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'security', label: 'Security', icon: Shield },
+        { id: 'loan-policy', label: 'Loan Policy', icon: Scale },
+        { id: 'legal', label: 'Legal Center', icon: ScrollText },
     ];
 
     return (
@@ -98,6 +104,8 @@ const Settings = () => {
                         {activeTab === 'preferences' && <PreferenceSettings />}
                         {activeTab === 'notifications' && <NotificationSettings />}
                         {activeTab === 'security' && <SecuritySettings />}
+                        {activeTab === 'loan-policy' && <LoanPolicySettings />}
+                        {activeTab === 'legal' && <LegalCenter />}
                     </div>
                 </div>
             </div>

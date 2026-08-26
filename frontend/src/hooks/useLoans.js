@@ -213,7 +213,23 @@ export const useDeleteLoan = () => {
         mutationFn: loanAPI.delete,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: ['stats'] }); // Refresh dashboard stats
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
         },
     });
 };
+
+/**
+ * Mark loan as COMPLETED (all EMIs paid)
+ */
+export const useCompleteLoan = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id) => loanAPI.complete(id),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: loanKeys.detail(id) });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
+        },
+    });
+};
+

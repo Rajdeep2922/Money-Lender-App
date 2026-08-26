@@ -10,13 +10,15 @@ import {
     FiClock,
     FiInfo,
     FiFileText,
-    FiEdit
+    FiEdit,
+    FiXCircle
 } from 'react-icons/fi';
 import {
     useLoan,
     useLoanAmortization,
     useApproveLoan,
     useForecloseLoan,
+    useCompleteLoan,
     useDownloadAgreement,
     useDownloadStatement,
     useDownloadNOC
@@ -42,12 +44,14 @@ const LoanDetails = () => {
     const downloadStatement = useDownloadStatement();
     const downloadNOC = useDownloadNOC();
     const forecloseLoan = useForecloseLoan();
+    const completeLoan = useCompleteLoan();
     const recordPayment = useRecordPayment();
     const deletePayment = useDeletePayment();
     const downloadReceipt = useDownloadReceipt();
 
     const [activeTab, setActiveTab] = useState('overview');
     const [approveModal, setApproveModal] = useState(false);
+    const [completeModal, setCompleteModal] = useState(false);
     const [paymentModal, setPaymentModal] = useState({ isOpen: false, emiItem: null });
     const [unpaidModal, setUnpaidModal] = useState({ isOpen: false, payment: null });
     const [forecloseModal, setForecloseModal] = useState({
@@ -108,9 +112,7 @@ const LoanDetails = () => {
         }
     };
 
-    const handleApprove = () => {
-        setApproveModal(true);
-    };
+    const handleApprove = () => setApproveModal(true);
 
     const handleApproveConfirm = async () => {
         const toastId = toast.loading('Approving loan...');
@@ -120,6 +122,17 @@ const LoanDetails = () => {
             setApproveModal(false);
         } catch (error) {
             toast.error(error.message || 'Failed to approve loan', { id: toastId });
+        }
+    };
+
+    const handleCompleteConfirm = async () => {
+        const toastId = toast.loading('Marking loan as completed...');
+        try {
+            await completeLoan.mutateAsync(id);
+            toast.success('Loan marked as COMPLETED!', { id: toastId });
+            setCompleteModal(false);
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Failed to complete loan', { id: toastId });
         }
     };
 
@@ -286,54 +299,70 @@ const LoanDetails = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        {loan.status === 'pending_approval' && (
-                            <Link
-                                to={`/loans/${id}/edit`}
-                                className="btn btn-secondary gap-2"
-                            >
-                                <FiEdit className="w-4 h-4" />
-                                Edit
-                            </Link>
-                        )}
-                        {/* Approve button removed - handled by toggle */}
-                        {loan.status === 'active' && (
-                            <button
-                                className="btn btn-ghost text-error border border-error/20 hover:bg-error/10 gap-2"
-                                onClick={handleForeclose}
-                                disabled={forecloseLoan.isPending}
-                            >
-                                <FiClock className="w-4 h-4" />
-                                {forecloseLoan.isPending ? 'Settle...' : 'Foreclose'}
-                            </button>
-                        )}
-                        {loan.status === 'closed' && (
-                            <button
-                                className="btn btn-primary gap-2"
-                                onClick={() => downloadNOC.mutate(id)}
-                                disabled={downloadNOC.isPending}
-                            >
-                                <FiCheckCircle className="w-4 h-4" />
-                                {downloadNOC.isPending ? 'Generating...' : 'Download NOC'}
-                            </button>
-                        )}
-                        <button
+                <div className="flex flex-wrap gap-2">
+                    {loan.status === 'pending_approval' && (
+                        <Link
+                            to={`/loans/${id}/edit`}
                             className="btn btn-secondary gap-2"
-                            onClick={() => downloadAgreement.mutate(id)}
-                            disabled={downloadAgreement.isPending}
                         >
-                            <FiDownload className="w-4 h-4" />
-                            {downloadAgreement.isPending ? 'Generating...' : 'Agreement'}
-                        </button>
+                            <FiEdit className="w-4 h-4" />
+                            Edit
+                        </Link>
+                    )}
+                    {/* Complete loan — only when all EMIs paid and still active */}
+                    {loan.status === 'active' && paymentsReceivedCount >= totalEmis && (
                         <button
-                            className="btn btn-secondary gap-2"
-                            onClick={() => downloadStatement.mutate(id)}
-                            disabled={downloadStatement.isPending}
+                            className="btn btn-primary gap-2"
+                            onClick={() => setCompleteModal(true)}
+                            disabled={completeLoan.isPending}
                         >
-                            <FiFileText className="w-4 h-4" />
-                            {downloadStatement.isPending ? 'Generating...' : 'Statement'}
+                            <FiCheckCircle className="w-4 h-4" />
+                            {completeLoan.isPending ? 'Completing...' : 'Mark Complete'}
                         </button>
-                    </div>
+                    )}
+                    {loan.status === 'active' && loan.foreclosurePolicy !== 'NOT_ALLOWED' && (
+                        <button
+                            className="btn btn-ghost text-error border border-error/20 hover:bg-error/10 gap-2"
+                            onClick={handleForeclose}
+                            disabled={forecloseLoan.isPending}
+                        >
+                            <FiClock className="w-4 h-4" />
+                            {forecloseLoan.isPending ? 'Settle...' : 'Foreclose'}
+                        </button>
+                    )}
+                    {loan.status === 'active' && loan.foreclosurePolicy === 'NOT_ALLOWED' && (
+                        <span className="flex items-center gap-1 text-xs text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2">
+                            <FiXCircle className="w-3.5 h-3.5" />
+                            Foreclosure Not Allowed
+                        </span>
+                    )}
+                    {(loan.status === 'closed' || loan.status === 'FORECLOSED' || loan.status === 'COMPLETED') && (
+                        <button
+                            className="btn btn-primary gap-2"
+                            onClick={() => downloadNOC.mutate(id)}
+                            disabled={downloadNOC.isPending}
+                        >
+                            <FiCheckCircle className="w-4 h-4" />
+                            {downloadNOC.isPending ? 'Generating...' : 'Download NOC'}
+                        </button>
+                    )}
+                    <button
+                        className="btn btn-secondary gap-2"
+                        onClick={() => downloadAgreement.mutate(id)}
+                        disabled={downloadAgreement.isPending}
+                    >
+                        <FiDownload className="w-4 h-4" />
+                        {downloadAgreement.isPending ? 'Generating...' : 'Agreement'}
+                    </button>
+                    <button
+                        className="btn btn-secondary gap-2"
+                        onClick={() => downloadStatement.mutate(id)}
+                        disabled={downloadStatement.isPending}
+                    >
+                        <FiFileText className="w-4 h-4" />
+                        {downloadStatement.isPending ? 'Generating...' : 'Statement'}
+                    </button>
+                </div>
                 </div>
 
                 {/* Quick Stats */}
@@ -395,7 +424,6 @@ const LoanDetails = () => {
                                 `}
                             >
                                 {tab}
-                                {/* Active indicator */}
                                 {activeTab === tab && (
                                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full" />
                                 )}
@@ -421,6 +449,9 @@ const LoanDetails = () => {
                                     <div className="text-gray-500">Start Date</div>
                                     <div className="font-medium">{formatDate(loan.startDate)}</div>
 
+                                    <div className="text-gray-500">End Date</div>
+                                    <div className="font-medium">{formatDate(loan.endDate)}</div>
+
                                     <div className="text-gray-500">Total Payable</div>
                                     <div className="font-medium">{formatCurrency(loan.totalAmountPayable)}</div>
 
@@ -429,6 +460,24 @@ const LoanDetails = () => {
 
                                     <div className="text-gray-500">EMI Amount</div>
                                     <div className="font-medium">{formatCurrency(loan.monthlyEMI)}</div>
+
+                                    <div className="text-gray-500">Grace Period</div>
+                                    <div className="font-medium">{loan.gracePeriodDays ?? 0} days</div>
+
+                                    <div className="text-gray-500">Late Fee</div>
+                                    <div className="font-medium">
+                                        {loan.lateFeeType === 'fixed' && `₹${loan.lateFeeValue} fixed`}
+                                        {loan.lateFeeType === 'percentage' && `${loan.lateFeeValue}% of EMI`}
+                                        {(!loan.lateFeeType || loan.lateFeeType === 'none') && 'None'}
+                                    </div>
+
+                                    <div className="text-gray-500">Foreclosure</div>
+                                    <div className="font-medium">
+                                        {loan.foreclosurePolicy === 'NOT_ALLOWED' && <span className="text-red-500">Not Allowed</span>}
+                                        {loan.foreclosurePolicy === 'WITHOUT_DISCOUNT' && <span className="text-blue-600">Allowed (Full Balance)</span>}
+                                        {loan.foreclosurePolicy === 'MANUAL_DISCOUNT' && <span className="text-teal-600">Allowed (Discount Possible)</span>}
+                                        {!loan.foreclosurePolicy && <span className="text-gray-400">—</span>}
+                                    </div>
                                 </div>
                             </div>
 
@@ -562,10 +611,11 @@ const LoanDetails = () => {
                             </table>
                         </div>
                     )}
+
                 </div>
             </motion.div>
 
-            {/* Approve Loan Modal */}
+
             <ConfirmModal
                 isOpen={approveModal}
                 onClose={() => setApproveModal(false)}
@@ -573,6 +623,17 @@ const LoanDetails = () => {
                 title="Approve Loan"
                 message="Are you sure you want to approve this loan? This will change the status to Active."
                 confirmText="Approve"
+                type="info"
+            />
+
+            {/* Mark Loan as Complete Modal */}
+            <ConfirmModal
+                isOpen={completeModal}
+                onClose={() => setCompleteModal(false)}
+                onConfirm={handleCompleteConfirm}
+                title="Mark Loan as Completed"
+                message={`All ${totalEmis} EMIs have been paid. Mark this loan as COMPLETED and generate the NOC?`}
+                confirmText="Complete Loan"
                 type="info"
             />
 
@@ -586,6 +647,7 @@ const LoanDetails = () => {
                 confirmText="Mark as Paid"
                 type="info"
             />
+
 
             {/* Mark as Unpaid Modal */}
             <ConfirmModal

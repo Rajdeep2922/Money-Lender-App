@@ -3,11 +3,11 @@ import { lenderAPI } from '../services/api';
 
 export const lenderKeys = {
     all: ['lender'],
+    loanPolicy: ['lender', 'loan-policy'],
 };
 
 /**
  * Fetch lender profile
- * Lender data rarely changes, so we use aggressive caching
  */
 export const useLender = () => {
     return useQuery({
@@ -16,8 +16,8 @@ export const useLender = () => {
             const { data } = await lenderAPI.get();
             return data.lender;
         },
-        staleTime: 1000 * 60 * 10, // 10 minutes - lender data rarely changes
-        gcTime: 1000 * 60 * 30, // 30 minutes garbage collection
+        staleTime: 1000 * 60 * 10,
+        gcTime: 1000 * 60 * 30,
     });
 };
 
@@ -26,11 +26,37 @@ export const useLender = () => {
  */
 export const useUpdateLender = () => {
     const queryClient = useQueryClient();
-
     return useMutation({
         mutationFn: (data) => lenderAPI.update(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: lenderKeys.all });
+        },
+    });
+};
+
+/**
+ * Fetch lender's configurable loan policy defaults
+ */
+export const useLoanPolicy = () => {
+    return useQuery({
+        queryKey: lenderKeys.loanPolicy,
+        queryFn: async () => {
+            const { data } = await lenderAPI.getLoanPolicy();
+            return data.loanPolicy;
+        },
+        staleTime: 1000 * 60 * 5,
+    });
+};
+
+/**
+ * Update lender's loan policy defaults
+ */
+export const useUpdateLoanPolicy = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data) => lenderAPI.updateLoanPolicy(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: lenderKeys.loanPolicy });
         },
     });
 };
