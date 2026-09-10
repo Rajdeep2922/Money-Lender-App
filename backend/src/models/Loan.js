@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { LOAN_STATUS, FORECLOSURE_POLICY, LATE_FEE_TYPE, LOAN_COMPLETION_TYPE, DISCOUNT_REASON } = require('../config/constants');
+const { LOAN_STATUS, FORECLOSURE_POLICY, LATE_FEE_TYPE, LOAN_COMPLETION_TYPE, DISCOUNT_REASON, AGREEMENT_TYPE } = require('../config/constants');
 
 const amortizationSchema = new mongoose.Schema({
     month: { type: Number, required: true },
@@ -10,9 +10,42 @@ const amortizationSchema = new mongoose.Schema({
     dueDate: { type: Date, required: true },
 }, { _id: false });
 
+// Customized agreement details schema stored inside agreementSnapshot
+const customAgreementDetailsSchema = new mongoose.Schema({
+    borrowerName: { type: String, required: true },
+    borrowerPhone: { type: String, required: true },
+    loanAmount: { type: Number, required: true },
+    interestType: { type: String, required: true },
+    interestRate: { type: Number },
+    interestAmount: { type: Number },
+    interestPeriod: { type: String },
+    tenureValue: { type: Number, required: true },
+    tenureUnit: { type: String, default: 'months' },
+    tenureMonths: { type: Number },
+    repaymentAmount: { type: Number, required: true },
+    repaymentFrequency: { type: String, required: true },
+    startDate: { type: Date, required: true },
+    firstPaymentDate: { type: Date, required: true },
+    foreclosurePolicy: { type: String, required: true },
+    gracePeriodDays: { type: Number, default: 0 },
+    lateFeeType: { type: String, default: 'none' },
+    lateFeeValue: { type: Number, default: 0 },
+    additionalAgreedTerms: { type: String, maxlength: 5000 },
+    totalRepayment: { type: Number },
+    warnings: [{ type: String }],
+    generatedContent: { type: String },
+    approvedAt: { type: Date },
+}, { _id: false });
+
 // Immutable snapshot of the legal policies accepted when the agreement was generated.
 // Written ONCE and never overwritten — even if the lender edits policies later.
 const agreementSnapshotSchema = new mongoose.Schema({
+    agreementType: {
+        type: String,
+        enum: Object.values(AGREEMENT_TYPE),
+        default: AGREEMENT_TYPE.STANDARD,
+    },
+    snapshotDate: { type: Date },
     agreementVersion: { type: String },
     termsVersion: { type: String },
     termsContent: { type: String },
@@ -22,6 +55,10 @@ const agreementSnapshotSchema = new mongoose.Schema({
     defaultPolicy: { type: String },
     privacyPolicy: { type: String },
     generatedAt: { type: Date },
+    customAgreementDetails: {
+        type: customAgreementDetailsSchema,
+        default: null,
+    },
 }, { _id: false });
 
 const loanSchema = new mongoose.Schema({

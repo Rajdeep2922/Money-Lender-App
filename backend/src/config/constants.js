@@ -111,6 +111,32 @@ module.exports = {
         ARCHIVED: 'archived',
     },
 
+    // Agreement types
+    AGREEMENT_TYPE: {
+        STANDARD: 'STANDARD',
+        CUSTOMIZED: 'CUSTOMIZED',
+    },
+
+    CUSTOM_INTEREST_TYPE: {
+        FIXED_AMOUNT: 'fixed_amount',
+        PERCENTAGE: 'percentage',
+        SIMPLE: 'simple',
+        OTHER: 'other',
+    },
+
+    CUSTOM_REPAYMENT_FREQUENCY: {
+        MONTHLY: 'monthly',
+        WEEKLY: 'weekly',
+        OTHER: 'other',
+    },
+
+    INTEREST_PERIOD: {
+        MONTHLY: 'monthly',
+        YEARLY: 'yearly',
+        ONE_TIME: 'one_time',
+        OTHER: 'other',
+    },
+
     // Pagination defaults
     PAGINATION: {
         DEFAULT_PAGE: 1,
@@ -118,3 +144,4 @@ module.exports = {
         MAX_LIMIT: 100,
     },
 };
+
