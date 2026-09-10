@@ -19,7 +19,12 @@ const app = express();
 const httpServer = http.createServer(app);
 
 // Connect to MongoDB
-connectDB();
+connectDB().then(() => {
+    if (process.env.RUN_MIGRATIONS === 'true') {
+        const runMigration = require('../migrations/20260911_backfill_message_read');
+        runMigration().catch((err) => console.error('[Migration] Startup migration error:', err.message));
+    }
+});
 
 // Initialize Schedulers
 initSchedulers();
@@ -49,7 +54,11 @@ app.use(compression());
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Static uploads directory (for attachments, receipts, etc.)
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Request logging in development
 if (process.env.NODE_ENV === 'development') {
@@ -92,9 +101,10 @@ app.use('/api/legal', protect, require('./routes/legal'));
 // Customer portal routes (customer authentication)
 app.use('/api/portal', require('./routes/customerPortal'));
 
-// ── NEW: Lender Discovery, Loan Requests, Chat, File Upload ───────────────
+// ── NEW: Lender Discovery, Loan Requests, Notifications, Chat, File Upload ─
 app.use('/api/lenders', require('./routes/lenders'));
 app.use('/api/loan-request', require('./routes/loanRequests'));
+app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/upload', require('./routes/upload'));
 // ── PUBLIC (no auth) — guest loan requests & tracking ─────────────────────
