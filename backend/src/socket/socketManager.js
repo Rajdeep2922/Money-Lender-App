@@ -97,6 +97,196 @@ const verifyRoomAccess = async (loanRequestId, currentUser) => {
 };
 
 /**
+ * Deliver pending messages sent to a user while they were offline
+ */
+const deliverPendingMessages = async (io, currentUser) => {
+    try {
+        let requestQuery = { status: 'accepted' };
+        let peerSenderType = null;
+
+        if (currentUser.role === 'lender') {
+            const lenderProfileId = currentUser.entity.lenderId?._id?.toString() || currentUser.entity.lenderId?.toString();
+            requestQuery.lenderId = lenderProfileId;
+            peerSenderType = 'customer';
+        } else if (currentUser.isGuest) {
+            requestQuery._id = currentUser.guestRequestId;
+            peerSenderType = 'lender';
+        } else {
+            // Portal customer
+            requestQuery.customerId = currentUser.userId;
+            peerSenderType = 'lender';
+        }
+
+        const acceptedRequests = await LoanRequest.find(requestQuery).select('_id');
+        if (!acceptedRequests.length) return;
+
+        const requestIds = acceptedRequests.map((r) => r._id);
+        const undeliveredMessages = await Message.find({
+            loanRequestId: { $in: requestIds },
+            senderType: peerSenderType,
+            delivered: false,
+        }).select('_id loanRequestId');
+
+        if (!undeliveredMessages.length) return;
+
+        const messageIds = undeliveredMessages.map((m) => m._id);
+        const now = new Date();
+
+        await Message.updateMany(
+            { _id: { $in: messageIds } },
+            { $set: { delivered: true, deliveredAt: now } }
+        );
+
+        // Group by loanRequestId to notify active chat rooms
+        const roomMap = {};
+        undeliveredMessages.forEach((m) => {
+            const rId = m.loanRequestId.toString();
+            if (!roomMap[rId]) roomMap[rId] = [];
+            roomMap[rId].push(m._id);
+        });
+
+        Object.entries(roomMap).forEach(([roomId, ids]) => {
+            io.to(roomId).emit('messages_delivered', {
+                loanRequestId: roomId,
+                messageIds: ids,
+                deliveredAt: now,
+            });
+        });
+    } catch (err) {
+        console.warn('[Socket] deliverPendingMessages error:', err.message);
+    }
+};
+
+const handleSendMessage = async ({ io, currentUser, data, callback }) => {
+    try {
+        const { loanRequestId, text, fileUrl, fileType } = data || {};
+        if (!loanRequestId) throw new Error('loanRequestId is required');
+        if (!text && !fileUrl) throw new Error('Message must have text or a file');
+
+        const loanRequest = await verifyRoomAccess(loanRequestId, currentUser);
+        if (loanRequest.status !== 'accepted') {
+            throw new Error('Chat is not available: loan request not accepted');
+        }
+
+        // Resolve receiver ID
+        let receiverId = null;
+        let senderName = 'Someone';
+
+        if (currentUser.role === 'lender') {
+            // Sender = lender → receiver = customer or guest
+            if (loanRequest.customerId) {
+                receiverId = loanRequest.customerId.toString();
+            } else {
+                // Guest: their socket userId = loanRequest._id
+                receiverId = loanRequest._id.toString();
+            }
+            senderName = currentUser.entity.lenderId?.businessName
+                || currentUser.entity.name
+                || 'Lender';
+        } else {
+            // Sender = customer or guest → receiver = lender (User account)
+            const lenderUser = await User.findOne({ lenderId: loanRequest.lenderId }).select('_id');
+            receiverId = lenderUser?._id?.toString();
+
+            if (currentUser.isGuest) {
+                senderName = loanRequest.guestName || 'Guest Customer';
+            } else {
+                const c = currentUser.entity;
+                senderName = [c.firstName, c.lastName].filter(Boolean).join(' ') || 'Customer';
+            }
+        }
+
+        // Explicit active room check:
+        // Cross-reference userSocketMap with io.sockets.adapter.rooms for this room
+        const receiverSocketId = receiverId ? userSocketMap.get(receiverId) : null;
+        const isReceiverInRoom = Boolean(
+            receiverSocketId && io.sockets?.adapter?.rooms?.get(loanRequestId)?.has(receiverSocketId)
+        );
+
+        const now = new Date();
+        let delivered = false;
+        let deliveredAt = null;
+        let read = false;
+        let readAt = null;
+
+        if (isReceiverInRoom) {
+            // Receiver is actively in this room: immediately delivered and seen!
+            delivered = true;
+            deliveredAt = now;
+            read = true;
+            readAt = now;
+        } else if (receiverSocketId) {
+            // Receiver is online (connected to socket), but in another room/page: delivered!
+            delivered = true;
+            deliveredAt = now;
+        }
+
+        const message = await Message.create({
+            loanRequestId,
+            senderId: currentUser.userId,
+            senderType: currentUser.role,
+            text: text || undefined,
+            fileUrl: fileUrl || undefined,
+            fileType: fileType || undefined,
+            delivered,
+            deliveredAt,
+            read,
+            readAt,
+        });
+
+        const payload = {
+            _id: message._id,
+            loanRequestId,
+            senderId: currentUser.userId,
+            senderType: currentUser.role,
+            text: message.text,
+            fileUrl: message.fileUrl,
+            fileType: message.fileType,
+            delivered: message.delivered,
+            deliveredAt: message.deliveredAt,
+            read: message.read,
+            readAt: message.readAt,
+            createdAt: message.createdAt,
+        };
+
+        // Broadcast to everyone in the chat room (both users get real-time update)
+        io.to(loanRequestId).emit('new_message', payload);
+        if (callback) callback({ success: true, message: payload });
+
+        // If receiver was actively viewing, broadcast seen update to update sender's ticks to blue
+        if (isReceiverInRoom) {
+            io.to(loanRequestId).emit('messages_seen', { loanRequestId, readAt: now });
+        }
+
+        // ── Push notification to receiver (suppressed by client if viewing chat) ──
+        if (receiverId && !isReceiverInRoom) {
+            try {
+                const preview = text
+                    ? (text.length > 50 ? `${text.slice(0, 50)}…` : text)
+                    : fileType === 'image'
+                        ? '📷 Sent an image'
+                        : '📎 Sent an attachment';
+
+                emitToUser(io, receiverId, 'message_notification', {
+                    loanRequestId,
+                    senderName,
+                    preview,
+                    timestamp: message.createdAt,
+                });
+            } catch (notifErr) {
+                console.warn('[Socket] Notification error:', notifErr.message);
+            }
+        }
+
+        return payload;
+    } catch (err) {
+        console.warn(`[Socket] send_message error: ${err.message}`);
+        if (callback) callback({ success: false, message: err.message });
+        throw err;
+    }
+};
+
+/**
  * Initialize Socket.IO event handlers
  */
 const initSocketManager = (io) => {
@@ -111,6 +301,9 @@ const initSocketManager = (io) => {
 
             console.log(`[Socket] Connected: ${currentUser.role}${currentUser.isGuest ? ' (guest)' : ''} ${currentUser.userId} (${socket.id})`);
             socket.emit('authenticated', { userId: currentUser.userId, role: currentUser.role, isGuest: currentUser.isGuest });
+
+            // Backfill delivery status for messages received while this user was offline
+            deliverPendingMessages(io, currentUser);
         } catch (err) {
             console.warn(`[Socket] Auth failed: ${err.message}`);
             socket.emit('auth_error', { message: err.message });
@@ -132,18 +325,22 @@ const initSocketManager = (io) => {
                 socket.join(loanRequestId);
                 console.log(`[Socket] ${currentUser.role} joined room ${loanRequestId}`);
 
-                // Mark any pending unread messages from the peer as read
+                // Mark any pending unread messages from the peer as read and delivered
                 const targetSenderType = currentUser.role === 'lender'
                     ? 'customer'
                     : (currentUser.role === 'customer' ? 'lender' : null);
 
                 if (targetSenderType) {
+                    const now = new Date();
                     await Message.updateMany(
                         { loanRequestId, senderType: targetSenderType, read: false },
-                        { $set: { read: true, readAt: new Date() } }
+                        { $set: { read: true, readAt: now, delivered: true, deliveredAt: now } }
                     );
-                    // Multi-tab sync for current user
+                    // Intentional dual-event design:
+                    // messages_read: targeted emit to user for clearing aggregate unread badges across tabs
+                    // messages_seen: room-level broadcast to live-update per-message visual ticks in chat window
                     emitToUser(io, currentUser.userId, 'messages_read', { loanRequestId });
+                    io.to(loanRequestId).emit('messages_seen', { loanRequestId, readAt: now });
                 }
 
                 if (callback) callback({ success: true });
@@ -163,11 +360,16 @@ const initSocketManager = (io) => {
                     : (currentUser.role === 'customer' ? 'lender' : null);
 
                 if (targetSenderType) {
+                    const now = new Date();
                     await Message.updateMany(
                         { loanRequestId, senderType: targetSenderType, read: false },
-                        { $set: { read: true, readAt: new Date() } }
+                        { $set: { read: true, readAt: now, delivered: true, deliveredAt: now } }
                     );
+                    // Intentional dual-event design:
+                    // messages_read: targeted emit to user for clearing aggregate unread badges across tabs
+                    // messages_seen: room-level broadcast to live-update per-message visual ticks in chat window
                     emitToUser(io, currentUser.userId, 'messages_read', { loanRequestId });
+                    io.to(loanRequestId).emit('messages_seen', { loanRequestId, readAt: now });
                     if (callback) callback({ success: true });
                 }
             } catch (err) {
@@ -186,97 +388,8 @@ const initSocketManager = (io) => {
         });
 
         // ── Send Message ──────────────────────────────────────────────────
-        socket.on('send_message', async ({ loanRequestId, text, fileUrl, fileType }, callback) => {
-            try {
-                if (!loanRequestId) throw new Error('loanRequestId is required');
-                if (!text && !fileUrl) throw new Error('Message must have text or a file');
-
-                const loanRequest = await verifyRoomAccess(loanRequestId, currentUser);
-                if (loanRequest.status !== 'accepted') {
-                    throw new Error('Chat is not available: loan request not accepted');
-                }
-
-                const message = await Message.create({
-                    loanRequestId,
-                    senderId: currentUser.userId,
-                    senderType: currentUser.role,
-                    text: text || undefined,
-                    fileUrl: fileUrl || undefined,
-                    fileType: fileType || undefined,
-                });
-
-                const payload = {
-                    _id: message._id,
-                    loanRequestId,
-                    senderId: currentUser.userId,
-                    senderType: currentUser.role,
-                    text: message.text,
-                    fileUrl: message.fileUrl,
-                    fileType: message.fileType,
-                    createdAt: message.createdAt,
-                };
-
-                // Broadcast to everyone in the chat room (both users get real-time update)
-                io.to(loanRequestId).emit('new_message', payload);
-                if (callback) callback({ success: true, message: payload });
-
-                // ── Push notification to receiver (always — frontend suppresses if viewing chat) ──
-                try {
-                    let receiverId = null;
-                    let senderName = 'Someone';
-
-                    if (currentUser.role === 'lender') {
-                        // Sender = lender → receiver = customer or guest
-                        if (loanRequest.customerId) {
-                            receiverId = loanRequest.customerId.toString();
-                        } else {
-                            // Guest: their socket userId = loanRequest._id
-                            receiverId = loanRequest._id.toString();
-                        }
-                        senderName = currentUser.entity.lenderId?.businessName
-                            || currentUser.entity.name
-                            || 'Lender';
-                    } else {
-                        // Sender = customer or guest → receiver = lender (User account)
-                        const lenderUser = await User.findOne({ lenderId: loanRequest.lenderId }).select('_id');
-                        receiverId = lenderUser?._id?.toString();
-
-                        if (currentUser.isGuest) {
-                            senderName = loanRequest.guestName || 'Guest Customer';
-                        } else {
-                            const c = currentUser.entity;
-                            senderName = [c.firstName, c.lastName].filter(Boolean).join(' ') || 'Customer';
-                        }
-                    }
-
-                    if (receiverId) {
-                        const preview = text
-                            ? (text.length > 50 ? `${text.slice(0, 50)}…` : text)
-                            : fileType === 'image'
-                                ? '📷 Sent an image'
-                                : '📎 Sent an attachment';
-
-                        // Always emit — frontend decides whether to show toast
-                        // (suppressed if receiver is currently viewing this chat room's URL)
-                        emitToUser(io, receiverId, 'message_notification', {
-                            loanRequestId,
-                            senderName,
-                            preview,
-                            timestamp: message.createdAt,
-                            unread: true,
-                        });
-
-                        console.log(`[Socket] Notification → ${receiverId}`);
-                    }
-                } catch (notifErr) {
-                    // Notification failure must never break the message delivery
-                    console.warn('[Socket] Notification error:', notifErr.message);
-                }
-
-            } catch (err) {
-                console.warn(`[Socket] send_message error: ${err.message}`);
-                if (callback) callback({ success: false, message: err.message });
-            }
+        socket.on('send_message', (data, callback) => {
+            handleSendMessage({ io, currentUser, data, callback }).catch(() => {});
         });
 
 
@@ -305,4 +418,12 @@ const initSocketManager = (io) => {
     });
 };
 
-module.exports = { initSocketManager, emitToUser, userSocketMap };
+module.exports = {
+    initSocketManager,
+    emitToUser,
+    userSocketMap,
+    deliverPendingMessages,
+    handleSendMessage,
+    verifyRoomAccess,
+    authenticateSocket,
+};
