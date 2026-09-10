@@ -65,6 +65,15 @@ const loanRequestSchema = new mongoose.Schema(
             default: 'pending',
             index: true,
         },
+        viewedByLender: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        viewedAt: {
+            type: Date,
+            default: null,
+        },
     },
     { timestamps: true }
 );
@@ -72,6 +81,7 @@ const loanRequestSchema = new mongoose.Schema(
 // Compound indexes
 loanRequestSchema.index({ customerId: 1, status: 1 });
 loanRequestSchema.index({ lenderId: 1, status: 1 });
+loanRequestSchema.index({ lenderId: 1, status: 1, viewedByLender: 1 });
 loanRequestSchema.index({ guestPhone: 1, status: 1 });
 
 // Auto-generate trackingToken before save if not set

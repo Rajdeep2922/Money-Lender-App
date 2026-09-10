@@ -31,6 +31,15 @@ const messageSchema = new mongoose.Schema(
             type: String,
             enum: ['image', 'pdf', 'document', 'other'],
         },
+        read: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        readAt: {
+            type: Date,
+            default: null,
+        },
     },
     { timestamps: true }
 );
@@ -45,5 +54,7 @@ messageSchema.pre('save', function (next) {
 
 // Index for fetching messages in a room ordered by time
 messageSchema.index({ loanRequestId: 1, createdAt: 1 });
+// Compound index for fast retrieval of unread messages by room and senderType
+messageSchema.index({ loanRequestId: 1, senderType: 1, read: 1 });
 
 module.exports = mongoose.model('Message', messageSchema);
