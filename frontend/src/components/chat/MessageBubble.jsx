@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from '../../utils/dateUtils';
-
+import MessageStatusTicks from './MessageStatusTicks';
 
 /**
  * MessageBubble — single chat message with file preview support
@@ -51,14 +51,15 @@ const MessageBubble = ({ message, isSelf }) => {
                     <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{text}</p>
                 )}
 
-                {/* Timestamp */}
-                <p
-                    className={`text-[10px] mt-1.5 ${
+                {/* Timestamp & Status Ticks */}
+                <div
+                    className={`flex items-center justify-end gap-1 text-[10px] mt-1.5 ${
                         isSelf ? 'text-violet-200/70' : 'text-slate-500'
-                    } text-right`}
+                    }`}
                 >
-                    {timeAgo}
-                </p>
+                    <span>{timeAgo}</span>
+                    <MessageStatusTicks message={message} isSelf={isSelf} />
+                </div>
             </div>
         </div>
     );

@@ -90,12 +90,40 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
             }
         };
 
+        // Listen for delivery updates (when recipient comes online)
+        const handleMessagesDelivered = ({ loanRequestId: targetId, messageIds, deliveredAt }) => {
+            if (targetId !== loanRequestId) return;
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    (!messageIds || messageIds.includes(msg._id)) && !msg.read
+                        ? { ...msg, delivered: true, deliveredAt: deliveredAt || msg.deliveredAt }
+                        : msg
+                )
+            );
+        };
+
+        // Listen for seen updates (when recipient opens/reads messages)
+        const handleMessagesSeen = ({ loanRequestId: targetId, readAt }) => {
+            if (targetId !== loanRequestId) return;
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.senderId === currentUserId
+                        ? { ...msg, read: true, readAt: readAt || new Date(), delivered: true }
+                        : msg
+                )
+            );
+        };
+
         socket.on('new_message', handleNewMessage);
         socket.on('user_typing', handleTyping);
+        socket.on('messages_delivered', handleMessagesDelivered);
+        socket.on('messages_seen', handleMessagesSeen);
 
         return () => {
             socket.off('new_message', handleNewMessage);
             socket.off('user_typing', handleTyping);
+            socket.off('messages_delivered', handleMessagesDelivered);
+            socket.off('messages_seen', handleMessagesSeen);
             // Leave the room so future messages trigger notifications
             // (backend uses room membership to decide whether to send message_notification)
             socket.emit('leave_room', { loanRequestId });
