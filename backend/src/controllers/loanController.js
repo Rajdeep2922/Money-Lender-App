@@ -9,6 +9,7 @@ const {
     LOAN_COMPLETION_TYPE,
     FORECLOSURE_POLICY,
     DISCOUNT_REASON,
+    AGREEMENT_TYPE,
 } = require('../config/constants');
 const {
     calculateMonthlyEMI,
@@ -20,6 +21,7 @@ const {
 const { generateDocumentNumber } = require('../utils/formatters');
 const {
     generateLoanAgreement,
+    generateCustomizedAgreement,
     generateLoanStatement,
     generateLoanClosureNOC,
     generateSettlementCertificate
@@ -29,6 +31,12 @@ const {
     computeLoanStage,
 } = require('../utils/loanCalculations');
 const { buildPolicySnapshot } = require('./legalController');
+const {
+    validateCustomAgreementInput,
+    calculateTotalRepayment,
+    detectMismatch,
+    generatePreviewText,
+} = require('../utils/customAgreementValidator');
 
 
 /**
@@ -458,6 +466,16 @@ exports.downloadAgreement = async (req, res, next) => {
 
         const lender = await Lender.getLender(req.user?.lenderId);
 
+        // ── ROUTE CUSTOMIZED AGREEMENT (if approved) ──
+        if (loan.agreementSnapshot?.agreementType === AGREEMENT_TYPE.CUSTOMIZED && loan.agreementSnapshot?.customAgreementDetails?.approvedAt) {
+            const pdfDoc = await generateCustomizedAgreement(loan.agreementSnapshot, lender);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=Agreement-${loan.loanNumber}.pdf`);
+            pdfDoc.pipe(res);
+            pdfDoc.end();
+            return;
+        }
+
         // Build immutable snapshot if not yet generated (first download)
         if (!loan.agreementSnapshot || !loan.agreementSnapshot.agreementVersion) {
             const snapshot = await buildPolicySnapshot(req.user?.lenderId);
@@ -768,3 +786,119 @@ exports.downloadSettlementCertificate = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Preview Customized Loan Agreement (Deterministic, no DB persistence)
+ */
+exports.previewCustomAgreement = async (req, res, next) => {
+    try {
+        const loan = await Loan.findById(req.params.id)
+            .populate('customerId', 'firstName lastName phone');
+
+        if (!loan) {
+            return next(new AppError('Loan not found', 404));
+        }
+
+        const { isValid, errors, sanitizedData } = validateCustomAgreementInput(req.body);
+        if (!isValid) {
+            return next(new AppError(`Validation failed: ${errors.join(', ')}`, 400));
+        }
+
+        const warnings = detectMismatch(
+            sanitizedData.loanAmount,
+            sanitizedData.repaymentAmount,
+            sanitizedData.repaymentFrequency,
+            sanitizedData.tenureMonths
+        );
+
+        const totalRepayment = calculateTotalRepayment(
+            sanitizedData.repaymentAmount,
+            sanitizedData.repaymentFrequency,
+            sanitizedData.tenureMonths
+        );
+
+        const previewText = generatePreviewText(sanitizedData, warnings);
+
+        res.json({
+            success: true,
+            data: {
+                previewText,
+                warnings,
+                totalRepayment,
+                sanitizedData,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Approve Customized Loan Agreement (Write-once, immutable snapshot)
+ */
+exports.approveCustomAgreement = async (req, res, next) => {
+    try {
+        const loan = await Loan.findById(req.params.id);
+        if (!loan) {
+            return next(new AppError('Loan not found', 404));
+        }
+
+        // Write-Once Immutability Safeguard:
+        // If ANY agreementSnapshot already exists (Standard or Customized), reject with 409 Conflict
+        if (loan.agreementSnapshot && (loan.agreementSnapshot.agreementVersion || loan.agreementGeneratedAt)) {
+            return next(new AppError('An agreement has already been generated for this loan', 409));
+        }
+
+        const { isValid, errors, sanitizedData } = validateCustomAgreementInput(req.body);
+        if (!isValid) {
+            return next(new AppError(`Validation failed: ${errors.join(', ')}`, 400));
+        }
+
+        const warnings = detectMismatch(
+            sanitizedData.loanAmount,
+            sanitizedData.repaymentAmount,
+            sanitizedData.repaymentFrequency,
+            sanitizedData.tenureMonths
+        );
+
+        const totalRepayment = calculateTotalRepayment(
+            sanitizedData.repaymentAmount,
+            sanitizedData.repaymentFrequency,
+            sanitizedData.tenureMonths
+        );
+
+        const previewText = generatePreviewText(sanitizedData, warnings);
+
+        // Build policy snapshot from legal center
+        const snapshot = await buildPolicySnapshot(req.user?.lenderId);
+        const existingLoanDocs = await Loan.countDocuments({ lenderId: req.user?.lenderId });
+        const agreementVersion = `v${existingLoanDocs}.0`;
+
+        loan.agreementSnapshot = {
+            ...snapshot,
+            agreementType: AGREEMENT_TYPE.CUSTOMIZED,
+            agreementVersion,
+            snapshotDate: new Date(),
+            generatedAt: new Date(),
+            customAgreementDetails: {
+                ...sanitizedData,
+                totalRepayment,
+                warnings,
+                generatedContent: previewText,
+                approvedAt: new Date(),
+            },
+        };
+        loan.agreementGeneratedAt = new Date();
+
+        await loan.save();
+
+        res.json({
+            success: true,
+            message: 'Customized agreement approved successfully',
+            agreementSnapshot: loan.agreementSnapshot,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+

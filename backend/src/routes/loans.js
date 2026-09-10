@@ -30,6 +30,8 @@ router.patch('/:id/status', loanController.updateLoanStatus);
 
 // Documents
 router.get('/:id/agreement', loanController.downloadAgreement);
+router.post('/:id/agreement/customized/preview', loanController.previewCustomAgreement);
+router.post('/:id/agreement/customized/approve', loanController.approveCustomAgreement);
 router.get('/:id/statement', loanController.downloadStatement);
 router.get('/:id/noc', loanController.downloadNOC);
 router.get('/:id/settlement-certificate', loanController.downloadSettlementCertificate);
