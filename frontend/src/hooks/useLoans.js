@@ -233,3 +233,28 @@ export const useCompleteLoan = () => {
     });
 };
 
+/**
+ * Preview customized agreement mutation
+ */
+export const usePreviewCustomAgreement = () => {
+    return useMutation({
+        mutationFn: ({ id, data }) => loanAPI.previewCustomAgreement(id, data),
+    });
+};
+
+/**
+ * Approve customized agreement mutation
+ */
+export const useApproveCustomAgreement = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }) => loanAPI.approveCustomAgreement(id, data),
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({ queryKey: loanKeys.detail(id) });
+            queryClient.invalidateQueries({ queryKey: loanKeys.lists() });
+        },
+    });
+};
+
+
