@@ -49,10 +49,15 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
     // ── Socket.IO: join room + listen for events ───────────────────────
     useEffect(() => {
         if (disabled || !loanRequestId) return;
+
+        // HTTP fallback to mark messages read on mount (in case socket connects later)
+        chatAPI.markAsRead(loanRequestId).catch(() => {});
+        clearUnreadChat(loanRequestId);
+
         const socket = getSocket();
         if (!socket) return;
 
-        // Join the room
+        // Join the room (backend also marks messages as read on join_room)
         socket.emit('join_room', { loanRequestId }, (ack) => {
             if (ack?.success) {
                 setJoined(true);
@@ -69,6 +74,13 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
                 if (prev.some((m) => m._id === msg._id)) return prev;
                 return [...prev, msg];
             });
+
+            // If message is from peer while we are actively viewing this chat,
+            // mark it as read via socket event (no redundant HTTP call)
+            if (msg.senderId !== currentUserId) {
+                socket.emit('mark_read', { loanRequestId });
+                clearUnreadChat(loanRequestId);
+            }
         };
 
         // Listen for typing

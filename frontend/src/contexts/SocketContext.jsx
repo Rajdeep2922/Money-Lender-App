@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import useNotificationStore from '../store/notificationStore';
+import { notificationAPI } from '../services/api';
 
 const SocketContext = createContext(null);
 
@@ -10,10 +11,33 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 export const SocketProvider = ({ children }) => {
     const socketRef = useRef(null);
-    const { token, isAuthenticated, role } = useAuthStore();
-    const { incrementUnreadRequests, incrementUnreadChat } = useNotificationStore();
+    const { token, isAuthenticated } = useAuthStore();
+    const {
+        incrementUnreadRequests,
+        incrementUnreadChat,
+        clearUnreadChat,
+        hydrateUnreadSummary,
+    } = useNotificationStore();
 
     const getSocket = useCallback(() => socketRef.current, []);
+
+    // Helper to fetch unread notification summary with timestamp-based reconciliation
+    const fetchAndHydrate = useCallback(() => {
+        const fetchInitiatedAt = Date.now();
+        notificationAPI.getUnreadSummary()
+            .then((res) => {
+                if (res.data?.success && res.data?.data) {
+                    hydrateUnreadSummary({
+                        unreadRequests: res.data.data.unreadRequests,
+                        unreadChats: res.data.data.unreadChats,
+                        fetchInitiatedAt,
+                    });
+                }
+            })
+            .catch((err) => {
+                console.warn('[Socket] Failed to load unread summary:', err.response?.data?.message || err.message);
+            });
+    }, [hydrateUnreadSummary]);
 
     useEffect(() => {
         if (!isAuthenticated || !token) {
@@ -24,6 +48,9 @@ export const SocketProvider = ({ children }) => {
             }
             return;
         }
+
+        // Hydrate unread counts immediately on auth mount
+        fetchAndHydrate();
 
         // Already connected
         if (socketRef.current?.connected) return;
@@ -39,6 +66,8 @@ export const SocketProvider = ({ children }) => {
 
         socket.on('connect', () => {
             console.log('[Socket] Connected:', socket.id);
+            // Re-fetch to ensure counts reflect anything that arrived during reconnect
+            fetchAndHydrate();
         });
 
         socket.on('auth_error', ({ message }) => {
@@ -141,6 +170,13 @@ export const SocketProvider = ({ children }) => {
             );
         });
 
+        // Multi-tab synchronization: another tab read messages for this chat room
+        socket.on('messages_read', ({ loanRequestId }) => {
+            if (loanRequestId) {
+                clearUnreadChat(loanRequestId);
+            }
+        });
+
         socket.on('disconnect', (reason) => {
             console.log('[Socket] Disconnected:', reason);
         });
@@ -153,7 +189,7 @@ export const SocketProvider = ({ children }) => {
             socket.disconnect();
             socketRef.current = null;
         };
-    }, [isAuthenticated, token]);
+    }, [isAuthenticated, token, fetchAndHydrate, incrementUnreadRequests, incrementUnreadChat, clearUnreadChat]);
 
     return (
         <SocketContext.Provider value={{ getSocket }}>

@@ -45,8 +45,11 @@ const IncomingRequests = () => {
     const queryClient = useQueryClient();
     const { clearUnreadRequests, unreadChats, clearUnreadChat } = useNotificationStore();
 
-    // Clear badge on mount
-    useEffect(() => { clearUnreadRequests(); }, [clearUnreadRequests]);
+    // Clear badge on mount and persist viewed status in DB
+    useEffect(() => {
+        clearUnreadRequests();
+        loanRequestAPI.markSeen().catch(() => {});
+    }, [clearUnreadRequests]);
 
     const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['incoming-loan-requests'],
