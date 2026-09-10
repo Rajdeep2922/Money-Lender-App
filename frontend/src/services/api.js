@@ -176,12 +176,20 @@ export const loanRequestAPI = {
     list: (params = {}) => api.get('/loan-request', { params }),
     getById: (id) => api.get(`/loan-request/${id}`),
     respond: (id, status) => api.post(`/loan-request/${id}/respond`, { status }),
+    markSeen: (requestIds) => api.post('/loan-request/mark-seen', { requestIds }),
+};
+
+// ── NEW: Notifications ───────────────────────────────────────────────────
+export const notificationAPI = {
+    getUnreadSummary: () => api.get('/notifications/unread-summary'),
 };
 
 // ── NEW: Chat ─────────────────────────────────────────────────────────────
 export const chatAPI = {
     getMessages: (loanRequestId, params = {}) =>
         api.get(`/chat/${loanRequestId}/messages`, { params }),
+    markAsRead: (loanRequestId) =>
+        api.post(`/chat/${loanRequestId}/mark-read`),
     upload: (loanRequestId, formData) =>
         api.post(`/upload?loanRequestId=${loanRequestId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
