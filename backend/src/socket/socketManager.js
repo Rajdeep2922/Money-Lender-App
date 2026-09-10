@@ -131,9 +131,47 @@ const initSocketManager = (io) => {
 
                 socket.join(loanRequestId);
                 console.log(`[Socket] ${currentUser.role} joined room ${loanRequestId}`);
+
+                // Mark any pending unread messages from the peer as read
+                const targetSenderType = currentUser.role === 'lender'
+                    ? 'customer'
+                    : (currentUser.role === 'customer' ? 'lender' : null);
+
+                if (targetSenderType) {
+                    await Message.updateMany(
+                        { loanRequestId, senderType: targetSenderType, read: false },
+                        { $set: { read: true, readAt: new Date() } }
+                    );
+                    // Multi-tab sync for current user
+                    emitToUser(io, currentUser.userId, 'messages_read', { loanRequestId });
+                }
+
                 if (callback) callback({ success: true });
             } catch (err) {
                 console.warn(`[Socket] join_room error: ${err.message}`);
+                if (callback) callback({ success: false, message: err.message });
+            }
+        });
+
+        // ── Mark Messages Read (Socket event) ─────────────────────────────
+        socket.on('mark_read', async ({ loanRequestId }, callback) => {
+            try {
+                if (!loanRequestId) return;
+                await verifyRoomAccess(loanRequestId, currentUser);
+                const targetSenderType = currentUser.role === 'lender'
+                    ? 'customer'
+                    : (currentUser.role === 'customer' ? 'lender' : null);
+
+                if (targetSenderType) {
+                    await Message.updateMany(
+                        { loanRequestId, senderType: targetSenderType, read: false },
+                        { $set: { read: true, readAt: new Date() } }
+                    );
+                    emitToUser(io, currentUser.userId, 'messages_read', { loanRequestId });
+                    if (callback) callback({ success: true });
+                }
+            } catch (err) {
+                console.warn(`[Socket] mark_read error: ${err.message}`);
                 if (callback) callback({ success: false, message: err.message });
             }
         });
