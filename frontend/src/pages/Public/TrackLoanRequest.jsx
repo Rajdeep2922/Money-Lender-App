@@ -4,6 +4,7 @@ import { Search, Loader2, CheckCircle, Clock, XCircle, MessageSquare, Send, Pape
 import { io } from 'socket.io-client';
 import api from '../../services/api';
 import { formatDistanceToNow } from '../../utils/dateUtils';
+import MessageStatusTicks from '../../components/chat/MessageStatusTicks';
 import toast from 'react-hot-toast';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
@@ -23,11 +24,14 @@ const STORAGE_KEY = 'ml_last_tracked_phone';
  */
 const TrackLoanRequest = ({ onClose, initialPhone }) => {
     const savedPhone = localStorage.getItem(STORAGE_KEY) || '';
-    const [phone, setPhone] = useState(initialPhone || savedPhone);
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const urlPhone = searchParams?.get('phone') || '';
+    const [phone, setPhone] = useState(initialPhone || urlPhone || savedPhone);
     const [requests, setRequests] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [activeChat, setActiveChat] = useState(null);
+    const [guestSocket, setGuestSocket] = useState(null);
 
     const doTrack = async (phoneNumber) => {
         const cleaned = phoneNumber.trim();
@@ -48,12 +52,36 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
 
     const handleTrack = () => doTrack(phone);
 
-    // Auto-load if we already have a saved/initial phone
+    // Auto-load if we already have a saved/initial/URL phone
     useEffect(() => {
-        const autoPhone = initialPhone || savedPhone;
+        const autoPhone = initialPhone || urlPhone || savedPhone;
         if (autoPhone) doTrack(autoPhone);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Connect guest socket when accepted loan request with trackingToken is loaded
+    useEffect(() => {
+        const acceptedReq = requests?.find(r => r.status === 'accepted' && r.trackingToken);
+        if (!acceptedReq) {
+            if (guestSocket) {
+                guestSocket.disconnect();
+                setGuestSocket(null);
+            }
+            return;
+        }
+
+        const socket = io(SOCKET_URL, {
+            auth: { trackingToken: acceptedReq.trackingToken },
+            transports: ['websocket', 'polling'],
+        });
+
+        setGuestSocket(socket);
+
+        return () => {
+            socket.disconnect();
+            setGuestSocket(null);
+        };
+    }, [requests]);
 
     // Listen for open-track-request event (fired from PublicLoanFlow success screen)
     useEffect(() => {
@@ -110,6 +138,7 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
                                 key="chat"
                                 request={activeChat.request}
                                 trackingToken={activeChat.trackingToken}
+                                socket={guestSocket}
                             />
                         ) : (
                             <motion.div key="track" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 space-y-5">
@@ -133,14 +162,23 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
                                     </button>
                                 </div>
 
-                                {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+                                {error && (
+                                    <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
+                                        {error}
+                                    </div>
+                                )}
 
                                 {/* Results */}
-                                {requests && (
+                                {requests && requests.length === 0 && (
+                                    <div className="text-center py-8 text-gray-500 text-sm">
+                                        No loan requests found for this phone number.
+                                    </div>
+                                )}
+
+                                {requests && requests.length > 0 && (
                                     <div className="space-y-3">
-                                        {requests.length === 0 ? (
-                                            <p className="text-gray-500 text-center py-8">No requests found.</p>
-                                        ) : requests.map(req => {
+                                        <p className="text-xs text-gray-400 font-medium">Found {requests.length} request(s):</p>
+                                        {requests.map(req => {
                                             const cfg = STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
                                             const StatusIcon = cfg.icon;
                                             return (
@@ -200,7 +238,7 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
 };
 
 /* ── Embedded guest chat window ─────────────────────────────────────────── */
-const GuestChatWindow = ({ request, trackingToken }) => {
+const GuestChatWindow = ({ request, trackingToken, socket: propSocket }) => {
     const [messages, setMessages] = useState([]);
     const [text, setText] = useState('');
     const [joined, setJoined] = useState(false);
@@ -212,21 +250,28 @@ const GuestChatWindow = ({ request, trackingToken }) => {
     const loanRequestId = request._id;
 
     useEffect(() => {
-        const socket = io(SOCKET_URL, {
+        const socket = propSocket || io(SOCKET_URL, {
             auth: { trackingToken },
             transports: ['websocket', 'polling'],
         });
         socketRef.current = socket;
 
-        socket.on('authenticated', () => {
+        const joinRoom = () => {
             setConnected(true);
             socket.emit('join_room', { loanRequestId }, (ack) => {
                 if (ack?.success) setJoined(true);
                 else toast.error(ack?.message || 'Could not join chat');
             });
-        });
+        };
 
-        socket.on('auth_error', ({ message }) => toast.error(message));
+        if (socket.connected) {
+            joinRoom();
+        } else {
+            socket.on('authenticated', joinRoom);
+        }
+
+        const handleAuthError = ({ message }) => toast.error(message);
+        socket.on('auth_error', handleAuthError);
 
         // Load message history — send trackingToken in header so backend can auth without JWT
         api.get(`/chat/${loanRequestId}/messages`, {
@@ -235,12 +280,49 @@ const GuestChatWindow = ({ request, trackingToken }) => {
             .then(r => setMessages(r.data.data || []))
             .catch(err => console.warn('History load failed:', err.response?.data?.message || err.message));
 
-        socket.on('new_message', (msg) => {
+        const handleNewMessage = (msg) => {
             setMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
-        });
+            // If message is from lender while guest is viewing, mark read via socket
+            if (msg.senderType === 'lender') {
+                socket.emit('mark_read', { loanRequestId });
+            }
+        };
+        socket.on('new_message', handleNewMessage);
 
-        return () => socket.disconnect();
-    }, [loanRequestId, trackingToken]);
+        // Listen for delivery updates (when lender comes online)
+        const handleDelivered = ({ loanRequestId: targetId, messageIds, deliveredAt }) => {
+            if (targetId !== loanRequestId) return;
+            setMessages(prev => prev.map(m =>
+                (!messageIds || messageIds.includes(m._id)) && !m.read
+                    ? { ...m, delivered: true, deliveredAt: deliveredAt || m.deliveredAt }
+                    : m
+            ));
+        };
+        socket.on('messages_delivered', handleDelivered);
+
+        // Listen for seen updates (when lender opens/reads guest messages)
+        const handleSeen = ({ loanRequestId: targetId, readAt }) => {
+            if (targetId !== loanRequestId) return;
+            setMessages(prev => prev.map(m =>
+                m.senderType === 'customer'
+                    ? { ...m, read: true, readAt: readAt || new Date(), delivered: true }
+                    : m
+            ));
+        };
+        socket.on('messages_seen', handleSeen);
+
+        return () => {
+            socket.emit('leave_room', { loanRequestId });
+            socket.off('authenticated', joinRoom);
+            socket.off('auth_error', handleAuthError);
+            socket.off('new_message', handleNewMessage);
+            socket.off('messages_delivered', handleDelivered);
+            socket.off('messages_seen', handleSeen);
+            if (!propSocket) {
+                socket.disconnect();
+            }
+        };
+    }, [loanRequestId, trackingToken, propSocket]);
 
     useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
@@ -308,7 +390,10 @@ const GuestChatWindow = ({ request, trackingToken }) => {
                                             <Paperclip className="w-3 h-3" /> View attachment
                                           </a>
                                 )}
-                                <p className="text-[10px] opacity-60 mt-1 text-right">{formatDistanceToNow(msg.createdAt)}</p>
+                                <div className={`flex items-center justify-end gap-1 text-[10px] mt-1 ${isSelf ? 'text-teal-100/80' : 'text-gray-400'}`}>
+                                    <span>{formatDistanceToNow(msg.createdAt)}</span>
+                                    <MessageStatusTicks message={msg} isSelf={isSelf} />
+                                </div>
                             </div>
                         </div>
                     );
