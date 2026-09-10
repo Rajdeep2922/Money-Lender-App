@@ -45,19 +45,32 @@ const calculateCompoundEMI = (principal, monthlyRate, tenure) => {
 /**
  * Generate Amortization Schedule (Flat Rate / Simple Interest)
  * Interest is constant every month based on original principal.
+ *
+ * BUG FIX: EMI #1 due date is now one period AFTER the loan start date,
+ * not on the start date itself. An explicit firstPaymentDate overrides this.
+ *
  * @param {number} principal - Loan amount
  * @param {number} monthlyRate - Monthly interest rate in percentage
  * @param {number} tenure - Loan duration in months
  * @param {number} emi - Monthly EMI
- * @param {Date|string} startDate - Loan start date
+ * @param {Date|string} startDate - Loan disbursement date
+ * @param {Date|string|null} [firstPaymentDate] - Optional explicit first EMI date.
+ *   If provided, EMI #1 is due on this date and subsequent EMIs step one
+ *   month forward from it. If omitted, EMI #1 = startDate + 1 month.
  * @returns {Array} Array of payment schedule objects
  */
-const generateAmortizationSchedule = (principal, monthlyRate, tenure, emi, startDate = new Date()) => {
+const generateAmortizationSchedule = (principal, monthlyRate, tenure, emi, startDate = new Date(), firstPaymentDate = null) => {
     const monthlyRateDecimal = monthlyRate / 100;
     const monthlyInterest = Math.round(principal * monthlyRateDecimal * 100) / 100;
     let remainingBalance = principal;
     const schedule = [];
-    const start = new Date(startDate);
+
+    // Determine the base date from which EMI due dates are counted.
+    // If an explicit firstPaymentDate is given, use it directly as EMI #1.
+    // Otherwise, EMI #1 = startDate + 1 month (loan start ≠ first payment).
+    const baseDate = firstPaymentDate
+        ? new Date(firstPaymentDate)
+        : (() => { const d = new Date(startDate); d.setMonth(d.getMonth() + 1); return d; })();
 
     for (let month = 1; month <= tenure; month++) {
         const interestPayment = monthlyInterest;
@@ -70,8 +83,8 @@ const generateAmortizationSchedule = (principal, monthlyRate, tenure, emi, start
 
         remainingBalance = Math.round((remainingBalance - principalPayment) * 100) / 100;
 
-        // Calculate due date (first EMI on start date, subsequent EMIs monthly after)
-        const dueDate = new Date(start);
+        // EMI #1 is on baseDate, EMI #2 is baseDate + 1 month, etc.
+        const dueDate = new Date(baseDate);
         dueDate.setMonth(dueDate.getMonth() + (month - 1));
 
         schedule.push({
@@ -91,18 +104,27 @@ const generateAmortizationSchedule = (principal, monthlyRate, tenure, emi, start
 
 /**
  * Generate Amortization Schedule for Compound Interest (Reducing Balance)
+ *
+ * BUG FIX: EMI #1 due date is now one period AFTER the loan start date.
+ * An explicit firstPaymentDate overrides this.
+ *
  * @param {number} principal - Loan amount
  * @param {number} monthlyRate - Monthly interest rate in percentage
  * @param {number} tenure - Loan duration in months
  * @param {number} emi - Monthly EMI
- * @param {Date|string} startDate - Loan start date
+ * @param {Date|string} startDate - Loan disbursement date
+ * @param {Date|string|null} [firstPaymentDate] - Optional explicit first EMI date.
  * @returns {Array} Array of payment schedule objects
  */
-const generateCompoundAmortizationSchedule = (principal, monthlyRate, tenure, emi, startDate = new Date()) => {
+const generateCompoundAmortizationSchedule = (principal, monthlyRate, tenure, emi, startDate = new Date(), firstPaymentDate = null) => {
     const r = monthlyRate / 100;
     let balance = principal;
     const schedule = [];
-    const start = new Date(startDate);
+
+    // Determine the base date (same logic as flat rate schedule)
+    const baseDate = firstPaymentDate
+        ? new Date(firstPaymentDate)
+        : (() => { const d = new Date(startDate); d.setMonth(d.getMonth() + 1); return d; })();
 
     for (let month = 1; month <= tenure; month++) {
         const interestPayment = Math.round(balance * r * 100) / 100;
@@ -115,8 +137,8 @@ const generateCompoundAmortizationSchedule = (principal, monthlyRate, tenure, em
 
         balance = Math.round((balance - principalPayment) * 100) / 100;
 
-        // Calculate due date (first EMI on start date, subsequent EMIs monthly after)
-        const dueDate = new Date(start);
+        // EMI #1 is on baseDate, EMI #2 is baseDate + 1 month, etc.
+        const dueDate = new Date(baseDate);
         dueDate.setMonth(dueDate.getMonth() + (month - 1));
 
         schedule.push({
