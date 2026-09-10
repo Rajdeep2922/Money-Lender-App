@@ -140,16 +140,22 @@ const markMessagesAsRead = async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Invalid role for reading messages' });
         }
 
+        const now = new Date();
         const result = await Message.updateMany(
             { loanRequestId, senderType: targetSenderType, read: false },
-            { $set: { read: true, readAt: new Date() } }
+            { $set: { read: true, readAt: now, delivered: true, deliveredAt: now } }
         );
 
-        // Multi-tab synchronization: broadcast to user's other open sockets
+        // Intentional dual-event design:
+        // messages_read: targeted emit to user for clearing aggregate unread badges across tabs
+        // messages_seen: room-level broadcast to live-update per-message visual ticks in chat window
         const io = req.app.get('io');
-        if (io && recipientUserId) {
-            const { emitToUser } = require('../socket/socketManager');
-            emitToUser(io, recipientUserId, 'messages_read', { loanRequestId });
+        if (io) {
+            if (recipientUserId) {
+                const { emitToUser } = require('../socket/socketManager');
+                emitToUser(io, recipientUserId, 'messages_read', { loanRequestId });
+            }
+            io.to(loanRequestId).emit('messages_seen', { loanRequestId, readAt: now });
         }
 
         res.json({
