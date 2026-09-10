@@ -33,6 +33,8 @@ import { PageLoader } from '../../components/common/LoadingSpinner';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { formatCurrency, formatDate, formatStatus, getStatusColor } from '../../utils/formatters';
 import toast from 'react-hot-toast';
+import AgreementModeModal from './CustomizedAgreement/AgreementModeModal';
+import CustomizedAgreementBuilder from './CustomizedAgreement/CustomizedAgreementBuilder';
 
 const LoanDetails = () => {
     const { id } = useParams();
@@ -52,6 +54,8 @@ const LoanDetails = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [approveModal, setApproveModal] = useState(false);
     const [completeModal, setCompleteModal] = useState(false);
+    const [agreementModeModal, setAgreementModeModal] = useState(false);
+    const [customizedBuilderModal, setCustomizedBuilderModal] = useState(false);
     const [paymentModal, setPaymentModal] = useState({ isOpen: false, emiItem: null });
     const [unpaidModal, setUnpaidModal] = useState({ isOpen: false, payment: null });
     const [forecloseModal, setForecloseModal] = useState({
@@ -348,7 +352,16 @@ const LoanDetails = () => {
                     )}
                     <button
                         className="btn btn-secondary gap-2"
-                        onClick={() => downloadAgreement.mutate(id)}
+                        onClick={() => {
+                            const hasExistingAgreement = Boolean(
+                                loan?.agreementSnapshot?.agreementVersion || loan?.agreementGeneratedAt
+                            );
+                            if (hasExistingAgreement) {
+                                downloadAgreement.mutate(id);
+                            } else {
+                                setAgreementModeModal(true);
+                            }
+                        }}
                         disabled={downloadAgreement.isPending}
                     >
                         <FiDownload className="w-4 h-4" />
@@ -894,6 +907,28 @@ const LoanDetails = () => {
                     </motion.div>
                 </div>
             )}
+
+            {/* Agreement Selection and Customized Builder Modals */}
+            <AgreementModeModal
+                isOpen={agreementModeModal}
+                onClose={() => setAgreementModeModal(false)}
+                hasExistingAgreement={Boolean(loan?.agreementSnapshot?.agreementVersion || loan?.agreementGeneratedAt)}
+                isStandardLoading={downloadAgreement.isPending}
+                onSelectStandard={() => {
+                    setAgreementModeModal(false);
+                    downloadAgreement.mutate(id);
+                }}
+                onSelectCustomized={() => {
+                    setAgreementModeModal(false);
+                    setCustomizedBuilderModal(true);
+                }}
+            />
+
+            <CustomizedAgreementBuilder
+                isOpen={customizedBuilderModal}
+                onClose={() => setCustomizedBuilderModal(false)}
+                loan={loan}
+            />
 
         </>
 
