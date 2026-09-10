@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getMessages } = require('../controllers/chatController');
+const { getMessages, markMessagesAsRead } = require('../controllers/chatController');
 
 /**
  * Dual-auth middleware
@@ -61,5 +61,8 @@ const protectBoth = async (req, res, next) => {
 
 // GET /api/chat/:loanRequestId/messages — message history
 router.get('/:loanRequestId/messages', protectBoth, getMessages);
+
+// POST /api/chat/:loanRequestId/mark-read — mark messages as read
+router.post('/:loanRequestId/mark-read', protectBoth, markMessagesAsRead);
 
 module.exports = router;

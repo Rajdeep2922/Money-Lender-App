@@ -98,4 +98,70 @@ const getMessages = async (req, res, next) => {
     }
 };
 
-module.exports = { getMessages };
+/**
+ * @desc    Mark unread messages in a loan request as read by the recipient
+ * @route   POST /api/chat/:loanRequestId/mark-read
+ * @access  JWT (Lender/Portal Customer) OR trackingToken header (Guest)
+ */
+const markMessagesAsRead = async (req, res, next) => {
+    try {
+        const { loanRequestId } = req.params;
+
+        let authContext = {};
+        let userRole = null;
+        let recipientUserId = null;
+
+        if (req.customer) {
+            userRole = 'customer';
+            recipientUserId = req.customer._id.toString();
+            authContext = { userId: recipientUserId, userRole };
+        } else if (req.user) {
+            userRole = 'lender';
+            recipientUserId = req.user._id.toString();
+            authContext = {
+                userId: (req.user.lenderId?._id || req.user.lenderId)?.toString(),
+                userRole,
+            };
+        } else if (req.guestTrackingToken) {
+            userRole = 'customer';
+            authContext = { trackingToken: req.guestTrackingToken };
+        }
+
+        // Verify participant access to the accepted loan request
+        await verifyAcceptedAccess(loanRequestId, authContext);
+
+        // Explicit allowed-values mapping (no negative logic)
+        let targetSenderType = null;
+        if (userRole === 'lender') {
+            targetSenderType = 'customer';
+        } else if (userRole === 'customer') {
+            targetSenderType = 'lender';
+        } else {
+            return res.status(403).json({ success: false, message: 'Invalid role for reading messages' });
+        }
+
+        const result = await Message.updateMany(
+            { loanRequestId, senderType: targetSenderType, read: false },
+            { $set: { read: true, readAt: new Date() } }
+        );
+
+        // Multi-tab synchronization: broadcast to user's other open sockets
+        const io = req.app.get('io');
+        if (io && recipientUserId) {
+            const { emitToUser } = require('../socket/socketManager');
+            emitToUser(io, recipientUserId, 'messages_read', { loanRequestId });
+        }
+
+        res.json({
+            success: true,
+            modifiedCount: result.modifiedCount,
+        });
+    } catch (error) {
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({ success: false, message: error.message });
+        }
+        next(error);
+    }
+};
+
+module.exports = { getMessages, markMessagesAsRead };

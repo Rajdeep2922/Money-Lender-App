@@ -229,9 +229,50 @@ const respondToLoanRequest = async (req, res, next) => {
     }
 };
 
+/**
+ * @desc    Mark pending loan requests as seen by lender
+ * @route   POST /api/loan-request/mark-seen
+ * @access  Private (Lender)
+ */
+const markLoanRequestsSeen = async (req, res, next) => {
+    try {
+        if (!req.user || !req.user.lenderId) {
+            return res.status(400).json({ success: false, message: 'Lender profile not found' });
+        }
+
+        const lenderProfileId = req.user.lenderId._id || req.user.lenderId;
+        const { requestIds } = req.body || {};
+
+        const query = {
+            lenderId: lenderProfileId,
+            status: 'pending',
+            viewedByLender: false,
+        };
+
+        if (Array.isArray(requestIds) && requestIds.length > 0) {
+            query._id = { $in: requestIds };
+        }
+
+        const result = await LoanRequest.updateMany(query, {
+            $set: {
+                viewedByLender: true,
+                viewedAt: new Date(),
+            },
+        });
+
+        res.json({
+            success: true,
+            modifiedCount: result.modifiedCount,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     createLoanRequest,
     getLoanRequests,
     getLoanRequestById,
     respondToLoanRequest,
+    markLoanRequestsSeen,
 };

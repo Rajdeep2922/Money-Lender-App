@@ -5,6 +5,7 @@ const {
     getLoanRequests,
     getLoanRequestById,
     respondToLoanRequest,
+    markLoanRequestsSeen,
 } = require('../controllers/loanRequestController');
 const { protect, protectCustomer } = require('../middleware/auth');
 
@@ -57,6 +58,9 @@ router.get('/', protectBoth, getLoanRequests);
 
 // GET /api/loan-request/:id — single request (participant only)
 router.get('/:id', protectBoth, getLoanRequestById);
+
+// POST /api/loan-request/mark-seen — lender marks pending requests as viewed
+router.post('/mark-seen', protect, markLoanRequestsSeen);
 
 // POST /api/loan-request/:id/respond — lender accepts/rejects
 router.post('/:id/respond', protect, respondToLoanRequest);
