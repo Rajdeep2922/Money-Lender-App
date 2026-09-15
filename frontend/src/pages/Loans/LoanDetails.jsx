@@ -159,8 +159,17 @@ const LoanDetails = () => {
     };
 
     const handleForecloseConfirm = async () => {
-        const toastId = toast.loading('Processing early settlement...');
         const discountAmount = parseFloat(forecloseModal.discount) || 0;
+        if (discountAmount < 0) {
+            toast.error('Discount cannot be negative');
+            return;
+        }
+        if (discountAmount > loan.remainingBalance) {
+            toast.error(`Discount cannot exceed remaining balance (${formatCurrency(loan.remainingBalance)})`);
+            return;
+        }
+
+        const toastId = toast.loading('Processing early settlement...');
         const finalAmount = Math.max(0, loan.remainingBalance - discountAmount);
 
         try {
@@ -303,55 +312,55 @@ const LoanDetails = () => {
                             </div>
                         </div>
                     </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {loan.status === 'pending_approval' && (
                         <Link
                             to={`/loans/${id}/edit`}
-                            className="btn btn-secondary gap-2"
+                            className="btn btn-secondary rounded-full text-xs font-semibold px-4 py-2 gap-2 shadow-xs"
                         >
-                            <FiEdit className="w-4 h-4" />
+                            <FiEdit className="w-3.5 h-3.5" />
                             Edit
                         </Link>
                     )}
                     {/* Complete loan — only when all EMIs paid and still active */}
                     {loan.status === 'active' && paymentsReceivedCount >= totalEmis && (
                         <button
-                            className="btn btn-primary gap-2"
+                            className="btn btn-primary rounded-full text-xs font-semibold px-4 py-2 gap-2 shadow-xs"
                             onClick={() => setCompleteModal(true)}
                             disabled={completeLoan.isPending}
                         >
-                            <FiCheckCircle className="w-4 h-4" />
+                            <FiCheckCircle className="w-3.5 h-3.5" />
                             {completeLoan.isPending ? 'Completing...' : 'Mark Complete'}
                         </button>
                     )}
                     {loan.status === 'active' && loan.foreclosurePolicy !== 'NOT_ALLOWED' && (
                         <button
-                            className="btn btn-ghost text-error border border-error/20 hover:bg-error/10 gap-2"
+                            className="btn btn-ghost text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-full text-xs font-semibold px-4 py-2 gap-2 transition-all active:scale-95"
                             onClick={handleForeclose}
                             disabled={forecloseLoan.isPending}
                         >
-                            <FiClock className="w-4 h-4" />
+                            <FiClock className="w-3.5 h-3.5" />
                             {forecloseLoan.isPending ? 'Settle...' : 'Foreclose'}
                         </button>
                     )}
                     {loan.status === 'active' && loan.foreclosurePolicy === 'NOT_ALLOWED' && (
-                        <span className="flex items-center gap-1 text-xs text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2">
+                        <span className="flex items-center gap-1 text-xs text-gray-400 border border-hairline-light dark:border-hairline-dark rounded-full px-3.5 py-1.5 font-medium">
                             <FiXCircle className="w-3.5 h-3.5" />
                             Foreclosure Not Allowed
                         </span>
                     )}
                     {(loan.status === 'closed' || loan.status === 'FORECLOSED' || loan.status === 'COMPLETED') && (
                         <button
-                            className="btn btn-primary gap-2"
+                            className="btn btn-primary rounded-full text-xs font-semibold px-4 py-2 gap-2 shadow-xs"
                             onClick={() => downloadNOC.mutate(id)}
                             disabled={downloadNOC.isPending}
                         >
-                            <FiCheckCircle className="w-4 h-4" />
+                            <FiCheckCircle className="w-3.5 h-3.5" />
                             {downloadNOC.isPending ? 'Generating...' : 'Download NOC'}
                         </button>
                     )}
                     <button
-                        className="btn btn-secondary gap-2"
+                        className="btn btn-secondary rounded-full text-xs font-semibold px-4 py-2 gap-2 border border-hairline-light dark:border-hairline-dark shadow-xs"
                         onClick={() => {
                             const hasExistingAgreement = Boolean(
                                 loan?.agreementSnapshot?.agreementVersion || loan?.agreementGeneratedAt
@@ -364,15 +373,15 @@ const LoanDetails = () => {
                         }}
                         disabled={downloadAgreement.isPending}
                     >
-                        <FiDownload className="w-4 h-4" />
+                        <FiDownload className="w-3.5 h-3.5" />
                         {downloadAgreement.isPending ? 'Generating...' : 'Agreement'}
                     </button>
                     <button
-                        className="btn btn-secondary gap-2"
+                        className="btn btn-secondary rounded-full text-xs font-semibold px-4 py-2 gap-2 border border-hairline-light dark:border-hairline-dark shadow-xs"
                         onClick={() => downloadStatement.mutate(id)}
                         disabled={downloadStatement.isPending}
                     >
-                        <FiFileText className="w-4 h-4" />
+                        <FiFileText className="w-3.5 h-3.5" />
                         {downloadStatement.isPending ? 'Generating...' : 'Statement'}
                     </button>
                 </div>
@@ -862,7 +871,7 @@ const LoanDetails = () => {
                             <label className="label">Settlement Discount (optional)</label>
                             <input
                                 type="number"
-                                className="input"
+                                className={`input ${parseFloat(forecloseModal.discount) > loan.remainingBalance ? 'border-rose-500 focus:border-rose-500' : ''}`}
                                 min="0"
                                 max={loan.remainingBalance}
                                 step="0.01"
@@ -870,7 +879,15 @@ const LoanDetails = () => {
                                 onChange={(e) => setForecloseModal({ ...forecloseModal, discount: e.target.value })}
                                 placeholder="Enter discount amount"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Reduce the final settlement by this amount</p>
+                            {parseFloat(forecloseModal.discount) > loan.remainingBalance ? (
+                                <p className="text-xs text-rose-500 font-medium mt-1">
+                                    Discount cannot exceed remaining balance ({formatCurrency(loan.remainingBalance)})
+                                </p>
+                            ) : parseFloat(forecloseModal.discount) < 0 ? (
+                                <p className="text-xs text-rose-500 font-medium mt-1">Discount cannot be negative</p>
+                            ) : (
+                                <p className="text-xs text-gray-500 mt-1">Reduce the final settlement by this amount</p>
+                            )}
                         </div>
 
                         {/* Notes */}

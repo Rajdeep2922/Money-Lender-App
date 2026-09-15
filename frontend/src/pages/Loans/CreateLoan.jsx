@@ -4,13 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FiArrowLeft, FiSave, FiPercent, FiEdit3, FiZap, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiPercent, FiEdit3, FiZap, FiChevronDown, FiChevronUp, FiPlus, FiX, FiAlertCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import { useCustomers } from '../../hooks/useCustomers';
+import { useCustomers, useCreateCustomer } from '../../hooks/useCustomers';
 import { useCreateLoan } from '../../hooks/useLoans';
 import { useLoanPolicy } from '../../hooks/useLender';
 import { formatCurrency } from '../../utils/formatters';
-// Import from shared calculation module - SINGLE SOURCE OF TRUTH
 import { calculateMonthlyEMI, calculateCompoundEMI } from '../../../../shared/loanCalculations.js';
 
 const loanSchema = z.object({
@@ -24,18 +23,20 @@ const loanSchema = z.object({
 });
 
 // Reverse calculate interest rate from EMI (Simple Interest)
-// Formula: EMI = (P + P*r*n) / n => r = (EMI*n - P) / (P*n)
 const calculateSimpleRateFromEMI = (principal, emi, months) => {
+    if (!principal || !months) return 0;
     const totalPayable = emi * months;
     const totalInterest = totalPayable - principal;
+    if (totalInterest < 0) return 0; // Guard against negative interest
     const rate = (totalInterest / (principal * months)) * 100;
     return Math.round(rate * 100) / 100;
 };
 
 // Reverse calculate interest rate from EMI (Compound Interest) using binary search
 const calculateCompoundRateFromEMI = (principal, emi, months) => {
+    if (!principal || !months || emi * months < principal) return 0;
     let low = 0;
-    let high = 50; // Max 50% monthly rate
+    let high = 50;
     let mid;
     const tolerance = 0.01;
 
@@ -61,8 +62,11 @@ export const CreateLoan = () => {
     const [isManualEMI, setIsManualEMI] = useState(false);
     const [manualEMI, setManualEMI] = useState('');
     const [policyExpanded, setPolicyExpanded] = useState(false);
+    const [quickCustomerModal, setQuickCustomerModal] = useState(false);
+    const [newCustomerForm, setNewCustomerForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
 
-    const { data: customersData } = useCustomers({ limit: 100 });
+    const { data: customersData, refetch: refetchCustomers } = useCustomers({ limit: 100 });
+    const createCustomerMutation = useCreateCustomer();
     const createLoan = useCreateLoan();
     const { data: loanPolicy } = useLoanPolicy();
 
@@ -86,6 +90,10 @@ export const CreateLoan = () => {
     const loanDurationMonths = watch('loanDurationMonths');
     const interestType = watch('interestType');
 
+    // Edge Case Guard: Minimum manual EMI cannot be less than principal / months
+    const minManualEMI = principal && loanDurationMonths ? Math.ceil(principal / loanDurationMonths) : 0;
+    const isEmiTooLow = isManualEMI && manualEMI && parseFloat(manualEMI) < minManualEMI;
+
     // Calculate derived values based on mode
     const calculations = useMemo(() => {
         if (!principal || !loanDurationMonths) return null;
@@ -100,7 +108,7 @@ export const CreateLoan = () => {
                 : calculateSimpleRateFromEMI(principal, emi, loanDurationMonths);
 
             const totalPayable = emi * loanDurationMonths;
-            const totalInterest = totalPayable - principal;
+            const totalInterest = Math.max(0, totalPayable - principal);
 
             return { emi, totalPayable, totalInterest, calculatedRate: rate };
         } else if (monthlyInterestRate) {
@@ -108,7 +116,7 @@ export const CreateLoan = () => {
                 ? calculateCompoundEMI(principal, monthlyInterestRate, loanDurationMonths)
                 : calculateMonthlyEMI(principal, monthlyInterestRate, loanDurationMonths);
             const totalPayable = emi * loanDurationMonths;
-            const totalInterest = totalPayable - principal;
+            const totalInterest = Math.max(0, totalPayable - principal);
             return { emi, totalPayable, totalInterest, calculatedRate: null };
         }
         return null;
@@ -121,14 +129,41 @@ export const CreateLoan = () => {
         }
     }, [calculations?.calculatedRate, isManualEMI, setValue]);
 
+    const handleQuickCustomerSubmit = async (e) => {
+        e.preventDefault();
+        if (!newCustomerForm.firstName || !newCustomerForm.lastName || !newCustomerForm.email || !newCustomerForm.phone) {
+            toast.error('Please fill all required customer fields');
+            return;
+        }
+
+        const toastId = toast.loading('Adding customer...');
+        try {
+            const response = await createCustomerMutation.mutateAsync(newCustomerForm);
+            const created = response.data?.customer || response.customer;
+            await refetchCustomers();
+            if (created?._id) {
+                setValue('customerId', created._id);
+            }
+            toast.success('Customer added and selected!', { id: toastId });
+            setQuickCustomerModal(false);
+            setNewCustomerForm({ firstName: '', lastName: '', email: '', phone: '' });
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.message || 'Failed to create customer', { id: toastId });
+        }
+    };
+
     const onSubmit = async (data) => {
+        if (isEmiTooLow) {
+            toast.error(`Manual EMI cannot be less than ₹${minManualEMI.toLocaleString()} (below principal fraction).`);
+            return;
+        }
+
         const toastId = toast.loading('Creating loan...');
         try {
             const submitData = isManualEMI && manualEMI
                 ? { ...data, manualEMI: parseFloat(manualEMI) }
                 : data;
 
-            // Include per-loan policy overrides (undefined fields will be ignored by server; it uses lender defaults)
             if (data.gracePeriodDays !== undefined && data.gracePeriodDays !== '') {
                 submitData.gracePeriodDays = Number(data.gracePeriodDays);
             }
@@ -155,53 +190,81 @@ export const CreateLoan = () => {
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-2xl mx-auto"
+            className="max-w-3xl mx-auto pb-12 space-y-6"
         >
             {/* Header */}
-            <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <FiArrowLeft className="w-5 h-5" />
+            <div className="flex items-center gap-4">
+                <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="p-2 rounded-xl border border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                    <FiArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Loan</h1>
-                    <p className="text-gray-500 dark:text-gray-400">Issue a new loan to a customer</p>
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Create Loan</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Issue a new loan agreement to a borrower</p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Loan Details */}
-                <div className="card p-6 space-y-6">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Loan Details</h2>
+                {/* Loan Details Card */}
+                <div className="card p-6 sm:p-7 space-y-6 bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl shadow-sm">
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-white border-b border-hairline-light dark:border-hairline-dark pb-3">
+                        Loan Parameters
+                    </h2>
 
+                    {/* Customer Select + Inline Quick Add */}
                     <div className="form-group">
-                        <label className="label">Select Customer *</label>
-                        <select {...register('customerId')} className={`input ${errors.customerId ? 'input-error' : ''}`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="label mb-0 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Select Borrower *
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => setQuickCustomerModal(true)}
+                                className="text-xs font-semibold text-primary dark:text-primary-bright hover:underline flex items-center gap-1"
+                            >
+                                <FiPlus className="w-3.5 h-3.5" /> Quick Add Customer
+                            </button>
+                        </div>
+                        <select
+                            {...register('customerId')}
+                            className={`input rounded-xl h-11 text-sm border-hairline-light dark:border-hairline-dark ${errors.customerId ? 'input-error' : ''}`}
+                        >
                             <option value="">Choose a customer...</option>
                             {customers.map((c) => (
                                 <option key={c._id} value={c._id}>
-                                    {c.firstName} {c.lastName} - {c.email}
+                                    {c.firstName} {c.lastName} · {c.phone || c.email}
                                 </option>
                             ))}
                         </select>
-                        {errors.customerId && <p className="error-text">{errors.customerId.message}</p>}
+                        {errors.customerId && <p className="error-text text-xs mt-1">{errors.customerId.message}</p>}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {/* Principal Amount */}
                         <div className="form-group">
-                            <label className="label">Principal Amount (₹) *</label>
+                            <label className="label text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Principal Amount (₹) *
+                            </label>
                             <input
                                 type="number"
                                 {...register('principal', { valueAsNumber: true })}
-                                className={`input ${errors.principal ? 'input-error' : ''}`}
+                                className={`input rounded-xl h-11 text-sm font-semibold tabular-nums ${errors.principal ? 'input-error' : ''}`}
+                                placeholder="100000"
                             />
-                            {errors.principal && <p className="error-text">{errors.principal.message}</p>}
+                            {errors.principal && <p className="error-text text-xs mt-1">{errors.principal.message}</p>}
                         </div>
 
+                        {/* Interest Rate / Manual EMI */}
                         <div className="form-group">
-                            <div className="flex items-center justify-between mb-2">
-                                <label className="label mb-0">Monthly Interest Rate (%) *</label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="label mb-0 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                    {isManualEMI ? 'Fixed Monthly EMI (₹) *' : 'Monthly Interest Rate (%) *'}
+                                </label>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -210,128 +273,173 @@ export const CreateLoan = () => {
                                             setManualEMI(calculations.emi.toString());
                                         }
                                     }}
-                                    className={`flex items-center gap-1 px-2 py-1 text-xs rounded-lg transition-colors ${isManualEMI
-                                        ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
-                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                                        }`}
+                                    className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-full font-medium transition-all ${
+                                        isManualEMI
+                                            ? 'bg-primary text-white shadow-sm font-semibold'
+                                            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                                    }`}
                                 >
                                     {isManualEMI ? <FiEdit3 className="w-3 h-3" /> : <FiZap className="w-3 h-3" />}
-                                    {isManualEMI ? 'Manual EMI' : 'Auto EMI'}
+                                    {isManualEMI ? 'Manual EMI Mode' : 'Auto EMI Mode'}
                                 </button>
                             </div>
+
                             {!isManualEMI ? (
                                 <>
                                     <input
                                         type="number"
                                         step="0.1"
                                         {...register('monthlyInterestRate', { valueAsNumber: true })}
-                                        className={`input ${errors.monthlyInterestRate ? 'input-error' : ''}`}
+                                        className={`input rounded-xl h-11 text-sm tabular-nums ${errors.monthlyInterestRate ? 'input-error' : ''}`}
                                     />
-                                    {errors.monthlyInterestRate && <p className="error-text">{errors.monthlyInterestRate.message}</p>}
+                                    {errors.monthlyInterestRate && <p className="error-text text-xs mt-1">{errors.monthlyInterestRate.message}</p>}
                                 </>
                             ) : (
-                                <div className="space-y-2">
-                                    <div className="relative">
-                                        <input
-                                            type="number"
-                                            value={manualEMI}
-                                            onChange={(e) => setManualEMI(e.target.value)}
-                                            placeholder="Enter monthly EMI amount"
-                                            className="input pr-16"
-                                        />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">EMI</span>
-                                    </div>
-                                    {calculations?.calculatedRate !== null && calculations?.calculatedRate !== undefined && (
-                                        <p className="text-sm text-teal-600 dark:text-teal-400">
-                                            Calculated Rate: <strong>{calculations.calculatedRate}%</strong> per month
+                                <div className="space-y-1.5">
+                                    <input
+                                        type="number"
+                                        value={manualEMI}
+                                        onChange={(e) => setManualEMI(e.target.value)}
+                                        placeholder={`Min ₹${minManualEMI.toLocaleString()}`}
+                                        className={`input rounded-xl h-11 text-sm font-semibold tabular-nums ${isEmiTooLow ? 'border-accent-danger' : ''}`}
+                                    />
+                                    {isEmiTooLow && (
+                                        <div className="flex items-center gap-1.5 text-xs text-accent-danger mt-1">
+                                            <FiAlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                                            <span>Cannot be lower than ₹{minManualEMI.toLocaleString()}/mo (below principal share).</span>
+                                        </div>
+                                    )}
+                                    {calculations?.calculatedRate !== null && !isEmiTooLow && (
+                                        <p className="text-xs text-primary dark:text-primary-bright font-medium">
+                                            Implied Monthly Rate: <strong>{calculations.calculatedRate}%</strong>
                                         </p>
                                     )}
                                 </div>
                             )}
                         </div>
 
+                        {/* Duration in Months */}
                         <div className="form-group">
-                            <label className="label">Duration (Months) *</label>
+                            <label className="label text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Duration (Months) *
+                            </label>
                             <input
                                 type="number"
                                 {...register('loanDurationMonths', { valueAsNumber: true })}
-                                className={`input ${errors.loanDurationMonths ? 'input-error' : ''}`}
+                                className={`input rounded-xl h-11 text-sm tabular-nums ${errors.loanDurationMonths ? 'input-error' : ''}`}
                             />
-                            {errors.loanDurationMonths && <p className="error-text">{errors.loanDurationMonths.message}</p>}
+                            {errors.loanDurationMonths && <p className="error-text text-xs mt-1">{errors.loanDurationMonths.message}</p>}
                         </div>
 
+                        {/* Start Date */}
                         <div className="form-group">
-                            <label className="label">Start Date *</label>
+                            <label className="label text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Loan Start Date *
+                            </label>
                             <input
                                 type="date"
                                 {...register('startDate')}
-                                className={`input ${errors.startDate ? 'input-error' : ''}`}
+                                className={`input rounded-xl h-11 text-sm ${errors.startDate ? 'input-error' : ''}`}
                             />
-                            {errors.startDate && <p className="error-text">{errors.startDate.message}</p>}
+                            {errors.startDate && <p className="error-text text-xs mt-1">{errors.startDate.message}</p>}
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label className="label">Notes</label>
-                        <textarea {...register('notes')} rows={2} className="input" placeholder="Purpose of loan, special conditions..." />
-                    </div>
-
-                    {/* Interest Type Toggle */}
-                    <div className="form-group">
-                        <label className="label">Interest Calculation Method *</label>
-                        <div className="flex gap-4 mt-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                    {/* Interest Calculation Method */}
+                    <div className="form-group pt-2 border-t border-hairline-light dark:border-hairline-dark">
+                        <label className="label text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2.5">
+                            Interest Method *
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                                interestType === 'simple'
+                                    ? 'border-primary bg-primary/5 dark:bg-primary/10 ring-1 ring-primary'
+                                    : 'border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated hover:bg-gray-50'
+                            }`}>
                                 <input
                                     type="radio"
                                     value="simple"
                                     {...register('interestType')}
-                                    className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
+                                    className="w-4 h-4 text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Simple Interest</span>
-                                <span className="text-xs text-gray-500">(Flat Rate)</span>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Simple Interest</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Flat Rate · Constant interest each month</p>
+                                </div>
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
+
+                            <label className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                                interestType === 'compound'
+                                    ? 'border-primary bg-primary/5 dark:bg-primary/10 ring-1 ring-primary'
+                                    : 'border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated hover:bg-gray-50'
+                            }`}>
                                 <input
                                     type="radio"
                                     value="compound"
                                     {...register('interestType')}
-                                    className="w-4 h-4 text-teal-600 border-gray-300 focus:ring-teal-500"
+                                    className="w-4 h-4 text-primary focus:ring-primary"
                                 />
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Compound Interest</span>
-                                <span className="text-xs text-gray-500">(Reducing Balance)</span>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Compound Interest</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Reducing Balance · Interest drops with balance</p>
+                                </div>
                             </label>
                         </div>
                     </div>
+
+                    {/* Notes */}
+                    <div className="form-group">
+                        <label className="label text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Notes / Special Terms
+                        </label>
+                        <textarea
+                            {...register('notes')}
+                            rows={2}
+                            className="input rounded-xl text-sm"
+                            placeholder="Loan purpose, guarantor details, or special covenants..."
+                        />
+                    </div>
                 </div>
 
-                {/* Live Calculation Preview */}
+                {/* Live Calculation Summary */}
                 {calculations && (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="card p-6 bg-gradient-to-br from-teal-50 to-blue-50 dark:from-teal-900/20 dark:to-teal-800/20 border-teal-200 dark:border-teal-800"
+                        className="card p-5 sm:p-6 bg-gray-50 dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl shadow-sm"
                     >
-                        <div className="flex items-center gap-2 mb-4">
-                            <FiPercent className="w-5 h-5 text-teal-600" />
-                            <h3 className="font-semibold text-gray-900 dark:text-white">Loan Summary</h3>
+                        <div className="flex items-center justify-between mb-4 pb-2 border-b border-hairline-light dark:border-hairline-dark">
+                            <div className="flex items-center gap-2">
+                                <FiPercent className="w-4 h-4 text-primary" />
+                                <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Financial Summary</h3>
+                            </div>
+                            <span className="text-xs font-mono font-medium text-gray-500">
+                                {loanDurationMonths} installments
+                            </span>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Monthly EMI</p>
-                                <p className="text-xl font-bold text-teal-600">{formatCurrency(calculations.emi)}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Monthly EMI</p>
+                                <p className="text-xl font-bold text-primary dark:text-primary-bright tabular-nums">
+                                    {formatCurrency(calculations.emi)}
+                                </p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Interest</p>
-                                <p className="text-xl font-bold text-orange-600">{formatCurrency(calculations.totalInterest)}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Total Interest</p>
+                                <p className="text-xl font-bold text-accent-warning tabular-nums">
+                                    {formatCurrency(calculations.totalInterest)}
+                                </p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Payable</p>
-                                <p className="text-xl font-bold text-purple-600">{formatCurrency(calculations.totalPayable)}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Total Repayment</p>
+                                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
+                                    {formatCurrency(calculations.totalPayable)}
+                                </p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Interest %</p>
-                                <p className="text-xl font-bold text-gray-700 dark:text-gray-300">
-                                    {((calculations.totalInterest / principal) * 100).toFixed(1)}%
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Effective Markup</p>
+                                <p className="text-xl font-bold text-gray-700 dark:text-gray-300 tabular-nums">
+                                    {principal > 0 ? ((calculations.totalInterest / principal) * 100).toFixed(1) : 0}%
                                 </p>
                             </div>
                         </div>
@@ -339,15 +447,15 @@ export const CreateLoan = () => {
                 )}
 
                 {/* Advanced Policy Overrides (Collapsible) */}
-                <div className="card overflow-hidden">
+                <div className="card overflow-hidden bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl">
                     <button
                         type="button"
                         onClick={() => setPolicyExpanded(v => !v)}
-                        className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                        className="w-full flex items-center justify-between px-6 py-4 bg-gray-50/70 dark:bg-gray-800/40 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     >
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Advanced Policy</span>
-                            <span className="text-xs text-gray-400 dark:text-gray-500">(optional — overrides lender defaults)</span>
+                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Policy Overrides</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">(Optional — overrides default lender settings)</span>
                         </div>
                         {policyExpanded
                             ? <FiChevronUp className="w-4 h-4 text-gray-400" />
@@ -362,50 +470,47 @@ export const CreateLoan = () => {
                                 transition={{ duration: 0.2 }}
                                 className="overflow-hidden"
                             >
-                                <div className="p-6 space-y-5">
-                                    {/* Grace Period */}
+                                <div className="p-6 space-y-4 border-t border-hairline-light dark:border-hairline-dark">
                                     <div className="form-group">
-                                        <label className="label">Grace Period Days</label>
-                                        <select {...register('gracePeriodDays')} className="input">
+                                        <label className="label text-xs font-semibold text-gray-500">Grace Period Days</label>
+                                        <select {...register('gracePeriodDays')} className="input rounded-xl text-sm">
                                             <option value="">Use lender default ({loanPolicy?.defaultGracePeriodDays ?? 0} days)</option>
                                             {[0, 3, 5, 7, 15, 30].map(d => (
-                                                <option key={d} value={d}>{d === 0 ? '0 Days (No Grace Period)' : `${d} Days`}</option>
+                                                <option key={d} value={d}>{d === 0 ? '0 Days (Strict Due Date)' : `${d} Days`}</option>
                                             ))}
                                         </select>
                                     </div>
 
-                                    {/* Late Fee */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="form-group">
-                                            <label className="label">Late Fee Type</label>
-                                            <select {...register('lateFeeType')} className="input">
-                                                <option value="">Use lender default ({loanPolicy?.defaultLateFeeType ?? 'none'})</option>
+                                            <label className="label text-xs font-semibold text-gray-500">Late Fee Type</label>
+                                            <select {...register('lateFeeType')} className="input rounded-xl text-sm">
+                                                <option value="">Use default ({loanPolicy?.defaultLateFeeType ?? 'none'})</option>
                                                 <option value="none">No Late Fee</option>
-                                                <option value="fixed">Fixed Amount (₹)</option>
+                                                <option value="fixed">Fixed Fee (₹)</option>
                                                 <option value="percentage">Percentage of EMI (%)</option>
                                             </select>
                                         </div>
                                         <div className="form-group">
-                                            <label className="label">Late Fee Value</label>
+                                            <label className="label text-xs font-semibold text-gray-500">Late Fee Value</label>
                                             <input
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
                                                 placeholder={`Default: ${loanPolicy?.defaultLateFeeValue ?? 0}`}
                                                 {...register('lateFeeValue')}
-                                                className="input"
+                                                className="input rounded-xl text-sm"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Foreclosure Policy */}
                                     <div className="form-group">
-                                        <label className="label">Foreclosure Policy</label>
-                                        <select {...register('foreclosurePolicy')} className="input">
-                                            <option value="">Use lender default ({loanPolicy?.defaultForeclosurePolicy ?? 'WITHOUT_DISCOUNT'})</option>
+                                        <label className="label text-xs font-semibold text-gray-500">Foreclosure Policy</label>
+                                        <select {...register('foreclosurePolicy')} className="input rounded-xl text-sm">
+                                            <option value="">Use default ({loanPolicy?.defaultForeclosurePolicy ?? 'WITHOUT_DISCOUNT'})</option>
                                             <option value="NOT_ALLOWED">Not Allowed</option>
-                                            <option value="WITHOUT_DISCOUNT">Allowed — No Discount</option>
-                                            <option value="MANUAL_DISCOUNT">Allowed — Manual Discount</option>
+                                            <option value="WITHOUT_DISCOUNT">Allowed — Full Principal</option>
+                                            <option value="MANUAL_DISCOUNT">Allowed — Discretionary Discount</option>
                                         </select>
                                     </div>
                                 </div>
@@ -414,17 +519,122 @@ export const CreateLoan = () => {
                     </AnimatePresence>
                 </div>
 
-                {/* Actions */}
-                <div className="flex justify-end gap-3">
-                    <button type="button" onClick={() => navigate(-1)} className="btn btn-secondary">
+                {/* Form Actions */}
+                <div className="flex justify-end gap-3 pt-2">
+                    <button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        className="btn btn-secondary h-11 px-5 rounded-xl text-sm"
+                    >
                         Cancel
                     </button>
-                    <button type="submit" disabled={isSubmitting} className="btn btn-primary">
-                        <FiSave className="w-4 h-4 mr-2" />
-                        {isSubmitting ? 'Creating...' : 'Create Loan'}
+                    <button
+                        type="submit"
+                        disabled={isSubmitting || isEmiTooLow}
+                        className="btn btn-primary h-11 px-6 rounded-xl text-sm font-semibold gap-2 shadow-sm disabled:opacity-50"
+                    >
+                        <FiSave className="w-4 h-4" />
+                        {isSubmitting ? 'Creating Agreement...' : 'Issue Loan'}
                     </button>
                 </div>
             </form>
+
+            {/* Quick Add Customer Modal */}
+            <AnimatePresence>
+                {quickCustomerModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl p-6 w-full max-w-md shadow-2xl relative"
+                        >
+                            <button
+                                type="button"
+                                onClick={() => setQuickCustomerModal(false)}
+                                className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                <FiX className="w-5 h-5" />
+                            </button>
+
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                Quick Add Borrower
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-5">
+                                Add a new customer record and automatically select them for this loan.
+                            </p>
+
+                            <form onSubmit={handleQuickCustomerSubmit} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="label text-xs">First Name *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={newCustomerForm.firstName}
+                                            onChange={(e) => setNewCustomerForm({ ...newCustomerForm, firstName: e.target.value })}
+                                            className="input rounded-xl text-sm"
+                                            placeholder="Rahul"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label text-xs">Last Name *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={newCustomerForm.lastName}
+                                            onChange={(e) => setNewCustomerForm({ ...newCustomerForm, lastName: e.target.value })}
+                                            className="input rounded-xl text-sm"
+                                            placeholder="Sharma"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="label text-xs">Email Address *</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={newCustomerForm.email}
+                                        onChange={(e) => setNewCustomerForm({ ...newCustomerForm, email: e.target.value })}
+                                        className="input rounded-xl text-sm"
+                                        placeholder="rahul@example.com"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="label text-xs">Phone Number *</label>
+                                    <input
+                                        type="tel"
+                                        required
+                                        value={newCustomerForm.phone}
+                                        onChange={(e) => setNewCustomerForm({ ...newCustomerForm, phone: e.target.value })}
+                                        className="input rounded-xl text-sm"
+                                        placeholder="+91 98765 43210"
+                                    />
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setQuickCustomerModal(false)}
+                                        className="btn btn-secondary btn-sm rounded-xl"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={createCustomerMutation.isPending}
+                                        className="btn btn-primary btn-sm rounded-xl font-semibold"
+                                    >
+                                        {createCustomerMutation.isPending ? 'Saving...' : 'Add & Select'}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 };
