@@ -1,53 +1,69 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiPlus, FiSearch, FiPhone, FiMail, FiTrash2, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiPhone, FiMail, FiTrash2, FiRefreshCw, FiUser, FiChevronRight } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useCustomers, useDeleteCustomer } from '../../hooks/useCustomers';
-import { PageLoader } from '../../components/common/LoadingSpinner';
+import { useDebounce } from '../../hooks/useDebounce';
 import { TableSkeleton } from '../../components/common/Skeletons';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
-import { formatPhone, formatDate } from '../../utils/formatters';
+import { formatPhone } from '../../utils/formatters';
 
-// Smooth staggered animations for both mobile and desktop
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.06,
-            delayChildren: 0.05
+            staggerChildren: 0.05,
+            delayChildren: 0.04
         }
     },
 };
 
 const itemVariants = {
-    hidden: { opacity: 0, y: 15 },
+    hidden: { opacity: 0, y: 12 },
     visible: {
         opacity: 1,
         y: 0,
         transition: {
-            duration: 0.25,
+            duration: 0.22,
             ease: [0.25, 0.46, 0.45, 0.94]
         }
     },
 };
 
+const STATUS_TABS = [
+    { id: '', label: 'All Borrowers' },
+    { id: 'active', label: 'Active' },
+    { id: 'inactive', label: 'Inactive' },
+];
 
 export const CustomerList = () => {
-    const [search, setSearch] = useState('');
+    const navigate = useNavigate();
+    const [searchInput, setSearchInput] = useState('');
+    const debouncedSearch = useDebounce(searchInput, 300);
     const [status, setStatus] = useState('');
     const [page, setPage] = useState(1);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, customer: null });
     const deleteCustomer = useDeleteCustomer();
 
-    const { data, isLoading, error, isFetching, refetch } = useCustomers({ page, limit: 20, search, status: status || undefined });
+    // Edge Case Fix: Reset page to 1 whenever search query or status filter changes
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, status]);
+
+    const { data, isLoading, error, refetch } = useCustomers({
+        page,
+        limit: 20,
+        search: debouncedSearch,
+        status: status || undefined
+    });
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
         await refetch();
-        setTimeout(() => setIsRefreshing(false), 500);
+        setTimeout(() => setIsRefreshing(false), 400);
     };
 
     const handleDeleteConfirm = async () => {
@@ -62,9 +78,14 @@ export const CustomerList = () => {
         }
     };
 
-    // Only show full page loader on initial load, not during search/filter
-    if (isLoading && !data) return <TableSkeleton columns={4} rows={10} />;
-    if (error) return <div className="text-red-500">Error: {error.message}</div>;
+    if (isLoading && !data) return <TableSkeleton columns={4} rows={8} />;
+    if (error) return (
+        <div className="card p-8 text-center text-red-500 border border-red-200 dark:border-red-900/30">
+            <p className="font-medium">Failed to load customers</p>
+            <p className="text-sm mt-1 text-gray-500 dark:text-gray-400">{error.message}</p>
+            <button onClick={handleRefresh} className="btn btn-secondary btn-sm mt-4">Retry</button>
+        </div>
+    );
 
     const { customers = [], pagination = {} } = data || {};
 
@@ -78,100 +99,132 @@ export const CustomerList = () => {
             {/* Header */}
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Customers</h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">
-                        Manage your borrowers
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Customers</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                        Manage your borrower database, contact info, and loan histories
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                     <button
                         onClick={handleRefresh}
-                        className="btn btn-secondary"
+                        className="btn btn-secondary h-10 w-10 !p-0 flex items-center justify-center rounded-xl"
                         disabled={isRefreshing}
                         title="Refresh List"
                     >
-                        <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        <FiRefreshCw className={`w-4 h-4 text-gray-600 dark:text-gray-300 ${isRefreshing ? 'animate-spin' : ''}`} />
                     </button>
-                    <Link to="/customers/new" className="btn btn-primary">
-                        <FiPlus className="w-4 h-4 mr-2" />
+                    <Link to="/customers/new" className="btn btn-primary h-10 px-4 rounded-xl gap-2 text-sm font-semibold shadow-sm">
+                        <FiPlus className="w-4 h-4" />
                         Add Customer
                     </Link>
                 </div>
             </motion.div>
 
-            {/* Filters */}
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
+            {/* Filters: Search + Status Tabs */}
+            <motion.div variants={itemVariants} className="space-y-3">
                 <div className="relative flex-1">
-                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Search by name, email, or phone..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="input pl-10"
+                        placeholder="Search by name, email, or phone number..."
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        className="input pl-10 rounded-xl h-11 text-sm border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated"
                     />
                 </div>
-                <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="input sm:w-48"
-                >
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
+
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    {STATUS_TABS.map((tab) => {
+                        const isActive = status === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setStatus(tab.id)}
+                                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                                    isActive
+                                        ? 'bg-primary text-white shadow-sm font-semibold'
+                                        : 'bg-white dark:bg-surface-elevated text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-hairline-light dark:border-hairline-dark'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        );
+                    })}
+                </div>
             </motion.div>
 
-            {/* Customer List */}
-            <motion.div variants={itemVariants} className="card">
+            {/* Customer List Container */}
+            <motion.div variants={itemVariants} className="bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl overflow-hidden shadow-sm">
                 {customers.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">
-                        No customers found.{' '}
-                        <Link to="/customers/new" className="text-teal-600">Add your first customer</Link>
+                    <div className="p-16 text-center max-w-sm mx-auto">
+                        <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3">
+                            <FiUser className="w-6 h-6 text-gray-400" />
+                        </div>
+                        <p className="font-semibold text-gray-900 dark:text-white">No customers found</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-4">
+                            {searchInput ? 'No borrowers match your search query.' : 'Add your first customer to start issuing loans.'}
+                        </p>
+                        <Link to="/customers/new" className="btn btn-primary btn-sm rounded-xl">
+                            Add First Customer
+                        </Link>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <div className="divide-y divide-hairline-light dark:divide-hairline-dark">
                         {customers.map((customer) => (
                             <div
                                 key={customer._id}
-                                className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors relative group"
+                                onClick={() => navigate(`/customers/${customer._id}`)}
+                                className="p-4 sm:p-5 flex items-center gap-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
                             >
-                                <Link
-                                    to={`/customers/${customer._id}`}
-                                    className="absolute inset-0 z-0"
-                                />
-                                <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400 font-semibold z-10 relative pointer-events-none">
-                                    {customer.firstName?.[0]}{customer.lastName?.[0]}
+                                {/* Avatar */}
+                                <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary dark:text-primary-bright flex items-center justify-center font-bold text-sm tracking-tight flex-shrink-0 border border-primary/20">
+                                    {customer.firstName?.[0]?.toUpperCase()}{customer.lastName?.[0]?.toUpperCase()}
                                 </div>
-                                <div className="flex-1 min-w-0 z-10 relative pointer-events-none">
-                                    <p className="font-medium text-gray-900 dark:text-white truncate">
-                                        {customer.firstName} {customer.lastName}
-                                    </p>
-                                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                        <span className="flex items-center gap-1">
-                                            <FiMail className="w-3 h-3" />
-                                            {customer.email}
-                                        </span>
-                                        <span className="flex items-center gap-1 hidden sm:flex">
-                                            <FiPhone className="w-3 h-3" />
-                                            {formatPhone(customer.phone)}
+
+                                {/* Main info */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white text-base group-hover:text-primary dark:group-hover:text-primary-bright transition-colors truncate">
+                                            {customer.firstName} {customer.lastName}
+                                        </h3>
+                                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
+                                            customer.status === 'active'
+                                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                                                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                        }`}>
+                                            {customer.status}
                                         </span>
                                     </div>
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        <span className="flex items-center gap-1.5 truncate">
+                                            <FiMail className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                                            {customer.email}
+                                        </span>
+                                        {customer.phone && (
+                                            <span className="flex items-center gap-1.5">
+                                                <FiPhone className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+                                                {formatPhone(customer.phone)}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-3 z-10 relative">
-                                    <span className={`badge ${customer.status === 'active' ? 'badge-success' : 'badge-error'}`}>
-                                        {customer.status}
-                                    </span>
+
+                                {/* Actions */}
+                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            setDeleteModal({ isOpen: true, customer });
-                                        }}
-                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                                        onClick={() => setDeleteModal({ isOpen: true, customer })}
+                                        className="p-2 text-gray-400 hover:text-accent-danger hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                                         title="Delete Customer"
                                     >
                                         <FiTrash2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => navigate(`/customers/${customer._id}`)}
+                                        className="p-2 text-gray-400 group-hover:text-primary transition-colors hidden sm:block"
+                                        title="View Details"
+                                    >
+                                        <FiChevronRight className="w-5 h-5" />
                                     </button>
                                 </div>
                             </div>
@@ -182,21 +235,21 @@ export const CustomerList = () => {
 
             {/* Pagination */}
             {pagination.pages > 1 && (
-                <motion.div variants={itemVariants} className="flex justify-center gap-2">
+                <motion.div variants={itemVariants} className="flex justify-center items-center gap-2 pt-2">
                     <button
                         onClick={() => setPage(p => Math.max(1, p - 1))}
                         disabled={page === 1}
-                        className="btn btn-secondary btn-sm"
+                        className="btn btn-secondary btn-sm rounded-xl text-xs"
                     >
                         Previous
                     </button>
-                    <span className="flex items-center px-4 text-gray-600 dark:text-gray-400">
+                    <span className="text-xs font-medium px-3 text-gray-600 dark:text-gray-400 tabular-nums">
                         Page {page} of {pagination.pages}
                     </span>
                     <button
                         onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
                         disabled={page === pagination.pages}
-                        className="btn btn-secondary btn-sm"
+                        className="btn btn-secondary btn-sm rounded-xl text-xs"
                     >
                         Next
                     </button>
@@ -209,7 +262,7 @@ export const CustomerList = () => {
                 onClose={() => setDeleteModal({ isOpen: false, customer: null })}
                 onConfirm={handleDeleteConfirm}
                 title="Delete Customer"
-                message={`Are you sure you want to delete ${deleteModal.customer?.firstName} ${deleteModal.customer?.lastName}? This action cannot be undone.`}
+                message={`Are you sure you want to delete ${deleteModal.customer?.firstName} ${deleteModal.customer?.lastName}? This will permanently remove their records.`}
                 confirmText="Delete Customer"
                 cancelText="Cancel"
                 type="danger"
