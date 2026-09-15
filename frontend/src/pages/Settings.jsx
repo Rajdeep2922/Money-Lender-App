@@ -53,8 +53,8 @@ const Settings = () => {
 
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Sidebar Navigation */}
-                <div className="lg:w-72 flex-shrink-0">
-                    <nav className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-2 lg:sticky lg:top-4">
+                <div className="lg:w-64 flex-shrink-0">
+                    <nav className="bg-white dark:bg-surface-elevated rounded-2xl border border-black/[0.06] dark:border-white/[0.08] p-2 lg:sticky lg:top-4 shadow-xs">
                         <div className="space-y-1">
                             {tabs.map((tab) => {
                                 const Icon = tab.icon;
@@ -65,30 +65,29 @@ const Settings = () => {
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`
                                             group w-full flex items-center
-                                            px-3 py-3
-                                            text-sm font-medium rounded-lg 
-                                            transition-all duration-200
-                                            min-h-[48px]
+                                            px-3.5 py-2.5
+                                            text-xs font-medium rounded-xl 
+                                            transition-all duration-150
                                             ${isActive
-                                                ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/25'
-                                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                                                ? 'bg-primary text-white shadow-xs font-semibold'
+                                                : 'text-gray-600 dark:text-gray-400 hover:bg-black/[0.02] dark:hover:bg-white/[0.03] hover:text-gray-900 dark:hover:text-white'
                                             }
                                         `}
                                     >
-                                        <div className="w-6 h-6 flex items-center justify-center flex-shrink-0 mr-3">
+                                        <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 mr-2.5">
                                             <Icon
                                                 className={`
-                                                    w-5 h-5 transition-transform duration-200
+                                                    w-4 h-4 transition-transform duration-150
                                                     ${isActive
                                                         ? 'text-white'
-                                                        : 'text-gray-500 dark:text-gray-400 group-hover:text-teal-600 dark:group-hover:text-teal-400'
+                                                        : 'text-gray-400 group-hover:text-primary dark:group-hover:text-primary-bright'
                                                     }
                                                 `}
                                             />
                                         </div>
                                         <span className="flex-1 text-left truncate">{tab.label}</span>
                                         {isActive && (
-                                            <div className="w-2 h-2 rounded-full bg-white ml-2 flex-shrink-0"></div>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-white ml-2 flex-shrink-0"></div>
                                         )}
                                     </button>
                                 );
@@ -99,7 +98,7 @@ const Settings = () => {
 
                 {/* Content Area */}
                 <div className="flex-1 min-w-0">
-                    <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+                    <div className="bg-white dark:bg-surface-elevated rounded-2xl border border-black/[0.06] dark:border-white/[0.08] p-5 sm:p-7 shadow-xs">
                         {activeTab === 'profile' && <ProfileSettings />}
                         {activeTab === 'preferences' && <PreferenceSettings />}
                         {activeTab === 'notifications' && <NotificationSettings />}
@@ -179,131 +178,133 @@ const ProfileSettings = () => {
         }
     };
 
+    const inputStyle = "w-full px-3.5 py-2.5 border border-black/[0.08] dark:border-white/[0.1] rounded-xl bg-white dark:bg-black/30 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
+    const labelStyle = "text-xs font-medium text-gray-700 dark:text-gray-300";
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white border-b border-black/[0.06] dark:border-white/[0.08] pb-3">
                 Business Information
             </h2>
 
-            {/* Simple stacked layout - NO GRID, just flex column */}
             <div className="flex flex-col gap-4">
                 {/* Business Name */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Business Name</label>
+                    <label className={labelStyle}>Business Name</label>
                     <input
                         {...register('businessName')}
-                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className={inputStyle}
                         placeholder="Enter business name"
                     />
                 </div>
 
                 {/* Owner Name */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Owner Name</label>
+                    <label className={labelStyle}>Owner Name</label>
                     <input
                         {...register('ownerName')}
-                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className={inputStyle}
                         placeholder="Enter owner name"
                     />
                 </div>
 
                 {/* Tax ID */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tax ID / PAN Number</label>
+                    <label className={labelStyle}>Tax ID / PAN Number</label>
                     <input
                         {...register('panNumber')}
-                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className={inputStyle}
                         placeholder="Enter PAN number"
                     />
                 </div>
 
                 {/* Business Email */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Business Email</label>
+                    <label className={labelStyle}>Business Email</label>
                     <input
                         {...register('email')}
                         type="email"
-                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className={inputStyle}
                         placeholder="business@example.com"
                     />
                 </div>
 
                 {/* Phone Number */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                    <label className={labelStyle}>Phone Number</label>
                     <input
                         {...register('phone')}
                         type="tel"
-                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className={inputStyle}
                         placeholder="Enter phone number"
                     />
                 </div>
 
                 {/* Street Address */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Street Address</label>
+                    <label className={labelStyle}>Street Address</label>
                     <input
                         {...register('address.street')}
-                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className={inputStyle}
                         placeholder="Enter street address"
                     />
                 </div>
 
                 {/* City */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">City</label>
+                    <label className={labelStyle}>City</label>
                     <input
                         {...register('address.city')}
-                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className={inputStyle}
                         placeholder="Enter city"
                     />
                 </div>
 
                 {/* State */}
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">State</label>
+                    <label className={labelStyle}>State</label>
                     <input
                         {...register('address.state')}
-                        className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className={inputStyle}
                         placeholder="Enter state"
                     />
                 </div>
             </div>
 
             {/* Bank Details Section */}
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-md font-medium text-gray-900 dark:text-white mb-4">Bank Details (For EMI Payments)</h3>
+            <div className="pt-4 border-t border-black/[0.06] dark:border-white/[0.08]">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Bank Details (For EMI Payments)</h3>
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank Name</label>
+                        <label className={labelStyle}>Bank Name</label>
                         <input
                             {...register('bankDetails.bankName')}
-                            className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className={inputStyle}
                             placeholder="Enter bank name"
                         />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Number</label>
+                        <label className={labelStyle}>Account Number</label>
                         <input
                             {...register('bankDetails.accountNumber')}
                             type="text"
-                            className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className={inputStyle}
                             placeholder="Enter account number"
                         />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">IFSC Code</label>
+                        <label className={labelStyle}>IFSC Code</label>
                         <input
                             {...register('bankDetails.ifscCode')}
-                            className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className={inputStyle}
                             placeholder="Enter IFSC code"
                         />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Name</label>
+                        <label className={labelStyle}>Account Name</label>
                         <input
                             {...register('bankDetails.accountName')}
-                            className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className={inputStyle}
                             placeholder="Enter account holder name"
                         />
                     </div>
@@ -311,35 +312,35 @@ const ProfileSettings = () => {
             </div>
 
             {/* Terms & Conditions Section */}
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-md font-medium text-gray-900 dark:text-white mb-2">Loan Agreement Terms & Conditions</h3>
+            <div className="pt-4 border-t border-black/[0.06] dark:border-white/[0.08]">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Loan Agreement Terms &amp; Conditions</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Each line will be automatically numbered in the PDF agreement.</p>
                 <textarea
                     {...register('termsAndConditions')}
                     rows="6"
-                    className="w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-mono text-sm"
+                    className="w-full px-3.5 py-2.5 border border-black/[0.08] dark:border-white/[0.1] rounded-xl bg-white dark:bg-black/30 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono transition-all"
                     placeholder="Enter terms here, one per line..."
                 />
             </div>
 
             {/* Company Stamp/Signature */}
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Company Stamp / Lender Signature</label>
+            <div className="pt-4 border-t border-black/[0.06] dark:border-white/[0.08]">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-2">Company Stamp / Lender Signature</label>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <div className="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-900/50">
+                    <div className="w-28 h-28 border border-dashed border-black/[0.15] dark:border-white/[0.2] rounded-xl flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-black/40">
                         {stampPreview ? (
                             <img src={stampPreview} alt="Company Stamp" className="max-w-full max-h-full object-contain" />
                         ) : (
-                            <Building className="w-8 h-8 text-gray-400" />
+                            <Building className="w-6 h-6 text-gray-400" />
                         )}
                     </div>
                     <div className="flex-1 space-y-2">
-                        <label className="btn btn-secondary btn-sm gap-2 cursor-pointer w-fit">
-                            <Upload className="w-4 h-4" />
+                        <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.1] cursor-pointer transition-colors shadow-2xs">
+                            <Upload className="w-3.5 h-3.5" />
                             {stampPreview ? 'Change Stamp' : 'Upload Stamp'}
                             <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                         </label>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-[11px] text-gray-400 dark:text-gray-500">
                             Recommended: PNG with transparent background. Max 100KB.
                         </p>
                         {stampPreview && (
@@ -350,7 +351,6 @@ const ProfileSettings = () => {
                                     e.stopPropagation();
                                     setStampPreview(null);
                                     setValue('companyStamp', '', { shouldDirty: true });
-                                    // Auto-save the removal with all current form data
                                     const toastId = toast.loading('Removing stamp...');
                                     try {
                                         const currentData = getValues();
@@ -368,8 +368,6 @@ const ProfileSettings = () => {
                                 <Trash2 className="w-3 h-3" /> Remove Stamp
                             </button>
                         )}
-
-
                     </div>
                 </div>
             </div>
@@ -378,13 +376,13 @@ const ProfileSettings = () => {
                 <button
                     type="submit"
                     disabled={updateLender.isPending}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-white font-semibold text-xs rounded-xl shadow-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-3.5 h-3.5" />
                     {updateLender.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
             </div>
-        </form >
+        </form>
     );
 };
 
@@ -478,7 +476,7 @@ const PreferenceSettings = () => {
 const NotificationSettings = () => {
     return (
         <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white border-b border-black/[0.06] dark:border-white/[0.08] pb-3 mb-4">
                 Notification Preferences
             </h2>
 
@@ -491,18 +489,18 @@ const NotificationSettings = () => {
                 ].map((item) => (
                     <div key={item.id} className="flex items-start justify-between py-3">
                         <div>
-                            <h3 className="font-medium text-gray-900 dark:text-white">{item.title}</h3>
-                            <p className="text-sm text-gray-500">{item.desc}</p>
+                            <h3 className="text-xs font-semibold text-gray-900 dark:text-white">{item.title}</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.desc}</p>
                         </div>
-                        <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer bg-gray-200 dark:bg-gray-700">
+                        <div className="relative inline-block w-11 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer bg-gray-200 dark:bg-white/[0.1]">
                             <input
                                 type="checkbox"
                                 id={item.id}
                                 className="peer absolute w-full h-full opacity-0 cursor-pointer"
                                 defaultChecked
                             />
-                            <div className="block w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer-checked:bg-teal-600 transition-colors"></div>
-                            <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-6"></div>
+                            <div className="block w-11 h-6 bg-gray-200 dark:bg-white/[0.1] rounded-full peer-checked:bg-primary transition-colors"></div>
+                            <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-5 shadow-xs"></div>
                         </div>
                     </div>
                 ))}
@@ -514,25 +512,25 @@ const NotificationSettings = () => {
 const SecuritySettings = () => {
     return (
         <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white border-b border-black/[0.06] dark:border-white/[0.08] pb-3 mb-4">
                 Security
             </h2>
 
             <form className="space-y-4">
                 <div>
-                    <label className="label">Current Password</label>
-                    <input type="password" className="input" />
+                    <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">Current Password</label>
+                    <input type="password" className="w-full px-3.5 py-2.5 border border-black/[0.08] dark:border-white/[0.1] rounded-xl bg-white dark:bg-black/30 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                 </div>
                 <div>
-                    <label className="label">New Password</label>
-                    <input type="password" className="input" />
+                    <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">New Password</label>
+                    <input type="password" className="w-full px-3.5 py-2.5 border border-black/[0.08] dark:border-white/[0.1] rounded-xl bg-white dark:bg-black/30 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                 </div>
                 <div>
-                    <label className="label">Confirm New Password</label>
-                    <input type="password" className="input" />
+                    <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">Confirm New Password</label>
+                    <input type="password" className="w-full px-3.5 py-2.5 border border-black/[0.08] dark:border-white/[0.1] rounded-xl bg-white dark:bg-black/30 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                 </div>
                 <div className="pt-2">
-                    <button type="button" className="btn btn-secondary" onClick={() => toast.success('Password update simulation')}>
+                    <button type="button" className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-white font-semibold text-xs rounded-xl shadow-sm active:scale-[0.98] transition-all" onClick={() => toast.success('Password update simulation')}>
                         Update Password
                     </button>
                 </div>

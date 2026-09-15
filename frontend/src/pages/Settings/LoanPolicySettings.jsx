@@ -95,16 +95,16 @@ const LoanPolicySettings = () => {
 
     if (isLoading) return <PageLoader />;
 
-    const inputClass = "w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500";
-    const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1";
+    const inputClass = "w-full px-3.5 py-2.5 border border-black/[0.08] dark:border-white/[0.1] rounded-xl bg-white dark:bg-black/30 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all";
+    const labelClass = "block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1";
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-3">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white border-b border-black/[0.06] dark:border-white/[0.08] pb-3">
                     Loan Policy Defaults
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                     These are the default settings applied to every new loan. They can be overridden per individual loan at creation time.
                 </p>
             </div>
@@ -142,7 +142,7 @@ const LoanPolicySettings = () => {
                         <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                 </select>
-                <p className="text-xs text-gray-400 mt-1">No overdue penalty will apply during the grace period.</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">No overdue penalty will apply during the grace period.</p>
             </div>
 
             {/* Late Fee */}
@@ -154,18 +154,18 @@ const LoanPolicySettings = () => {
                         { value: 'fixed', label: 'Fixed (₹)' },
                         { value: 'percentage', label: 'Percentage (%)' },
                     ].map(opt => (
-                        <label key={opt.value} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                        <label key={opt.value} className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
                             lateFeeType === opt.value
-                                ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
-                                : 'border-gray-200 dark:border-gray-600 hover:border-teal-300'
+                                ? 'border-primary/50 bg-primary/[0.04] dark:bg-primary/[0.08]'
+                                : 'border-black/[0.08] dark:border-white/[0.08] hover:border-black/[0.15] dark:hover:border-white/[0.15]'
                         }`}>
                             <input
                                 type="radio"
                                 value={opt.value}
                                 {...register('defaultLateFeeType')}
-                                className="accent-teal-600"
+                                className="accent-primary"
                             />
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{opt.label}</span>
+                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{opt.label}</span>
                         </label>
                     ))}
                 </div>
@@ -193,14 +193,14 @@ const LoanPolicySettings = () => {
                 <label className={labelClass}>Default Foreclosure Policy</label>
                 <div className="space-y-2">
                     {FORECLOSURE_OPTIONS.map(opt => (
-                        <label key={opt.value} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:border-teal-400 transition-colors">
+                        <label key={opt.value} className="flex items-center gap-3 p-3 rounded-xl border border-black/[0.08] dark:border-white/[0.08] cursor-pointer hover:border-black/[0.15] dark:hover:border-white/[0.15] transition-colors">
                             <input
                                 type="radio"
                                 value={opt.value}
                                 {...register('defaultForeclosurePolicy')}
-                                className="accent-teal-600"
+                                className="accent-primary"
                             />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">{opt.label}</span>
+                            <span className="text-xs text-gray-700 dark:text-gray-300">{opt.label}</span>
                         </label>
                     ))}
                 </div>
@@ -211,18 +211,18 @@ const LoanPolicySettings = () => {
                 <label className={labelClass}>Default Accepted Payment Methods</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {PAYMENT_METHODS.map(method => (
-                        <label key={method.value} className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                        <label key={method.value} className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all ${
                             selectedMethods.includes(method.value)
-                                ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
-                                : 'border-gray-200 dark:border-gray-600'
+                                ? 'border-primary/50 bg-primary/[0.04] dark:bg-primary/[0.08]'
+                                : 'border-black/[0.08] dark:border-white/[0.08]'
                         }`}>
                             <input
                                 type="checkbox"
                                 checked={selectedMethods.includes(method.value)}
                                 onChange={e => handlePaymentMethodToggle(method.value, e.target.checked, selectedMethods)}
-                                className="accent-teal-600"
+                                className="accent-primary"
                             />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">{method.label}</span>
+                            <span className="text-xs text-gray-700 dark:text-gray-300">{method.label}</span>
                         </label>
                     ))}
                 </div>
@@ -237,22 +237,22 @@ const LoanPolicySettings = () => {
                         { value: 'FLAT', label: 'Flat Rate', available: false },
                         { value: 'REDUCING_BALANCE', label: 'Reducing Balance', available: false },
                     ].map(opt => (
-                        <label key={opt.value} className={`flex items-center gap-2 p-3 rounded-lg border transition-all ${
+                        <label key={opt.value} className={`flex items-center gap-2 p-3 rounded-xl border transition-all ${
                             !opt.available
-                                ? 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 opacity-60 cursor-not-allowed'
-                                : 'border-gray-200 dark:border-gray-600 cursor-pointer hover:border-teal-400'
+                                ? 'border-black/[0.04] dark:border-white/[0.04] bg-gray-50 dark:bg-white/[0.02] opacity-60 cursor-not-allowed'
+                                : 'border-black/[0.08] dark:border-white/[0.08] cursor-pointer hover:border-primary/40'
                         }`}>
                             <input
                                 type="radio"
                                 value={opt.value}
                                 disabled={!opt.available}
                                 {...register('interestCalculationType')}
-                                className="accent-teal-600"
+                                className="accent-primary"
                             />
                             <div>
-                                <span className="text-sm text-gray-700 dark:text-gray-300">{opt.label}</span>
+                                <span className="text-xs text-gray-700 dark:text-gray-300">{opt.label}</span>
                                 {!opt.available && (
-                                    <span className="block text-xs text-gray-400 dark:text-gray-500">Coming soon</span>
+                                    <span className="block text-[10px] text-gray-400 dark:text-gray-500">Coming soon</span>
                                 )}
                             </div>
                         </label>
@@ -261,17 +261,17 @@ const LoanPolicySettings = () => {
             </div>
 
             {/* Info note */}
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300">
-                <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/[0.06] border border-amber-500/20 text-xs text-amber-800 dark:text-amber-200">
+                <Info className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                 <span>These are <strong>default settings</strong>. Individual loans can override any of these values at the time of creation.</span>
             </div>
 
             <button
                 type="submit"
                 disabled={updateLoanPolicy.isPending}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold shadow-sm active:scale-[0.98] transition-all disabled:opacity-50"
             >
-                <Save className="w-4 h-4" />
+                <Save className="w-3.5 h-3.5" />
                 {updateLoanPolicy.isPending ? 'Saving...' : 'Save Loan Policy'}
             </button>
         </form>

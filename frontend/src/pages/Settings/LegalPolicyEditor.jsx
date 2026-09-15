@@ -210,16 +210,16 @@ const LegalPolicyEditor = () => {
             <div className="flex items-center gap-3">
                 <button
                     onClick={() => navigate('/settings')}
-                    className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                    className="p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div className="flex-1">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">{policyLabel}</h2>
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">{policyLabel}</h2>
                     <div className="flex items-center gap-3 mt-0.5">
                         <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                             <Tag className="w-3 h-3" />
-                            Current: <strong className="text-teal-600 dark:text-teal-400">{policy?.version || 'None'}</strong>
+                            Current: <strong className="font-mono text-primary dark:text-primary-bright font-semibold">{policy?.version || 'None'}</strong>
                         </span>
                         {policy?.createdAt && (
                             <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
@@ -230,7 +230,7 @@ const LegalPolicyEditor = () => {
                             </span>
                         )}
                         {isDirty && (
-                            <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                            <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium">
                                 <AlertCircle className="w-3 h-3" />
                                 Unsaved changes
                             </span>
@@ -240,20 +240,20 @@ const LegalPolicyEditor = () => {
                 <button
                     onClick={handleSave}
                     disabled={publishPolicy.isPending || !isDirty}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-tight transition-all duration-150 ${
                         isDirty && !publishPolicy.isPending
-                            ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-sm shadow-teal-500/30'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                            ? 'bg-primary hover:bg-primary/90 text-white shadow-sm active:scale-[0.98]'
+                            : 'bg-black/[0.04] dark:bg-white/[0.06] text-gray-400 dark:text-gray-500 cursor-not-allowed'
                     }`}
                 >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-3.5 h-3.5" />
                     {publishPolicy.isPending ? 'Publishing...' : 'Publish'}
                 </button>
             </div>
 
             {/* Notice */}
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
-                <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-primary/[0.04] dark:bg-primary/[0.08] border border-primary/20 text-xs text-gray-700 dark:text-gray-300">
+                <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary dark:text-primary-bright" />
                 <span>
                     Publishing creates a new version. Existing loan agreements are <strong>not affected</strong> — they retain a permanent snapshot of the policies accepted at signing.
                 </span>
@@ -264,22 +264,22 @@ const LegalPolicyEditor = () => {
                 value={content}
                 onChange={handleChange}
                 rows={24}
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm font-mono leading-relaxed focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-y"
+                className="w-full px-4 py-3 rounded-2xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-black/40 text-gray-900 dark:text-gray-100 text-xs font-mono leading-relaxed focus:ring-2 focus:ring-primary/20 focus:border-primary resize-y shadow-2xs transition-all"
                 placeholder="Enter policy content here..."
                 spellCheck={false}
             />
 
             {/* Version History */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+            <div className="border border-black/[0.06] dark:border-white/[0.08] rounded-2xl overflow-hidden bg-white dark:bg-surface-elevated shadow-xs">
                 <button
                     onClick={() => setShowHistory(v => !v)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50/70 dark:bg-white/[0.02] hover:bg-gray-100 dark:hover:bg-white/[0.04] transition-colors"
                 >
-                    <span className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <span className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
                         <History className="w-4 h-4" />
                         Version History
                         {history?.length > 0 && (
-                            <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full px-2 py-0.5">
+                            <span className="text-[10px] font-mono bg-black/[0.06] dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 rounded-full px-2 py-0.5">
                                 {history.length}
                             </span>
                         )}
@@ -297,32 +297,32 @@ const LegalPolicyEditor = () => {
                             className="overflow-hidden"
                         >
                             {loadingHistory ? (
-                                <div className="p-4 text-center text-sm text-gray-400">Loading history...</div>
+                                <div className="p-4 text-center text-xs text-gray-400">Loading history...</div>
                             ) : !history?.length ? (
-                                <div className="p-4 text-center text-sm text-gray-400">No version history yet.</div>
+                                <div className="p-4 text-center text-xs text-gray-400">No version history yet.</div>
                             ) : (
-                                <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                                <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
                                     {history.map((entry, idx) => (
                                         <div key={entry._id} className="flex items-start gap-3 px-4 py-3">
-                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-mono font-bold ${
                                                 idx === 0
-                                                    ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-400'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                                    : 'bg-black/[0.04] dark:bg-white/[0.06] text-gray-500 dark:text-gray-400'
                                             }`}>
                                                 {entry.version.replace('v', '')}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                    <span className="text-xs font-semibold font-mono text-gray-800 dark:text-gray-200">
                                                         {entry.version}
                                                     </span>
                                                     {idx === 0 && (
-                                                        <span className="text-xs bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-400 rounded-full px-2 py-0.5">
+                                                        <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full px-2 py-0.5 font-semibold">
                                                             Current
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="text-xs text-gray-400 mt-0.5">
+                                                <div className="text-[11px] text-gray-400 mt-0.5">
                                                     {new Date(entry.createdAt).toLocaleString('en-IN')} · by {entry.updatedBy}
                                                 </div>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 font-mono">
