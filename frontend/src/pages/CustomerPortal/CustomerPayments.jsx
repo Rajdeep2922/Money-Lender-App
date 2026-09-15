@@ -119,18 +119,18 @@ const CustomerPayments = () => {
 
             {/* Summary Card */}
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="card p-4 sm:p-6"
+                className="bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl p-4 sm:p-5 shadow-xs"
             >
                 <div className="flex items-center gap-3">
-                    <div className="p-3 bg-teal-100 dark:bg-teal-900/30 rounded-xl">
-                        <FiCheckCircle className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+                    <div className="p-2.5 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light rounded-xl">
+                        <FiCheckCircle className="h-5 w-5" />
                     </div>
                     <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Total Payments</p>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Total Payments Recorded</p>
+                        <p className="text-xl font-bold font-mono tabular-nums text-gray-900 dark:text-white mt-0.5">
                             {payments.length}
                         </p>
                     </div>
@@ -139,56 +139,56 @@ const CustomerPayments = () => {
 
             {/* Payments List */}
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="card"
+                className="bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl shadow-xs overflow-hidden"
             >
                 {payments.length === 0 ? (
-                    <div className="p-8 text-center">
-                        <FiCreditCard className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400">
-                            No payments recorded yet.
+                    <div className="p-12 text-center">
+                        <FiCreditCard className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            No payment transactions recorded yet.
                         </p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <div className="divide-y divide-hairline-light dark:divide-hairline-dark">
                         {payments.map((payment, index) => (
                             <motion.div
                                 key={payment._id}
-                                initial={{ opacity: 0, x: -20 }}
+                                initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="p-4 flex items-center justify-between"
+                                transition={{ delay: index * 0.03 }}
+                                className="p-4 flex items-center justify-between hover:bg-gray-50/60 dark:hover:bg-canvas-dark/30 transition-colors"
                             >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full flex-shrink-0">
-                                        <FiCheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                    <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-full flex-shrink-0">
+                                        <FiCheckCircle className="w-4 h-4" />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-gray-900 dark:text-white">
+                                        <p className="font-semibold font-mono tabular-nums text-gray-900 dark:text-white text-sm">
                                             {formatCurrency(payment.amountPaid)}
                                         </p>
-                                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                            <span className="flex items-center gap-1">
+                                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                            <span className="flex items-center gap-1 font-mono">
                                                 <FiCalendar className="w-3 h-3" />
                                                 {formatDate(payment.paymentDate)}
                                             </span>
                                             {payment.loanId?.loanNumber && (
-                                                <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full">
-                                                    {payment.loanId.loanNumber}
+                                                <span className="px-2 py-0.5 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light font-mono text-[11px] rounded-full">
+                                                    #{payment.loanId.loanNumber}
                                                 </span>
                                             )}
-                                            <span>{payment.paymentMethod || 'Cash'}</span>
+                                            <span className="capitalize">{payment.paymentMethod || 'Cash'}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => generateReceipt(payment)}
-                                    className="p-2 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg transition-colors flex-shrink-0"
+                                    className="w-9 h-9 rounded-full hover:bg-primary/10 text-gray-500 hover:text-primary transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer"
                                     title="Download Receipt"
                                 >
-                                    <FiDownload className="w-5 h-5" />
+                                    <FiDownload className="w-4 h-4" />
                                 </button>
                             </motion.div>
                         ))}

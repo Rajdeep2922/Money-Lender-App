@@ -216,22 +216,27 @@ const CustomerLoanDetails = () => {
         <div className="space-y-4 sm:space-y-6">
             {/* Header */}
             <motion.div
-                initial={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div className="flex items-center gap-3">
-                    <Link to="/portal" className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                        <FiArrowLeft className="w-5 h-5" />
+                    <Link
+                        to="/portal"
+                        className="w-9 h-9 rounded-full bg-white dark:bg-surface-elevated hover:bg-gray-100 dark:hover:bg-surface-border text-gray-700 dark:text-gray-200 border border-hairline-light dark:border-hairline-dark transition-colors flex items-center justify-center shadow-xs cursor-pointer"
+                    >
+                        <FiArrowLeft className="w-4 h-4" />
                     </Link>
                     <div>
-                        <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
+                        <h1 className="text-lg sm:text-xl font-bold tracking-tight text-gray-900 dark:text-white">
                             Loan #{loan.loanNumber || id.slice(-6).toUpperCase()}
                         </h1>
-                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${loan.status === 'active'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400'
-                            }`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                            loan.status === 'active'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40'
+                                : 'bg-gray-100 dark:bg-surface-border text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                        }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${loan.status === 'active' ? 'bg-emerald-500' : 'bg-gray-400'}`} />
                             {loan.status}
                         </span>
                     </div>
@@ -240,48 +245,48 @@ const CustomerLoanDetails = () => {
                 <button
                     onClick={generatePDF}
                     disabled={isGeneratingPDF}
-                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-3 sm:py-2 bg-gradient-to-r from-teal-600 to-emerald-500 text-white rounded-xl font-medium shadow-md active:scale-[0.98] transition-transform disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-full text-xs font-semibold shadow-xs active:scale-95 transition-all disabled:opacity-70 cursor-pointer"
                 >
                     {isGeneratingPDF ? (
-                        <><FiLoader className="w-4 h-4 animate-spin" /> Generating...</>
+                        <><FiLoader className="w-3.5 h-3.5 animate-spin" /> Generating…</>
                     ) : (
-                        <><FiDownload className="w-4 h-4" /> Download PDF</>
+                        <><FiDownload className="w-3.5 h-3.5" /> Download Statement</>
                     )}
                 </button>
             </motion.div>
 
-            {/* Stats Grid - Mobile: 2x2 */}
+            {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card p-3 sm:p-4">
-                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                        <FiDollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="card p-3.5 sm:p-4">
+                    <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
+                        <FiDollarSign className="w-3.5 h-3.5" />
                         Principal
                     </div>
-                    <p className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(loan.principal)}</p>
+                    <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-gray-900 dark:text-white">{formatCurrency(loan.principal)}</p>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="card p-3 sm:p-4">
-                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                        <FiPercent className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Interest
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="card p-3.5 sm:p-4">
+                    <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
+                        <FiPercent className="w-3.5 h-3.5" />
+                        Interest Rate
                     </div>
-                    <p className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">{loan.monthlyInterestRate}%</p>
+                    <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-gray-900 dark:text-white">{loan.monthlyInterestRate}% / mo</p>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="card p-3 sm:p-4">
-                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                        <FiClock className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Duration
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="card p-3.5 sm:p-4">
+                    <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
+                        <FiClock className="w-3.5 h-3.5" />
+                        Tenure
                     </div>
-                    <p className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">{loan.loanDurationMonths} months</p>
+                    <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-gray-900 dark:text-white">{loan.loanDurationMonths} months</p>
                 </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="card p-3 sm:p-4">
-                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs mb-1">
-                        <FiCalendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                        EMI
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="card p-3.5 sm:p-4">
+                    <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs mb-1">
+                        <FiCalendar className="w-3.5 h-3.5" />
+                        EMI Amount
                     </div>
-                    <p className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(loan.monthlyEMI)}</p>
+                    <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-gray-900 dark:text-white">{formatCurrency(loan.monthlyEMI)}</p>
                 </motion.div>
             </div>
 

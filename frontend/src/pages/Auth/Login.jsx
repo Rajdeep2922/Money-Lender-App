@@ -33,7 +33,7 @@ const Login = () => {
 
     return (
         <>
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-screen bg-gray-50 dark:bg-black flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
                     <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }} className="flex justify-center">
                         <div className="p-3 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl shadow-lg">
@@ -52,7 +52,7 @@ const Login = () => {
                 </div>
 
                 <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5, delay: 0.3 }} className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                    <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-100 dark:border-gray-700">
+                    <div className="bg-white dark:bg-surface-elevated py-8 px-4 shadow-sm sm:rounded-2xl sm:px-10 border border-gray-100 dark:border-hairline-dark">
                         <form className="space-y-6" onSubmit={handleSubmit}>
                             <AnimatePresence mode="wait">
                                 {error && (
