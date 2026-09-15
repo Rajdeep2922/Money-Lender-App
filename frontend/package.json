@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "npx vite build",
     "lint": "eslint .",
+    "migrate:theme": "node ../scripts/migrate-design-tokens.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

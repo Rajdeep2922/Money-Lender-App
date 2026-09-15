@@ -41,15 +41,19 @@ api.interceptors.response.use(
         const message = error.response?.data?.message || error.message || 'An error occurred';
         console.error('API Error:', message);
 
-        // Handle 401 Unauthorized - clear auth and redirect to login
+        // Handle 401 Unauthorized - clear auth and redirect to appropriate login
         if (error.response?.status === 401) {
             localStorage.removeItem('auth-storage');
-            // Public pages that should NOT be redirected to /login
+            // Public pages that should NOT be redirected
             const publicPaths = ['/', '/landing', '/login', '/register', '/calculator', '/customer-login'];
             const isPublicPage = publicPaths.some(p => window.location.pathname === p)
-                || window.location.pathname.startsWith('/landing');
+                || window.location.pathname.startsWith('/landing')
+                || window.location.pathname.startsWith('/legal')
+                || window.location.pathname.startsWith('/privacy-policy')
+                || window.location.pathname.startsWith('/about');
             if (!isPublicPage) {
-                window.location.href = '/login';
+                const isCustomerRoute = window.location.pathname.startsWith('/portal');
+                window.location.href = isCustomerRoute ? '/customer-login' : '/login';
             }
         }
 

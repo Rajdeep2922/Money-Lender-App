@@ -17,6 +17,7 @@ import { useLender } from '../../hooks/useLender';
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
 import NotificationBadge from '../notifications/NotificationBadge';
+import ThemeToggle from './ThemeToggle';
 
 const navLinks = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, matchExact: true },
@@ -53,12 +54,6 @@ const Navbar = () => {
 
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    // Auto-detect dark mode from system preference
-    useEffect(() => {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.classList.toggle('dark', prefersDark);
-    }, []);
-
     // Close mobile menu on route change
     useEffect(() => {
         setMobileOpen(false);
@@ -75,25 +70,25 @@ const Navbar = () => {
 
     return (
         <>
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+            <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-100 dark:border-hairline-dark">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
 
                         {/* Logo */}
                         <Link to="/" className="flex items-center gap-3 shrink-0">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-sm">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-bright flex items-center justify-center shadow-sm">
                                 <span className="text-white text-xs font-bold tracking-tight">
                                     {getInitials(businessName)}
                                 </span>
                             </div>
-                            <span className="text-[15px] font-semibold text-gray-900 dark:text-white hidden sm:block">
+                            <span className="text-[15px] font-semibold text-gray-900 dark:text-white hidden sm:block tracking-tight">
                                 {businessName}
                             </span>
                         </Link>
 
                         {/* Desktop Nav */}
                         <div className="hidden md:flex items-center">
-                            <div className="flex items-center bg-gray-50 dark:bg-gray-800/60 rounded-xl p-1 gap-0.5">
+                            <div className="flex items-center bg-gray-50 dark:bg-surface-elevated rounded-xl p-1 gap-0.5 border border-hairline-light dark:border-hairline-dark">
                                 {visibleLinks.map(link => {
                                     const Icon = link.icon;
                                     const active = checkActive(link);
@@ -103,11 +98,11 @@ const Navbar = () => {
                                             key={link.to}
                                             to={link.to}
                                             className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${active
-                                                ? 'bg-white dark:bg-gray-700 text-teal-700 dark:text-teal-300 shadow-sm'
-                                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                                                ? 'bg-white dark:bg-black text-primary dark:text-primary-bright shadow-sm font-semibold border border-hairline-light/50 dark:border-hairline-dark'
+                                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                                                 }`}
                                         >
-                                            <Icon className={`w-4 h-4 ${active ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400 dark:text-gray-500'}`} strokeWidth={1.8} />
+                                            <Icon className={`w-4 h-4 ${active ? 'text-primary dark:text-primary-bright' : 'text-gray-400 dark:text-gray-500'}`} strokeWidth={1.8} />
                                             <span className="hidden lg:inline">{link.label}</span>
                                             {badge > 0 && (
                                                 <NotificationBadge count={badge} className="absolute -top-1.5 -right-1.5" />
@@ -119,16 +114,17 @@ const Navbar = () => {
                         </div>
 
                         {/* Right side */}
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
+                            <ThemeToggle />
 
                             {/* User area (desktop) */}
                             {user && (
-                                <div className="hidden md:flex items-center gap-1.5 ml-2 pl-3 border-l border-gray-200 dark:border-gray-700">
+                                <div className="hidden md:flex items-center gap-1.5 ml-1 pl-3 border-l border-gray-200 dark:border-hairline-dark">
                                     <Link
                                         to="/settings"
-                                        className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+                                        className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl hover:bg-gray-50 dark:hover:bg-surface-elevated transition-colors group"
                                     >
-                                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center overflow-hidden ring-2 ring-white dark:ring-gray-900">
+                                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary-bright flex items-center justify-center overflow-hidden ring-2 ring-white dark:ring-gray-900">
                                             {lender?.companyStamp ? (
                                                 <img src={lender.companyStamp} alt="" className="w-full h-full object-cover" />
                                             ) : (
@@ -143,7 +139,7 @@ const Navbar = () => {
                                     </Link>
                                     <button
                                         onClick={() => { window.location.href = '/signout'; }}
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
                                         title="Logout"
                                     >
                                         <LogOut className="w-[18px] h-[18px]" strokeWidth={1.8} />
@@ -187,7 +183,7 @@ const Navbar = () => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
                             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                            className="fixed top-16 left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-lg shadow-black/5 dark:shadow-black/20"
+                            className="fixed top-16 left-0 right-0 z-50 md:hidden bg-white dark:bg-black border-b border-gray-200 dark:border-hairline-dark shadow-lg shadow-black/5 dark:shadow-black/20"
                         >
                             <div className="max-w-lg mx-auto px-4 py-3 space-y-1">
                                 {visibleLinks.map(link => {
@@ -199,12 +195,12 @@ const Navbar = () => {
                                             key={link.to}
                                             to={link.to}
                                             className={`relative flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-medium transition-colors ${active
-                                                ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300'
-                                                : 'text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800'
+                                                ? 'bg-primary/10 text-primary dark:text-primary-bright font-semibold'
+                                                : 'text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-surface-elevated'
                                                 }`}
                                         >
                                             <Icon
-                                                className={`w-5 h-5 ${active ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400 dark:text-gray-500'}`}
+                                                className={`w-5 h-5 ${active ? 'text-primary dark:text-primary-bright' : 'text-gray-400 dark:text-gray-500'}`}
                                                 strokeWidth={1.8}
                                             />
                                             {link.label}
@@ -216,12 +212,12 @@ const Navbar = () => {
                                 })}
 
                                 {user && (
-                                    <div className="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 space-y-1">
+                                    <div className="pt-2 mt-2 border-t border-gray-100 dark:border-hairline-dark space-y-1">
                                         <Link
                                             to="/settings"
-                                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-gray-800"
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-medium text-gray-700 dark:text-gray-300 active:bg-gray-50 dark:active:bg-surface-elevated"
                                         >
-                                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center overflow-hidden">
+                                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary-bright flex items-center justify-center overflow-hidden ring-2 ring-white dark:ring-gray-900">
                                                 {lender?.companyStamp ? (
                                                     <img src={lender.companyStamp} alt="" className="w-full h-full object-cover" />
                                                 ) : (

@@ -4,8 +4,8 @@ import { FiAlertTriangle } from 'react-icons/fi';
 
 const ErrorFallback = ({ error, resetErrorBoundary }) => {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-            <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 text-center">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black px-4">
+            <div className="max-w-md w-full bg-white dark:bg-surface-elevated rounded-2xl border border-hairline-light dark:border-hairline-dark shadow-xl p-8 text-center">
                 <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                     <FiAlertTriangle className="w-8 h-8 text-red-600 dark:text-red-500" />
                 </div>

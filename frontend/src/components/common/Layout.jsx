@@ -19,7 +19,7 @@ export const Layout = () => {
     const location = useLocation();
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-screen bg-gray-50 dark:bg-black transition-colors duration-200">
             {/* Top Navbar */}
             <Navbar />
 

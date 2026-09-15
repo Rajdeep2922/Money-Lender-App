@@ -3,9 +3,10 @@ import { FiHome, FiLogOut, FiCreditCard, FiSearch, FiFileText } from 'react-icon
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
 import NotificationBadge from '../notifications/NotificationBadge';
+import ThemeToggle from '../common/ThemeToggle';
 
 /**
- * Customer Portal Layout - Mobile Optimized
+ * Customer Portal Layout - Mobile Optimized & Themed
  */
 const CustomerPortalLayout = () => {
     const { isAuthenticated, role, user } = useAuthStore();
@@ -14,7 +15,7 @@ const CustomerPortalLayout = () => {
     const totalUnreadChats = Object.values(unreadChats).reduce((s, n) => s + n, 0);
 
     if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/customer-login" replace />;
     }
 
     if (role !== 'customer') {
@@ -25,15 +26,20 @@ const CustomerPortalLayout = () => {
 
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
+    const handleLogout = () => {
+        useAuthStore.getState().logout();
+        window.location.href = '/customer-login';
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-16 sm:pb-0">
+        <div className="min-h-screen bg-gray-50 dark:bg-canvas-dark pb-16 sm:pb-0 transition-colors duration-200">
             {/* Header */}
-            <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+            <header className="bg-white dark:bg-surface-elevated shadow-sm border-b border-hairline-light dark:border-hairline-dark sticky top-0 z-40">
                 <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                     <div className="flex justify-between items-center h-14 sm:h-16">
                         {/* Logo */}
                         <Link to="/portal" className="flex items-center space-x-2">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary to-primary-bright rounded-lg sm:rounded-xl flex items-center justify-center shadow-sm">
                                 <span className="text-white font-bold text-sm sm:text-base">CP</span>
                             </div>
                             <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
@@ -41,26 +47,27 @@ const CustomerPortalLayout = () => {
                             </span>
                         </Link>
 
-                        {/* Desktop: User info + Logout */}
-                        <div className="hidden sm:flex items-center gap-4">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                                Welcome, {customerName}
+                        {/* Desktop: Theme + User info + Logout */}
+                        <div className="hidden sm:flex items-center gap-3">
+                            <ThemeToggle />
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium ml-2">
+                                {customerName}
                             </span>
                             <button
-                                onClick={() => {
-                                    useAuthStore.getState().logout();
-                                    window.location.href = '/login';
-                                }}
-                                className="btn btn-secondary text-sm"
+                                onClick={handleLogout}
+                                className="btn btn-secondary text-sm ml-1"
                             >
                                 Logout
                             </button>
                         </div>
 
-                        {/* Mobile: Just name */}
-                        <span className="sm:hidden text-sm text-gray-600 dark:text-gray-400 truncate max-w-[120px]">
-                            Hi, {customerName}
-                        </span>
+                        {/* Mobile: Theme + Name */}
+                        <div className="sm:hidden flex items-center gap-2">
+                            <ThemeToggle />
+                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate max-w-[100px]">
+                                {customerName}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -139,10 +146,7 @@ const CustomerPortalLayout = () => {
                         <span className="text-xs mt-1">Payments</span>
                     </Link>
                     <button
-                        onClick={() => {
-                            useAuthStore.getState().logout();
-                            window.location.href = '/login';
-                        }}
+                        onClick={handleLogout}
                         className="flex flex-col items-center justify-center flex-1 h-full text-gray-500 dark:text-gray-400"
                     >
                         <FiLogOut className="w-6 h-6" />

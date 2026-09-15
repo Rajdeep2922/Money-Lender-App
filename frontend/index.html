@@ -7,9 +7,9 @@
     // Execute IMMEDIATELY to prevent flash - before any CSS loads
     (function () {
       try {
-        const darkMode = localStorage.getItem('darkMode');
+        const theme = localStorage.getItem('money-lender-theme') || localStorage.getItem('darkMode');
         // Apply dark class if enabled, or auto-detect from system
-        if (darkMode === 'true' || (darkMode === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (theme === 'dark' || theme === 'true' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           document.documentElement.classList.add('dark');
         }
       } catch (e) {
@@ -30,13 +30,19 @@
   <!-- SEO Meta Tags -->
   <meta name="description"
     content="Professional Money Lender Management System. Manage customers, loans, payments, and agreements efficiently." />
-  <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#494fdf" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
   <title>Money Lender App</title>
 
-  <!-- Critical CSS to prevent layout shift -->
+  <!-- Critical CSS to prevent layout shift & dark flash -->
   <style>
+    html.dark,
+    .dark body {
+      background-color: #000000 !important;
+      color: #ffffff;
+    }
+
     /* Prevent flash of unstyled content */
     #root {
       min-height: 100vh;
@@ -44,7 +50,7 @@
     }
 
     .dark #root {
-      background-color: #0f172a;
+      background-color: #000000;
     }
 
     /* Loading state to prevent white flash */
@@ -56,7 +62,7 @@
     }
 
     .dark #root:empty {
-      background-color: #0f172a;
+      background-color: #000000;
     }
   </style>
 </head>
