@@ -128,7 +128,7 @@ const LoanCalculator = () => {
                                 <div className="flex justify-between items-center">
                                     <label
                                         htmlFor="principal-input"
-                                        className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                                        className="text-xs font-medium text-gray-700 dark:text-gray-300"
                                     >
                                         Loan amount
                                     </label>
@@ -159,9 +159,9 @@ const LoanCalculator = () => {
                                     max="10000000"
                                     step="10000"
                                     aria-label="Loan Amount Slider"
-                                    className="w-full h-1.5 bg-gray-200 dark:bg-white/[0.1] rounded-lg appearance-none cursor-pointer accent-primary"
+                                    className="w-full h-1.5 bg-gray-200 dark:bg-white/[0.12] rounded-lg appearance-none cursor-pointer accent-primary"
                                 />
-                                <div className="flex justify-between text-[11px] font-mono text-gray-400 dark:text-gray-500">
+                                <div className="flex justify-between text-[11px] font-mono text-gray-500 dark:text-gray-400">
                                     <span>₹10K</span>
                                     <span>₹50L</span>
                                     <span>₹1Cr</span>
@@ -173,7 +173,7 @@ const LoanCalculator = () => {
                                 <div className="flex justify-between items-center">
                                     <label
                                         htmlFor="rate-input"
-                                        className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                                        className="text-xs font-medium text-gray-700 dark:text-gray-300"
                                     >
                                         Monthly interest rate
                                     </label>
@@ -205,9 +205,9 @@ const LoanCalculator = () => {
                                     max="10"
                                     step="0.1"
                                     aria-label="Monthly Interest Rate Slider"
-                                    className="w-full h-1.5 bg-gray-200 dark:bg-white/[0.1] rounded-lg appearance-none cursor-pointer accent-primary"
+                                    className="w-full h-1.5 bg-gray-200 dark:bg-white/[0.12] rounded-lg appearance-none cursor-pointer accent-primary"
                                 />
-                                <div className="flex justify-between text-[11px] font-mono text-gray-400 dark:text-gray-500">
+                                <div className="flex justify-between text-[11px] font-mono text-gray-500 dark:text-gray-400">
                                     <span>0%</span>
                                     <span>5%</span>
                                     <span>10%</span>
@@ -219,7 +219,7 @@ const LoanCalculator = () => {
                                 <div className="flex justify-between items-center">
                                     <label
                                         htmlFor="duration-input"
-                                        className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                                        className="text-xs font-medium text-gray-700 dark:text-gray-300"
                                     >
                                         Loan duration
                                     </label>
@@ -250,9 +250,9 @@ const LoanCalculator = () => {
                                     max="60"
                                     step="1"
                                     aria-label="Loan Duration Slider"
-                                    className="w-full h-1.5 bg-gray-200 dark:bg-white/[0.1] rounded-lg appearance-none cursor-pointer accent-primary"
+                                    className="w-full h-1.5 bg-gray-200 dark:bg-white/[0.12] rounded-lg appearance-none cursor-pointer accent-primary"
                                 />
-                                <div className="flex justify-between text-[11px] font-mono text-gray-400 dark:text-gray-500">
+                                <div className="flex justify-between text-[11px] font-mono text-gray-500 dark:text-gray-400">
                                     <span>1 month</span>
                                     <span>36 months</span>
                                     <span>60 months</span>
@@ -261,7 +261,7 @@ const LoanCalculator = () => {
 
                             {/* Interest Type Segmented Control */}
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                                     Interest type
                                 </label>
                                 <div
@@ -274,7 +274,7 @@ const LoanCalculator = () => {
                                         role="radio"
                                         aria-checked={interestType === 'simple'}
                                         onClick={() => setInterestType('simple')}
-                                        className={`py-2.5 px-3 rounded-lg text-left transition-all ${
+                                        className={`py-2.5 px-3.5 rounded-lg text-left transition-all ${
                                             interestType === 'simple'
                                                 ? 'bg-primary text-white shadow-xs'
                                                 : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
@@ -296,7 +296,7 @@ const LoanCalculator = () => {
                                         role="radio"
                                         aria-checked={interestType === 'compound'}
                                         onClick={() => setInterestType('compound')}
-                                        className={`py-2.5 px-3 rounded-lg text-left transition-all ${
+                                        className={`py-2.5 px-3.5 rounded-lg text-left transition-all ${
                                             interestType === 'compound'
                                                 ? 'bg-primary text-white shadow-xs'
                                                 : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
@@ -328,7 +328,7 @@ const LoanCalculator = () => {
                                 <div className="bg-white dark:bg-surface-elevated border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-6 sm:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-6">
                                     {/* Primary EMI */}
                                     <div>
-                                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                                             Monthly EMI
                                         </p>
                                         <p className="text-4xl sm:text-5xl font-semibold tabular-nums tracking-tight text-gray-900 dark:text-white mt-1.5">
@@ -414,7 +414,7 @@ const LoanCalculator = () => {
                                     </div>
 
                                     {/* Interest Context */}
-                                    <div className="flex items-center gap-2.5 text-xs text-gray-600 dark:text-gray-400 py-2.5 px-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.05]">
+                                    <div className="flex items-center gap-2.5 text-xs text-gray-700 dark:text-gray-300 py-2.5 px-3.5 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.05]">
                                         <FiInfo className="w-3.5 h-3.5 flex-shrink-0 text-gray-400 dark:text-gray-500" />
                                         <span>
                                             Interest adds{' '}
@@ -440,19 +440,19 @@ const LoanCalculator = () => {
                             <button
                                 type="button"
                                 onClick={handleShare}
-                                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-surface-elevated border border-black/[0.08] dark:border-white/[0.10] hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:-translate-y-0.5 active:scale-[0.98] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-semibold text-gray-800 dark:text-gray-200 bg-white dark:bg-surface-elevated border border-black/[0.08] dark:border-white/[0.10] hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:-translate-y-0.5 active:scale-[0.98] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
                             >
                                 <FiShare2 className="w-3.5 h-3.5" />
                                 <span>Share calculation</span>
                             </button>
 
-                            {/* Estimate Disclaimer */}
-                            <div className="p-4 rounded-2xl bg-white/50 dark:bg-surface-elevated/50 border border-black/[0.04] dark:border-white/[0.05] text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                            {/* Estimate Disclaimer - Clean, unboxed footer */}
+                            <div className="pt-2 px-1 text-xs text-gray-500 dark:text-gray-400 space-y-1">
                                 <div className="flex items-center gap-1.5 font-medium text-gray-700 dark:text-gray-300">
-                                    <FiInfo className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                    <FiInfo className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                                     <span>Estimate only</span>
                                 </div>
-                                <p className="leading-relaxed pl-5 text-[11px] text-gray-500 dark:text-gray-400">
+                                <p className="leading-relaxed pl-5 text-xs text-gray-500 dark:text-gray-400">
                                     Actual loan terms may vary based on eligibility and approval. This calculator uses the same formula as the loan creation system.
                                 </p>
                             </div>
