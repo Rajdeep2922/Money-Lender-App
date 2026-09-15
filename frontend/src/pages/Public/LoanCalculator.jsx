@@ -4,6 +4,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { FiArrowLeft, FiInfo, FiShare2 } from 'react-icons/fi';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
+import ThemeToggle from '../../components/common/ThemeToggle';
+import useTheme from '../../hooks/useTheme';
 // Import from shared calculation module - SINGLE SOURCE OF TRUTH
 import { calculateMonthlyEMI, calculateCompoundEMI } from '../../../../shared/loanCalculations.js';
 
@@ -18,6 +20,7 @@ const formatCurrency = (amount) => {
 };
 
 const LoanCalculator = () => {
+    useTheme();
     const [searchParams] = useSearchParams();
 
     const [principal, setPrincipal] = useState(() => {
@@ -80,17 +83,20 @@ const LoanCalculator = () => {
                 />
             </Helmet>
 
-            <div className="min-h-screen bg-gray-50 dark:bg-canvas text-gray-900 dark:text-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-screen bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 transition-colors duration-200 py-8 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto">
-                    {/* Header with Back Navigation */}
+                    {/* Header with Back Navigation and Theme Toggle */}
                     <div className="mb-8">
-                        <Link
-                            to="/"
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors group mb-4"
-                        >
-                            <FiArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-                            <span>Back to Home</span>
-                        </Link>
+                        <div className="flex items-center justify-between mb-4">
+                            <Link
+                                to="/"
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors group"
+                            >
+                                <FiArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+                                <span>Back to Home</span>
+                            </Link>
+                            <ThemeToggle />
+                        </div>
 
                         <div className="flex flex-col gap-1">
                             <span className="text-[11px] font-semibold tracking-wider text-primary uppercase">

@@ -15,6 +15,7 @@
 
 /* Tailwind v4 Theme Tokens - Pure Pitch Black & Neutral Dark Surfaces (Zero Blue Undertones) */
 @theme {
+  --color-canvas: #000000;
   --color-canvas-light: #ffffff;
   --color-canvas-dark: #000000;
   --color-surface-soft: #f4f4f4;

@@ -92,6 +92,7 @@ const PublicRoute = ({ children }) => {
 
 import { HelmetProvider } from 'react-helmet-async';
 import { SocketProvider } from './contexts/SocketContext';
+import useTheme from './hooks/useTheme';
 
 // Root route: authenticated → dashboard, guest → landing page
 const RootRoute = () => {
@@ -105,6 +106,7 @@ const RootRoute = () => {
 };
 
 function App() {
+  useTheme();
 
   return (
     <HelmetProvider>
