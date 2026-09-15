@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail } from 'lucide-react';
 import { loanRequestAPI } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import ChatWindow from '../../components/chat/ChatWindow';
@@ -27,62 +27,70 @@ const LenderChatRoom = () => {
     const currentUserId = user?._id?.toString();
 
     return (
-        <div className="flex flex-col h-[calc(100vh-8rem)]">
+        <div className="flex flex-col h-[calc(100vh-7.5rem)]">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-3">
                 <button
                     onClick={() => navigate('/loan-requests')}
-                    className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors flex items-center justify-center"
+                    className="w-9 h-9 rounded-full bg-white dark:bg-surface-elevated hover:bg-gray-100 dark:hover:bg-surface-border text-gray-700 dark:text-gray-200 border border-hairline-light dark:border-hairline-dark transition-colors flex items-center justify-center shadow-xs"
                     title="Back to Requests"
                 >
                     <ArrowLeft className="w-4 h-4" />
                 </button>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                     {isLoading ? (
-                        <div className="h-5 bg-slate-700 rounded w-48 animate-pulse" />
+                        <div className="h-5 bg-gray-200 dark:bg-surface-border rounded w-48 animate-pulse" />
                     ) : (
                         <>
-                            <h1 className="text-white font-semibold text-lg leading-tight">
-                                Chat — {isAccepted ? (loanRequest.guestName || customer?.firstName || 'Customer') : 'Awaiting acceptance'}
+                            <h1 className="text-gray-900 dark:text-white font-semibold text-base leading-tight truncate">
+                                Chat with {isAccepted ? (loanRequest.guestName || customer?.firstName || 'Borrower') : 'Awaiting Acceptance'}
                             </h1>
-                            <p className="text-slate-400 text-xs">
+                            <p className="text-gray-500 dark:text-gray-400 text-xs font-mono tabular-nums">
                                 ₹{loanRequest?.amount?.toLocaleString('en-IN')} · {loanRequest?.purpose}
                             </p>
                         </>
                     )}
                 </div>
                 <span
-                    className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full border ${
                         isAccepted
-                            ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                            : 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40'
+                            : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40'
                     }`}
                 >
-                    {isAccepted ? '✅ Accepted' : '⏳ Pending'}
+                    <span className={`w-1.5 h-1.5 rounded-full ${isAccepted ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    {isAccepted ? 'Accepted' : 'Pending'}
                 </span>
             </div>
 
-            {/* Post-acceptance: show customer full details */}
+            {/* Post-acceptance customer preview strip */}
             {isAccepted && (customer || loanRequest?.guestName) && (
-                <div className="mb-3 bg-slate-800/40 border border-slate-700/50 rounded-xl px-4 py-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                        {(loanRequest.guestName || customer?.firstName || '?').charAt(0)}
+                <div className="mb-3 bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl px-4 py-2.5 flex items-center gap-3 shadow-xs">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 dark:bg-primary/20 border border-primary/20 text-primary dark:text-primary-light flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        {(loanRequest.guestName || customer?.firstName || '?').charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                        <p className="text-white text-sm font-medium">
+                    <div className="flex items-center gap-3 text-xs flex-wrap min-w-0">
+                        <span className="text-gray-900 dark:text-white font-medium flex items-center gap-1">
+                            <User className="w-3 h-3 text-gray-400" />
                             {customer ? `${customer.firstName} ${customer.lastName}` : loanRequest.guestName}
-                        </p>
-                        {(customer?.email || loanRequest?.guestEmail) && (
-                            <p className="text-slate-400 text-xs">{customer?.email || loanRequest.guestEmail}</p>
-                        )}
+                        </span>
                         {(customer?.phone || loanRequest?.guestPhone) && (
-                            <p className="text-slate-400 text-xs">{customer?.phone || loanRequest.guestPhone}</p>
+                            <span className="text-gray-500 dark:text-gray-400 font-mono flex items-center gap-1">
+                                <Phone className="w-3 h-3 text-gray-400" />
+                                {customer?.phone || loanRequest.guestPhone}
+                            </span>
+                        )}
+                        {(customer?.email || loanRequest?.guestEmail) && (
+                            <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                <Mail className="w-3 h-3 text-gray-400" />
+                                {customer?.email || loanRequest.guestEmail}
+                            </span>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* Chat */}
+            {/* Chat Window */}
             <div className="flex-1 min-h-0">
                 <ChatWindow
                     loanRequestId={loanRequestId}

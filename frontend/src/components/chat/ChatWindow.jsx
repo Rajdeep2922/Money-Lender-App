@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { chatAPI } from '../../services/api';
 import { useSocket } from '../../contexts/SocketContext';
 import useNotificationStore from '../../store/notificationStore';
 import MessageBubble from './MessageBubble';
-import { Paperclip, SendHorizonal } from 'lucide-react';
+import { Paperclip, SendHorizonal, Lock, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 /**
@@ -18,7 +18,6 @@ import toast from 'react-hot-toast';
  */
 const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = false }) => {
     const { getSocket } = useSocket();
-    const queryClient = useQueryClient();
     const { clearUnreadChat } = useNotificationStore();
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -30,7 +29,7 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
     const [joined, setJoined] = useState(false);
     const typingTimeoutRef = useRef(null);
 
-    // ── Fetch message history (React Query — NOT Zustand) ──────────────
+    // ── Fetch message history ──────────────────────────────────────────
     const { data: historyData, isLoading } = useQuery({
         queryKey: ['chat-messages', loanRequestId],
         queryFn: () => chatAPI.getMessages(loanRequestId).then((r) => r.data.data),
@@ -124,8 +123,6 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
             socket.off('user_typing', handleTyping);
             socket.off('messages_delivered', handleMessagesDelivered);
             socket.off('messages_seen', handleMessagesSeen);
-            // Leave the room so future messages trigger notifications
-            // (backend uses room membership to decide whether to send message_notification)
             socket.emit('leave_room', { loanRequestId });
             setJoined(false);
         };
@@ -214,26 +211,33 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
     // ── Disabled state ────────────────────────────────────────────────
     if (disabled) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
-                <div className="text-5xl">🔒</div>
-                <p className="text-slate-400 font-medium">Chat is locked</p>
-                <p className="text-slate-500 text-sm">Chat becomes available once the loan request is accepted.</p>
+            <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-3 text-center bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl p-6 shadow-xs">
+                <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-surface-border flex items-center justify-center text-gray-400 mb-1">
+                    <Lock className="w-5 h-5" />
+                </div>
+                <p className="text-gray-900 dark:text-white font-medium text-base">Chat is locked</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs max-w-xs">
+                    Messaging becomes active immediately once this loan request has been accepted.
+                </p>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-full bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden">
+        <div className="flex flex-col h-full bg-white dark:bg-surface-elevated rounded-2xl border border-hairline-light dark:border-hairline-dark shadow-xs overflow-hidden">
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-1 min-h-0">
                 {isLoading ? (
-                    <div className="flex justify-center py-12">
-                        <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="flex justify-center items-center h-full py-12">
+                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     </div>
                 ) : messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full py-12 gap-3 text-center">
-                        <div className="text-4xl">💬</div>
-                        <p className="text-slate-400 text-sm">No messages yet. Start the conversation!</p>
+                    <div className="flex flex-col items-center justify-center h-full py-12 gap-2.5 text-center">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light flex items-center justify-center">
+                            <MessageSquare className="w-5 h-5" />
+                        </div>
+                        <p className="text-gray-900 dark:text-white font-medium text-sm">No messages yet</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs">Start the conversation with an initial note.</p>
                     </div>
                 ) : (
                     messages.map((msg) => (
@@ -248,11 +252,11 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
                 {/* Typing indicator */}
                 {peerTyping && (
                     <div className="flex justify-start mb-2">
-                        <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-bl-sm px-4 py-2.5">
-                            <div className="flex gap-1 items-center">
-                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                        <div className="bg-gray-100 dark:bg-surface-border border border-hairline-light dark:border-hairline-dark rounded-2xl rounded-bl-xs px-4 py-2.5 shadow-xs">
+                            <div className="flex gap-1.5 items-center">
+                                <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce [animation-delay:0ms]" />
+                                <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce [animation-delay:150ms]" />
+                                <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce [animation-delay:300ms]" />
                             </div>
                         </div>
                     </div>
@@ -262,16 +266,16 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
             </div>
 
             {/* Input bar */}
-            <div className="border-t border-slate-700/50 bg-slate-900/60 p-3 flex items-end gap-2">
+            <div className="border-t border-hairline-light dark:border-hairline-dark bg-gray-50 dark:bg-canvas-dark/40 p-3 flex items-end gap-2">
                 {/* File upload button */}
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading || !joined}
-                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-slate-800 border border-slate-600 text-slate-400 hover:text-violet-400 hover:border-violet-500 transition-all disabled:opacity-40 flex items-center justify-center"
+                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-white dark:bg-surface-border border border-hairline-light dark:border-hairline-dark text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light transition-colors disabled:opacity-40 flex items-center justify-center shadow-xs cursor-pointer"
                     title="Attach file"
                 >
-                {uploading ? (
-                        <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                    {uploading ? (
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     ) : (
                         <Paperclip className="w-4 h-4" />
                     )}
@@ -289,10 +293,10 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
                     value={text}
                     onChange={(e) => handleTyping(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={joined ? 'Type a message… (Enter to send)' : 'Connecting…'}
+                    placeholder={joined ? 'Type a message… (Enter to send)' : 'Connecting to chat…'}
                     disabled={!joined}
                     rows={1}
-                    className="flex-1 bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-500 resize-none focus:outline-none focus:border-violet-500 transition-colors disabled:opacity-50 max-h-32"
+                    className="flex-1 bg-white dark:bg-surface-border/60 border border-hairline-light dark:border-hairline-dark rounded-xl px-3.5 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none focus:outline-none focus:border-primary transition-colors disabled:opacity-50 max-h-32"
                     style={{ overflowY: text.split('\n').length > 3 ? 'auto' : 'hidden' }}
                 />
 
@@ -300,7 +304,7 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
                 <button
                     onClick={sendMessage}
                     disabled={!text.trim() || !joined}
-                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center active:scale-95"
+                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary hover:bg-primary-hover text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center active:scale-95 shadow-xs cursor-pointer"
                     title="Send message"
                 >
                     <SendHorizonal className="w-4 h-4" />

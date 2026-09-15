@@ -9,13 +9,13 @@ const MessageBubble = ({ message, isSelf }) => {
     const timeAgo = formatDistanceToNow(new Date(createdAt));
 
     return (
-        <div className={`flex ${isSelf ? 'justify-end' : 'justify-start'} mb-3`}>
+        <div className={`flex ${isSelf ? 'justify-end' : 'justify-start'} mb-2.5`}>
             <div
-                className={`max-w-[75%] ${
+                className={`max-w-[80%] sm:max-w-[70%] ${
                     isSelf
-                        ? 'bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-2xl rounded-br-sm'
-                        : 'bg-slate-800 text-slate-100 border border-slate-700 rounded-2xl rounded-bl-sm'
-                } px-4 py-3 shadow-md`}
+                        ? 'bg-primary text-white rounded-2xl rounded-br-xs'
+                        : 'bg-gray-100 dark:bg-surface-border text-gray-900 dark:text-gray-100 border border-hairline-light dark:border-hairline-dark rounded-2xl rounded-bl-xs'
+                } px-4 py-2.5 shadow-xs`}
             >
                 {/* File attachment */}
                 {fileUrl && (
@@ -25,7 +25,7 @@ const MessageBubble = ({ message, isSelf }) => {
                                 <img
                                     src={fileUrl}
                                     alt="attachment"
-                                    className="max-w-full rounded-lg max-h-48 object-cover hover:opacity-90 transition-opacity cursor-pointer"
+                                    className="max-w-full rounded-xl max-h-56 object-cover hover:opacity-95 transition-opacity cursor-pointer border border-white/10"
                                 />
                             </a>
                         ) : (
@@ -33,12 +33,14 @@ const MessageBubble = ({ message, isSelf }) => {
                                 href={fileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`flex items-center gap-2 text-sm underline underline-offset-2 ${
-                                    isSelf ? 'text-violet-200' : 'text-violet-400'
-                                } hover:opacity-80 transition-opacity`}
+                                className={`inline-flex items-center gap-2 text-xs font-medium py-1.5 px-3 rounded-lg border ${
+                                    isSelf
+                                        ? 'bg-white/15 border-white/20 text-white hover:bg-white/25'
+                                        : 'bg-white dark:bg-surface-elevated border-hairline-light dark:border-hairline-dark text-gray-800 dark:text-gray-200 hover:bg-gray-50'
+                                } transition-all`}
                             >
                                 <span>{fileType === 'pdf' ? '📄' : '📎'}</span>
-                                <span className="truncate max-w-[200px]">
+                                <span className="truncate max-w-[180px]">
                                     {fileUrl.split('/').pop() || 'Document'}
                                 </span>
                             </a>
@@ -53,8 +55,8 @@ const MessageBubble = ({ message, isSelf }) => {
 
                 {/* Timestamp & Status Ticks */}
                 <div
-                    className={`flex items-center justify-end gap-1 text-[10px] mt-1.5 ${
-                        isSelf ? 'text-violet-200/70' : 'text-slate-500'
+                    className={`flex items-center justify-end gap-1 text-[10px] font-mono mt-1 ${
+                        isSelf ? 'text-white/75' : 'text-gray-500 dark:text-gray-400'
                     }`}
                 >
                     <span>{timeAgo}</span>

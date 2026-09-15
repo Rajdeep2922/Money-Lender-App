@@ -150,12 +150,12 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
                                         onChange={e => setPhone(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && handleTrack()}
                                         placeholder="Enter your registered phone number"
-                                        className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                        className="flex-1 bg-black/40 border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary transition-colors font-mono"
                                     />
                                     <button
                                         onClick={handleTrack}
                                         disabled={loading}
-                                        className="px-4 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-xl font-semibold text-sm hover:shadow-lg transition-all disabled:opacity-60 flex items-center gap-2"
+                                        className="px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold text-xs tracking-tight shadow-sm active:scale-[0.98] transition-all disabled:opacity-60 flex items-center gap-2"
                                     >
                                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                                         {loading ? '' : 'Track'}
@@ -163,14 +163,14 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
                                 </div>
 
                                 {error && (
-                                    <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
+                                    <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs text-center">
                                         {error}
                                     </div>
                                 )}
 
                                 {/* Results */}
                                 {requests && requests.length === 0 && (
-                                    <div className="text-center py-8 text-gray-500 text-sm">
+                                    <div className="text-center py-8 text-gray-400 text-xs">
                                         No loan requests found for this phone number.
                                     </div>
                                 )}
@@ -196,7 +196,7 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
                                                     </div>
 
                                                     {req.status === 'pending' && (
-                                                        <p className="text-yellow-300/70 text-xs mt-3 text-center">
+                                                        <p className="text-amber-300/70 text-xs mt-3 text-center">
                                                             ⏳ Waiting for lender to respond…
                                                         </p>
                                                     )}
@@ -210,7 +210,7 @@ const TrackLoanRequest = ({ onClose, initialPhone }) => {
                                                     {req.status === 'accepted' && req.trackingToken && (
                                                         <button
                                                             onClick={() => setActiveChat({ request: req, trackingToken: req.trackingToken })}
-                                                            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-500/20 transition-all"
+                                                            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm active:scale-[0.98] transition-all"
                                                         >
                                                             <MessageSquare className="w-4 h-4" />
                                                             Open Chat with Lender
@@ -365,10 +365,10 @@ const GuestChatWindow = ({ request, trackingToken, socket: propSocket }) => {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-0">
                 {!connected && (
-                    <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 text-teal-400 animate-spin" /></div>
+                    <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 text-primary-bright animate-spin" /></div>
                 )}
                 {messages.length === 0 && connected && (
-                    <div className="text-center py-10 text-gray-500 text-sm">
+                    <div className="text-center py-10 text-gray-400 text-xs">
                         <p className="text-3xl mb-2">💬</p>
                         <p>Chat is open! Start the conversation.</p>
                     </div>
@@ -378,8 +378,8 @@ const GuestChatWindow = ({ request, trackingToken, socket: propSocket }) => {
                     const isSelf = msg.senderType === 'customer';
                     return (
                         <div key={msg._id} className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${isSelf ? 'bg-gradient-to-br from-teal-600 to-cyan-600 text-white rounded-br-sm' : 'bg-gray-800 text-gray-100 border border-gray-700 rounded-bl-sm'}`}>
-                                {!isSelf && <p className="text-teal-400 text-xs font-semibold mb-1">Lender</p>}
+                            <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-xs ${isSelf ? 'bg-primary text-white rounded-br-sm' : 'bg-surface-elevated text-gray-100 border border-white/[0.08] rounded-bl-sm'}`}>
+                                {!isSelf && <p className="text-primary-bright text-xs font-semibold mb-1">Lender</p>}
                                 {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
                                 {msg.fileUrl && (
                                     msg.fileType === 'image'
@@ -390,7 +390,7 @@ const GuestChatWindow = ({ request, trackingToken, socket: propSocket }) => {
                                             <Paperclip className="w-3 h-3" /> View attachment
                                           </a>
                                 )}
-                                <div className={`flex items-center justify-end gap-1 text-[10px] mt-1 ${isSelf ? 'text-teal-100/80' : 'text-gray-400'}`}>
+                                <div className={`flex items-center justify-end gap-1 text-[10px] mt-1 ${isSelf ? 'text-white/80' : 'text-gray-400'}`}>
                                     <span>{formatDistanceToNow(msg.createdAt)}</span>
                                     <MessageStatusTicks message={msg} isSelf={isSelf} />
                                 </div>
@@ -402,12 +402,12 @@ const GuestChatWindow = ({ request, trackingToken, socket: propSocket }) => {
             </div>
 
             {/* Input bar */}
-            <div className="border-t border-gray-700 p-3 flex gap-2 items-end">
+            <div className="border-t border-white/[0.08] p-3 flex gap-2 items-end">
                 {/* File upload */}
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading || !joined}
-                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-800 border border-gray-700 text-gray-400 hover:text-teal-400 hover:border-teal-500 transition-all disabled:opacity-40 flex items-center justify-center"
+                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-surface-elevated border border-white/[0.08] text-gray-400 hover:text-primary-bright hover:border-primary transition-all disabled:opacity-40 flex items-center justify-center"
                     title="Attach file"
                 >
                     {uploading
@@ -429,12 +429,12 @@ const GuestChatWindow = ({ request, trackingToken, socket: propSocket }) => {
                     placeholder={joined ? 'Type a message…' : 'Connecting…'}
                     disabled={!joined}
                     rows={1}
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 resize-none focus:outline-none focus:border-teal-500 transition-colors disabled:opacity-50"
+                    className="flex-1 bg-black/40 border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 resize-none focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
                 />
                 <button
                     onClick={send}
                     disabled={!text.trim() || !joined}
-                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all"
+                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-primary hover:bg-primary/90 text-white flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all shadow-sm"
                 >
                     <Send className="w-4 h-4" />
                 </button>

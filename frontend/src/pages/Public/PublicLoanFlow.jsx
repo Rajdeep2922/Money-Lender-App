@@ -105,8 +105,8 @@ const PublicLoanFlow = ({ onClose }) => {
 
                 {/* Progress bar */}
                 {step < 2 && (
-                    <div className="h-1 bg-gray-800 flex-shrink-0">
-                        <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 transition-all duration-500" style={{ width: `${(step + 1) / 2 * 100}%` }} />
+                    <div className="h-1 bg-black/40 flex-shrink-0">
+                        <div className="h-full bg-primary transition-all duration-500" style={{ width: `${(step + 1) / 2 * 100}%` }} />
                     </div>
                 )}
 
@@ -122,12 +122,12 @@ const PublicLoanFlow = ({ onClose }) => {
                                 <input
                                     type="text" value={search} onChange={e => setSearch(e.target.value)}
                                     placeholder="Search by name or city…"
-                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                    className="w-full bg-black/40 border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                                 />
 
                                 {/* Lender list */}
                                 {isLoading ? (
-                                    <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 text-teal-400 animate-spin" /></div>
+                                    <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 text-primary-bright animate-spin" /></div>
                                 ) : filtered.length === 0 ? (
                                     <p className="text-center text-gray-500 py-10">No lenders found.</p>
                                 ) : (
@@ -136,22 +136,22 @@ const PublicLoanFlow = ({ onClose }) => {
                                             <button
                                                 key={lender._id}
                                                 onClick={() => { setSelectedLender(lender); setStep(1); }}
-                                                className="w-full text-left p-4 rounded-xl bg-gray-800 border border-gray-700 hover:border-teal-500 hover:bg-gray-800/80 transition-all group"
+                                                className="w-full text-left p-4 rounded-xl bg-surface-elevated border border-white/[0.08] hover:border-primary/50 transition-all group shadow-xs"
                                             >
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-700 flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                                                    <div className="w-12 h-12 rounded-xl bg-primary/20 text-primary-bright flex items-center justify-center font-bold text-xl flex-shrink-0">
                                                         {lender.businessName?.charAt(0) || 'L'}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-white font-semibold truncate group-hover:text-teal-300 transition-colors">{lender.businessName}</p>
+                                                        <p className="text-white font-semibold truncate group-hover:text-primary-bright transition-colors">{lender.businessName}</p>
                                                         <div className="flex items-center gap-3 mt-1">
                                                             <span className="text-emerald-400 text-xs font-medium">💰 {lender.interestRate ?? 12}% p.a.</span>
-                                                            <span className="text-yellow-400 text-xs">⭐ {(lender.rating ?? 4.0).toFixed(1)}</span>
-                                                            {lender.address?.city && <span className="text-gray-500 text-xs flex items-center gap-1"><MapPin className="w-3 h-3" />{lender.address.city}</span>}
+                                                            <span className="text-amber-400 text-xs">⭐ {(lender.rating ?? 4.0).toFixed(1)}</span>
+                                                            {lender.address?.city && <span className="text-gray-400 text-xs flex items-center gap-1"><MapPin className="w-3 h-3" />{lender.address.city}</span>}
                                                         </div>
                                                         {lender.description && <p className="text-gray-400 text-xs mt-1 line-clamp-1">{lender.description}</p>}
                                                     </div>
-                                                    <ArrowRight className="w-5 h-5 text-gray-600 group-hover:text-teal-400 transition-colors flex-shrink-0" />
+                                                    <ArrowRight className="w-5 h-5 text-gray-500 group-hover:text-primary-bright transition-colors flex-shrink-0" />
                                                 </div>
                                             </button>
                                         ))}
@@ -164,8 +164,8 @@ const PublicLoanFlow = ({ onClose }) => {
                         {step === 1 && selectedLender && (
                             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="p-6 space-y-4">
                                 {/* Selected lender strip */}
-                                <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-800 border border-gray-700">
-                                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-600 to-emerald-700 flex items-center justify-center text-white font-bold text-sm">
+                                <div className="flex items-center gap-3 p-3 rounded-xl bg-black/40 border border-white/[0.08]">
+                                    <div className="w-9 h-9 rounded-lg bg-primary/20 text-primary-bright flex items-center justify-center font-bold text-sm">
                                         {selectedLender.businessName?.charAt(0)}
                                     </div>
                                     <div>
@@ -181,14 +181,14 @@ const PublicLoanFlow = ({ onClose }) => {
                                     <div>
                                         <label className="block text-xs text-gray-400 mb-1">Full Name *</label>
                                         <input value={form.guestName} onChange={e => setForm(f => ({ ...f, guestName: e.target.value }))}
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                            className="w-full bg-black/40 border border-white/[0.1] rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                                             placeholder="Your full name" />
                                         {errors.guestName && <p className="text-red-400 text-xs mt-1">{errors.guestName}</p>}
                                     </div>
                                     <div>
-                                        <label className="block text-xs text-gray-400 mb-1">Phone Number * <span className="text-teal-400">(used to track request)</span></label>
+                                        <label className="block text-xs text-gray-400 mb-1">Phone Number * <span className="text-primary-bright">(used to track request)</span></label>
                                         <input value={form.guestPhone} onChange={e => setForm(f => ({ ...f, guestPhone: e.target.value }))}
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                            className="w-full bg-black/40 border border-white/[0.1] rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                                             placeholder="10-digit phone" maxLength={10} />
                                         {errors.guestPhone && <p className="text-red-400 text-xs mt-1">{errors.guestPhone}</p>}
                                     </div>
@@ -198,7 +198,7 @@ const PublicLoanFlow = ({ onClose }) => {
                                     <label className="block text-xs text-gray-400 mb-1">Email <span className="text-gray-500">(optional)</span></label>
                                     <input value={form.guestEmail} onChange={e => setForm(f => ({ ...f, guestEmail: e.target.value }))}
                                         type="email"
-                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                        className="w-full bg-black/40 border border-white/[0.1] rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                                         placeholder="you@example.com" />
                                 </div>
 
@@ -209,14 +209,14 @@ const PublicLoanFlow = ({ onClose }) => {
                                         <label className="block text-xs text-gray-400 mb-1">Amount (₹) *</label>
                                         <input value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                                             type="number" min="1"
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-500 transition-colors"
+                                            className="w-full bg-black/40 border border-white/[0.1] rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                                             placeholder="e.g. 50000" />
                                         {errors.amount && <p className="text-red-400 text-xs mt-1">{errors.amount}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-xs text-gray-400 mb-1">Purpose *</label>
                                         <select value={form.purpose} onChange={e => setForm(f => ({ ...f, purpose: e.target.value }))}
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-teal-500 transition-colors">
+                                            className="w-full bg-black/40 border border-white/[0.1] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-primary transition-colors">
                                             <option value="">Select purpose…</option>
                                             {PURPOSES.map(p => <option key={p} value={p}>{p}</option>)}
                                         </select>
@@ -228,18 +228,18 @@ const PublicLoanFlow = ({ onClose }) => {
                                     <label className="block text-xs text-gray-400 mb-1">Message <span className="text-gray-500">(optional)</span></label>
                                     <textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                                         rows={3} maxLength={1000}
-                                        className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-500 transition-colors resize-none"
+                                        className="w-full bg-black/40 border border-white/[0.1] rounded-xl px-3 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary transition-colors resize-none"
                                         placeholder="Briefly describe your situation…" />
                                 </div>
 
-                                <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300">
+                                <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary-bright">
                                     🔒 Your phone number will be your <strong>tracking ID</strong>. Save it — you'll need it to check your request status and access the chat.
                                 </div>
 
                                 <button
                                     onClick={handleSubmit}
                                     disabled={mutation.isPending}
-                                    className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-teal-500/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-sm active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {mutation.isPending ? <><Loader2 className="w-5 h-5 animate-spin" />Submitting…</> : <>Submit Loan Request <ArrowRight className="w-5 h-5" /></>}
                                 </button>
@@ -249,33 +249,33 @@ const PublicLoanFlow = ({ onClose }) => {
                         {/* ── Step 2: Success ── */}
                         {step === 2 && result && (
                             <motion.div key="step2" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-8 flex flex-col items-center text-center gap-5">
-                                <div className="w-20 h-20 rounded-full bg-teal-500/15 border-2 border-teal-500/40 flex items-center justify-center">
-                                    <CheckCircle className="w-10 h-10 text-teal-400" />
+                                <div className="w-20 h-20 rounded-full bg-emerald-500/15 border-2 border-emerald-500/40 flex items-center justify-center">
+                                    <CheckCircle className="w-10 h-10 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <h3 className="text-white text-2xl font-bold">Request Sent!</h3>
+                                    <h3 className="text-white text-2xl font-bold tracking-tight">Request Sent!</h3>
                                     <p className="text-gray-400 text-sm mt-1">Your loan request has been submitted to <strong className="text-white">{result.lenderName}</strong>.</p>
                                 </div>
 
                                 {/* Tracking info box */}
-                                <div className="w-full bg-gray-800 border border-teal-500/30 rounded-2xl p-5 space-y-3 text-left">
-                                    <p className="text-teal-400 text-xs font-bold uppercase tracking-wider">📋 Save This Information</p>
+                                <div className="w-full bg-surface-elevated border border-white/[0.1] rounded-2xl p-5 space-y-3 text-left">
+                                    <p className="text-primary-bright text-xs font-bold uppercase tracking-wider">📋 Save This Information</p>
                                     <div>
                                         <p className="text-gray-400 text-xs">Your Tracking Phone Number</p>
-                                        <p className="text-white text-xl font-bold tracking-widest mt-1">{result.trackingPhone}</p>
+                                        <p className="text-white text-xl font-bold font-mono tracking-widest mt-1">{result.trackingPhone}</p>
                                     </div>
-                                    <p className="text-gray-500 text-xs leading-relaxed">
+                                    <p className="text-gray-400 text-xs leading-relaxed">
                                         Use this phone number to check your request status. Once the lender <strong className="text-white">accepts</strong> your request, a chat will become available.
                                     </p>
                                 </div>
 
                                 <div className="flex gap-3 w-full">
-                                    <button onClick={onClose} className="flex-1 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-gray-300 text-sm font-medium hover:bg-gray-700 transition-colors">
+                                    <button onClick={onClose} className="flex-1 py-2.5 bg-black/40 border border-white/[0.1] rounded-xl text-gray-300 text-sm font-medium hover:bg-white/[0.05] transition-colors">
                                         Close
                                     </button>
                                     <button
                                         onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('open-track-request', { detail: { phone: result.trackingPhone } })); }}
-                                        className="flex-1 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-xl text-white text-sm font-bold hover:shadow-lg transition-all"
+                                        className="flex-1 py-2.5 bg-primary hover:bg-primary/90 rounded-xl text-white text-sm font-bold shadow-sm active:scale-[0.98] transition-all"
                                     >
                                         Check My Request →
                                     </button>
