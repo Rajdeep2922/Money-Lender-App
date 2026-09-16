@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 const THEME_STORAGE_KEY = 'money-lender-theme';
 
 export const useTheme = () => {
-    // 'light' | 'dark' | 'system' - defaults to 'dark'
+    // 'light' | 'dark' | 'system' - defaults to 'light'
     const [theme, setThemeState] = useState(() => {
         try {
-            return localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
+            return localStorage.getItem(THEME_STORAGE_KEY) || 'light';
         } catch {
-            return 'dark';
+            return 'light';
         }
     });
 

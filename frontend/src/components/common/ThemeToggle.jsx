@@ -3,8 +3,29 @@ import { motion } from 'framer-motion';
 import { Sun, Moon, Laptop } from 'lucide-react';
 import useTheme from '../../hooks/useTheme';
 
-export const ThemeToggle = ({ className = '', compact = false }) => {
+export const ThemeToggle = ({ className = '', compact = false, sidebar = false }) => {
     const { theme, setTheme } = useTheme();
+
+    if (sidebar) {
+        const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
+        const CurrentIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Laptop;
+        const currentLabel = theme.charAt(0).toUpperCase() + theme.slice(1);
+        return (
+            <button
+                type="button"
+                onClick={() => setTheme(nextTheme)}
+                className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors focus-visible:ring-2 focus-visible:ring-primary focus:outline-none cursor-pointer ${className}`}
+                title={`Theme: ${currentLabel} (Click to switch)`}
+                aria-label={`Current theme: ${currentLabel}. Click to switch theme.`}
+            >
+                <div className="flex items-center gap-3">
+                    <CurrentIcon className="w-4 h-4 text-gray-400" strokeWidth={1.8} />
+                    <span>Theme</span>
+                </div>
+                <span className="text-[11px] font-semibold text-gray-400 capitalize">{currentLabel}</span>
+            </button>
+        );
+    }
 
     if (compact) {
         const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';

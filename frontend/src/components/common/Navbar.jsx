@@ -78,163 +78,138 @@ const Navbar = () => {
             {/* ========================================================================= */}
             {/* DESKTOP VERTICAL NAVIGATION RAIL (md and above)                            */}
             {/* ========================================================================= */}
+            {/* DESKTOP WIDE LABELLED SIDEBAR (md and above, 240px)                       */}
+            {/* ========================================================================= */}
             <aside
                 aria-label="Lending workspace navigation"
-                className="hidden md:flex fixed inset-y-0 left-0 w-[72px] z-40 bg-white dark:bg-black border-r border-black/[0.06] dark:border-white/[0.08] flex-col items-center justify-between py-5 select-none transition-colors"
+                className="hidden md:flex fixed inset-y-0 left-0 w-[240px] z-40 bg-[#0c0d12] border-r border-white/[0.08] flex-col justify-between py-5 px-3 select-none transition-colors"
             >
-                {/* Top Section: Business Brand Mark */}
-                <div className="flex flex-col items-center w-full px-3">
+                {/* Top Section: Business Brand Mark with Title */}
+                <div className="w-full">
                     <Link
                         to="/"
-                        className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-primary text-white shadow-xs hover:opacity-95 transition-all group focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black focus:outline-none"
+                        className="flex items-center gap-3 px-2 py-1 mb-4 rounded-xl group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
                         aria-label={businessName ? `${businessName} Dashboard` : 'Money Lender Dashboard'}
                     >
-                        {lender?.companyStamp ? (
-                            <img
-                                src={lender.companyStamp}
-                                alt="Company Stamp"
-                                className="w-full h-full object-cover rounded-2xl"
-                            />
-                        ) : (
-                            <Landmark className="w-5 h-5 text-white" strokeWidth={2.2} />
-                        )}
-
-                        {/* Brand Hover Tooltip */}
-                        <div
-                            role="tooltip"
-                            className="absolute left-full ml-3.5 px-2.5 py-1 bg-gray-900 dark:bg-gray-800 text-white text-[12px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 shadow-lg z-50 pointer-events-none"
-                        >
-                            {businessName || 'Money Lender'}
+                        <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
+                            {lender?.companyStamp ? (
+                                <img
+                                    src={lender.companyStamp}
+                                    alt="Company Stamp"
+                                    className="w-full h-full object-cover rounded-2xl"
+                                />
+                            ) : (
+                                <Landmark className="w-5 h-5 text-white" strokeWidth={2.2} />
+                            )}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-bold text-white tracking-tight leading-tight truncate">
+                                Money
+                            </span>
+                            <span className="text-sm font-bold text-white tracking-tight leading-tight truncate">
+                                Lender
+                            </span>
                         </div>
                     </Link>
+
+                    {/* Navigation Links with Icons and Full Labels */}
+                    <nav className="flex flex-col gap-1 w-full" aria-label="Main menu">
+                        {visibleLinks.map((link) => {
+                            const Icon = link.icon;
+                            const active = checkActive(link);
+                            const badge = getBadgeCount(link);
+
+                            return (
+                                <Link
+                                    key={link.to}
+                                    to={link.to}
+                                    aria-current={active ? 'page' : undefined}
+                                    className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
+                                        active
+                                            ? 'bg-primary/25 text-white font-semibold shadow-xs'
+                                            : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <Icon
+                                            className={`w-4 h-4 shrink-0 transition-colors ${
+                                                active ? 'text-primary-bright' : 'text-gray-400 group-hover:text-gray-200'
+                                            }`}
+                                            strokeWidth={active ? 2.2 : 1.8}
+                                        />
+                                        <span className="truncate">{link.label}</span>
+                                    </div>
+
+                                    {badge > 0 && (
+                                        <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
+                                            {badge > 99 ? '99+' : badge}
+                                        </span>
+                                    )}
+                                </Link>
+                            );
+                        })}
+                    </nav>
                 </div>
 
-                {/* Middle Section: Main Navigation Links */}
-                <nav
-                    className="flex flex-col items-center gap-2 w-full px-3"
-                    aria-label="Main menu"
-                >
-                    {visibleLinks.map((link) => {
-                        const Icon = link.icon;
-                        const active = checkActive(link);
-                        const badge = getBadgeCount(link);
+                {/* Bottom Section: Settings, Theme, User Profile & Logout */}
+                <div className="flex flex-col gap-1 w-full pt-4 border-t border-white/[0.08]">
+                    {user && (
+                        <Link
+                            to="/settings"
+                            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm font-medium transition-all group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
+                                location.pathname.startsWith('/settings')
+                                    ? 'bg-primary/20 text-white font-semibold'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                            }`}
+                        >
+                            <Settings className="w-4 h-4 text-gray-400 group-hover:text-gray-200" strokeWidth={1.8} />
+                            <span>Settings</span>
+                        </Link>
+                    )}
 
-                        return (
-                            <Link
-                                key={link.to}
-                                to={link.to}
-                                aria-current={active ? 'page' : undefined}
-                                aria-label={link.label}
-                                className={`relative flex items-center justify-center w-11 h-11 rounded-xl transition-all group focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black focus:outline-none ${
-                                    active
-                                        ? 'bg-primary/10 text-primary dark:text-primary-bright font-semibold'
-                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04]'
-                                }`}
-                            >
-                                {/* Left violet active indicator bar */}
-                                {active && (
-                                    <motion.div
-                                        layoutId="rail-active-pill"
-                                        className="absolute -left-3 w-1 h-5 bg-primary dark:bg-primary-bright rounded-r-full"
-                                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                                    />
-                                )}
-
-                                <Icon
-                                    className={`w-5 h-5 transition-colors ${
-                                        active
-                                            ? 'text-primary dark:text-primary-bright'
-                                            : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-200'
-                                    }`}
-                                    strokeWidth={active ? 2.2 : 1.8}
-                                />
-
-                                {/* Notification count badge */}
-                                {badge > 0 && (
-                                    <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-primary rounded-full ring-2 ring-white dark:ring-black">
-                                        {badge > 99 ? '99+' : badge}
-                                    </span>
-                                )}
-
-                                {/* Floating Tooltip */}
-                                <div
-                                    role="tooltip"
-                                    className="absolute left-full ml-3.5 px-2.5 py-1 bg-gray-900 dark:bg-gray-800 text-white text-[12px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 shadow-lg z-50 pointer-events-none"
-                                >
-                                    {link.label}
-                                </div>
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                {/* Bottom Section: ThemeToggle, Settings, Profile & Logout */}
-                <div className="flex flex-col items-center gap-2.5 w-full px-3 pt-4 border-t border-black/[0.06] dark:border-white/[0.08]">
-                    {/* Compact Theme Toggle */}
-                    <ThemeToggle compact />
+                    {/* Theme Toggle with label */}
+                    <ThemeToggle sidebar />
 
                     {user && (
                         <>
-                            {/* Settings Link */}
+                            {/* User Profile Card */}
                             <Link
                                 to="/settings"
-                                aria-label="Settings"
-                                className={`relative flex items-center justify-center w-11 h-11 rounded-xl transition-all group focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black focus:outline-none ${
-                                    location.pathname.startsWith('/settings')
-                                        ? 'bg-primary/10 text-primary dark:text-primary-bright'
-                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04]'
-                                }`}
-                            >
-                                <Settings className="w-5 h-5" strokeWidth={1.8} />
-                                <div
-                                    role="tooltip"
-                                    className="absolute left-full ml-3.5 px-2.5 py-1 bg-gray-900 dark:bg-gray-800 text-white text-[12px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 shadow-lg z-50 pointer-events-none"
-                                >
-                                    Settings
-                                </div>
-                            </Link>
-
-                            {/* User Profile Avatar Link */}
-                            <Link
-                                to="/settings"
+                                className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.06] transition-colors mt-1 group"
                                 aria-label={`Workspace Profile: ${user.username}`}
-                                className="relative flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden border border-black/[0.08] dark:border-white/[0.1] bg-primary text-white shadow-2xs hover:opacity-90 transition-opacity group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none mt-0.5"
                             >
-                                {lender?.companyStamp ? (
-                                    <img
-                                        src={lender.companyStamp}
-                                        alt="Company Stamp"
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <span className="text-[12px] font-bold text-white leading-none">
-                                        {user.username?.charAt(0).toUpperCase() || 'U'}
-                                    </span>
-                                )}
-                                <div
-                                    role="tooltip"
-                                    className="absolute left-full ml-3.5 px-2.5 py-1 bg-gray-900 dark:bg-gray-800 text-white text-[12px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 shadow-lg z-50 pointer-events-none"
-                                >
-                                    {user.username || 'Profile'}
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0 border border-white/[0.12] shadow-2xs">
+                                    {lender?.companyStamp ? (
+                                        <img
+                                            src={lender.companyStamp}
+                                            alt="Company Stamp"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <span>{user.username?.charAt(0).toUpperCase() || 'U'}</span>
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-white truncate leading-tight">
+                                        {displayName || user.username}
+                                    </p>
+                                    <p className="text-[11px] text-gray-400 truncate leading-tight mt-0.5">
+                                        Lender
+                                    </p>
                                 </div>
                             </Link>
 
-                            {/* Logout Button */}
+                            {/* Logout */}
                             <button
                                 type="button"
                                 onClick={() => {
                                     window.location.href = '/signout';
                                 }}
                                 aria-label="Log out"
-                                className="relative flex items-center justify-center w-10 h-10 rounded-xl text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/20 transition-colors group focus-visible:ring-2 focus-visible:ring-red-500 focus:outline-none"
+                                className="flex items-center gap-3 w-full text-left px-3.5 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-rose-400 hover:bg-rose-950/20 transition-colors cursor-pointer"
                             >
                                 <LogOut className="w-4 h-4" strokeWidth={1.8} />
-                                <div
-                                    role="tooltip"
-                                    className="absolute left-full ml-3.5 px-2.5 py-1 bg-gray-900 dark:bg-gray-800 text-white text-[12px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 shadow-lg z-50 pointer-events-none"
-                                >
-                                    Log out
-                                </div>
+                                <span>Log Out</span>
                             </button>
                         </>
                     )}
