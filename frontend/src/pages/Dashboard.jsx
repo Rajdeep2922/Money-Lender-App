@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
-    AreaChart,
-    Area,
+    BarChart,
+    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -12,41 +12,43 @@ import {
 } from 'recharts';
 import {
     RefreshCw,
-    AlertCircle,
-    CheckCircle2,
-    UserPlus,
-    FilePlus,
-    ArrowDownLeft,
+    Clock,
+    Info,
     ArrowUpRight,
-    TrendingUp,
-    ShieldCheck,
-    Users,
-    ChevronRight,
     HandCoins,
-    CreditCard
+    ArrowDownLeft,
+    CreditCard,
+    TrendingUp,
+    Users,
+    UserCheck,
+    Wallet,
+    UserPlus,
+    AlertTriangle,
+    CheckCircle2,
+    ShieldCheck,
+    ChevronRight,
+    Sparkles,
+    Calendar,
+    AlertCircle,
+    Search,
+    Bell
 } from 'lucide-react';
 import { useLoans } from '../hooks/useLoans';
 import { usePayments } from '../hooks/usePayments';
 import { useStats } from '../hooks/useStats';
 import { useLender } from '../hooks/useLender';
+import useNotificationStore from '../store/notificationStore';
 import { formatCurrency } from '../utils/formatters';
 import { PageLoader } from '../components/common/LoadingSpinner';
 
 const fadeUp = {
-    hidden: { opacity: 0, y: 12 },
+    hidden: { opacity: 0, y: 8 },
     visible: (i = 0) => ({
         opacity: 1,
         y: 0,
-        transition: { delay: i * 0.04, duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+        transition: { delay: i * 0.03, duration: 0.25, ease: [0.22, 1, 0.36, 1] }
     }),
 };
-
-function getGreeting() {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-}
 
 function relativeDate(dateStr) {
     if (!dateStr) return '';
@@ -60,6 +62,22 @@ function relativeDate(dateStr) {
     return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
+function getInitials(name) {
+    if (!name) return '??';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+}
+
+function formatYAxis(v) {
+    if (v >= 10000000) return `${(v / 10000000).toFixed(1)}Cr`;
+    if (v >= 100000) return `${(v / 100000).toFixed(1)}L`;
+    if (v >= 1000) return `${(v / 1000).toFixed(0)}k`;
+    return v;
+}
+
 export const Dashboard = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [period, setPeriod] = useState('6M'); // '6M' | '12M' | 'YTD'
@@ -67,11 +85,13 @@ export const Dashboard = () => {
 
     const { data: stats, isLoading: loadingStats, refetch: refetchStats } = useStats();
     const { data: lender, isLoading: loadingLender, refetch: refetchLender } = useLender();
-    const { data: recentLoansData, isLoading: loadingRecentLoans, refetch: refetchLoans } = useLoans({ limit: 5 });
+    const { data: recentLoansData, isLoading: loadingRecentLoans, refetch: refetchLoans } = useLoans({ limit: 4 });
     const { data: recentPaymentsData, isLoading: loadingRecentPayments, refetch: refetchPayments } = usePayments({
-        limit: 5,
+        limit: 4,
         sortBy: '-paymentDate'
     });
+    const { unreadRequests = 0, unreadChats = {} } = useNotificationStore();
+    const totalUnread = unreadRequests + Object.values(unreadChats).reduce((s, n) => s + n, 0);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -79,8 +99,7 @@ export const Dashboard = () => {
         setTimeout(() => setIsRefreshing(false), 400);
     };
 
-    const ownerName = lender?.ownerName || 'there';
-    const businessName = lender?.businessName || 'Your Business';
+    const ownerName = lender?.ownerName || 'Rajdeep';
 
     const {
         totalCustomers = 0,
@@ -100,6 +119,7 @@ export const Dashboard = () => {
     } = stats || {};
 
     const collectionRate = collectionRateFromAPI || (totalLent > 0 ? Math.round((totalReceived / totalLent) * 100) : 0);
+    const totalLoansCount = activeLoans + completedLoans + foreclosedLoans + overdueLoans + defaultedLoans;
 
     // Chart data calculation strictly from real monthlyData
     const chartData = useMemo(() => {
@@ -115,19 +135,13 @@ export const Dashboard = () => {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const m = d.getMonth() + 1;
             const y = d.getFullYear();
-            const name = `${monthNames[m - 1]} '${y.toString().slice(-2)}`;
+            const name = monthNames[m - 1];
             const lent = monthlyData.loans?.find(l => l._id.month === m && l._id.year === y)?.total || 0;
             const collected = monthlyData.payments?.find(p => p._id.month === m && p._id.year === y)?.total || 0;
             months.push({ name, lent, collected });
         }
         return months;
     }, [monthlyData, period]);
-
-    const periodTotals = useMemo(() => {
-        const totalLentPeriod = chartData.reduce((s, c) => s + (c.lent || 0), 0);
-        const totalCollectedPeriod = chartData.reduce((s, c) => s + (c.collected || 0), 0);
-        return { totalLent: totalLentPeriod, totalCollected: totalCollectedPeriod };
-    }, [chartData]);
 
     if (loadingStats || loadingRecentLoans || loadingRecentPayments || loadingLender) {
         return <PageLoader />;
@@ -136,9 +150,9 @@ export const Dashboard = () => {
     const needsAttention = overdueLoans > 0 || todaysDueEMIs > 0;
 
     return (
-        <div className="space-y-6 pb-12">
+        <div className="space-y-5 pb-8">
             {/* ========================================================================= */}
-            {/* 1. WORKSPACE HEADER                                                       */}
+            {/* A. WORKSPACE HEADER (Spacious, greeting on left, fintech pill on right)    */}
             {/* ========================================================================= */}
             <motion.div
                 variants={fadeUp}
@@ -148,236 +162,174 @@ export const Dashboard = () => {
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1"
             >
                 <div>
-                    <div className="flex items-center gap-2">
-                        <span className="inline-block w-2 h-2 rounded-full bg-primary" />
-                        <p className="text-[11px] font-semibold text-primary dark:text-primary-bright uppercase tracking-wider">
-                            {businessName}
-                        </p>
-                    </div>
-                    <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight mt-1">
-                        {getGreeting()}, {ownerName}
+                    <h1 className="text-2xl sm:text-[28px] font-bold text-gray-950 dark:text-white tracking-tight">
+                        Hello, {ownerName}!
                     </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Here's an overview of your lending business performance.
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                        Here's an overview of your lending business.
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2 self-start sm:self-auto">
+                {/* Right Header Controls matching reference screenshot */}
+                <div className="flex items-center gap-3 self-start sm:self-auto">
+                    {/* Search Pill */}
+                    <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] text-xs text-gray-400 w-52 lg:w-60 shadow-2xs">
+                        <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <span className="truncate">Search customers, loans, payments...</span>
+                    </div>
+
+                    {/* Notification Bell */}
+                    <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] text-gray-600 dark:text-gray-300 shadow-2xs">
+                        <Bell className="w-3.5 h-3.5" />
+                        {totalUnread > 0 && (
+                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#141722]" />
+                        )}
+                    </div>
+
+                    {/* User Initials Avatar */}
+                    <div className="w-8 h-8 rounded-full bg-primary/20 text-primary dark:text-primary-bright font-bold text-xs flex items-center justify-center shadow-2xs">
+                        {getInitials(ownerName)}
+                    </div>
+
+                    {/* Refresh Button */}
                     <button
                         onClick={handleRefresh}
                         disabled={isRefreshing}
-                        className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-[#111215] border border-black/[0.08] dark:border-white/[0.08] rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all active:scale-[0.98] disabled:opacity-50 shadow-2xs cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-[#141722] border border-black/[0.08] dark:border-white/[0.08] rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all active:scale-[0.98] disabled:opacity-50 shadow-2xs cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
                         aria-label="Refresh dashboard data"
+                        title="Refresh live data"
                     >
                         <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        <span>Refresh</span>
+                        <span className="hidden sm:inline">Refresh</span>
                     </button>
                 </div>
             </motion.div>
 
             {/* ========================================================================= */}
-            {/* 2. FINANCIAL OVERVIEW (4 Hero Metric Cards)                                */}
+            {/* TWO-COLUMN MASTER GRID (8 cols Left / 4 cols Right on desktop)             */}
+            {/* Matches the reference screenshot's structural alignment perfectly!        */}
             {/* ========================================================================= */}
-            <motion.div
-                variants={fadeUp}
-                initial="hidden"
-                animate="visible"
-                custom={1}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-            >
-                {/* 2A: Outstanding Amount (Hero Metric) */}
-                <Link
-                    to="/loans"
-                    className="relative p-5 rounded-2xl bg-white dark:bg-[#111215] border border-black/[0.06] dark:border-white/[0.08] hover:border-primary/40 dark:hover:border-primary/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.02)] group flex flex-col justify-between"
-                >
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                            Outstanding Balance
-                        </span>
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary dark:text-primary-bright flex items-center justify-center">
-                            <HandCoins className="w-4 h-4" strokeWidth={2} />
-                        </div>
-                    </div>
-                    <div className="mt-4">
-                        <p className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight tabular-nums">
-                            {formatCurrency(totalRemaining)}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {activeLoans} active loan{activeLoans !== 1 ? 's' : ''}
-                            </span>
-                            <ArrowUpRight className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
-                        </div>
-                    </div>
-                </Link>
-
-                {/* 2B: Total Collected */}
-                <Link
-                    to="/payments"
-                    className="relative p-5 rounded-2xl bg-white dark:bg-[#111215] border border-black/[0.06] dark:border-white/[0.08] hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.02)] group flex flex-col justify-between"
-                >
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                            Total Collected
-                        </span>
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                            <CreditCard className="w-4 h-4" strokeWidth={2} />
-                        </div>
-                    </div>
-                    <div className="mt-4">
-                        <p className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight tabular-nums">
-                            {formatCurrency(totalReceived)}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                {collectionRate}%
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                                collection rate
-                            </span>
-                            <ArrowUpRight className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
-                        </div>
-                    </div>
-                </Link>
-
-                {/* 2C: Projected Interest */}
-                <div className="relative p-5 rounded-2xl bg-white dark:bg-[#111215] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                            Projected Interest
-                        </span>
-                        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                            <TrendingUp className="w-4 h-4" strokeWidth={2} />
-                        </div>
-                    </div>
-                    <div className="mt-4">
-                        <p className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight tabular-nums">
-                            {formatCurrency(projectedInterest)}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-                            Accruing across portfolio
-                        </p>
-                    </div>
-                </div>
-
-                {/* 2D: Borrowers / Customers */}
-                <Link
-                    to="/customers"
-                    className="relative p-5 rounded-2xl bg-white dark:bg-[#111215] border border-black/[0.06] dark:border-white/[0.08] hover:border-primary/40 dark:hover:border-primary/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.02)] group flex flex-col justify-between"
-                >
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                            Total Borrowers
-                        </span>
-                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                            <Users className="w-4 h-4" strokeWidth={2} />
-                        </div>
-                    </div>
-                    <div className="mt-4">
-                        <p className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight tabular-nums">
-                            {totalCustomers}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {activeLoans} currently active
-                            </span>
-                            <ArrowUpRight className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
-                        </div>
-                    </div>
-                </Link>
-            </motion.div>
-
-            {/* ========================================================================= */}
-            {/* 3. ATTENTION / HEALTH STATUS BANNER                                       */}
-            {/* ========================================================================= */}
-            <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}>
-                {needsAttention ? (
-                    <div className="rounded-2xl p-4 sm:p-5 bg-amber-500/[0.06] border border-amber-500/20 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-3.5">
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400">
-                                <AlertCircle className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                    Attention required
-                                </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                                    {overdueLoans > 0 && todaysDueEMIs > 0
-                                        ? `${overdueLoans} overdue loan${overdueLoans !== 1 ? 's' : ''} · ${todaysDueEMIs} EMI payment${todaysDueEMIs !== 1 ? 's' : ''} due today`
-                                        : overdueLoans > 0
-                                        ? `${overdueLoans} overdue loan${overdueLoans !== 1 ? 's' : ''} requiring borrower follow-up`
-                                        : `${todaysDueEMIs} EMI payment${todaysDueEMIs !== 1 ? 's' : ''} scheduled for today`}
-                                </p>
-                            </div>
-                        </div>
-                        <Link
-                            to={overdueLoans > 0 ? "/loans" : "/payments"}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-900 dark:text-amber-200 hover:text-amber-950 dark:hover:text-white shrink-0 self-start sm:self-auto px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/20 transition-all active:scale-[0.98]"
-                        >
-                            <span>Review collections</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
-                    </div>
-                ) : (
-                    <div className="rounded-2xl p-4 sm:p-5 bg-emerald-500/[0.05] border border-emerald-500/15 text-emerald-900 dark:text-emerald-200 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3.5">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0 text-emerald-600 dark:text-emerald-400">
-                                <CheckCircle2 className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                    Portfolio is healthy
-                                </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                                    All {activeLoans} active loans are on schedule. No overdue accounts detected.
-                                </p>
-                            </div>
-                        </div>
-                        <span className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                            <ShieldCheck className="w-4 h-4" />
-                            <span>100% On-time</span>
-                        </span>
-                    </div>
-                )}
-            </motion.div>
-
-            {/* ========================================================================= */}
-            {/* MAIN OPERATIONAL WORKSPACE (2 Columns: 1.55fr / 1fr)                      */}
-            {/* ========================================================================= */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-6 items-start">
-                {/* --------------------------------------------------------------------- */}
-                {/* LEFT COLUMN: Cash Flow Chart + Recent Activity Table                  */}
-                {/* --------------------------------------------------------------------- */}
-                <div className="space-y-6">
-                    {/* 4. CASH FLOW ANALYTICS SECTION */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                {/* ===================================================================== */}
+                {/* LEFT MASTER COLUMN (8 cols): Top 3 Metrics + Chart + Recent Activity   */}
+                {/* ===================================================================== */}
+                <div className="lg:col-span-8 space-y-5">
+                    {/* ROW 1: TOP 3 METRICS (Outstanding dominant + Collected + Interest) */}
                     <motion.div
                         variants={fadeUp}
                         initial="hidden"
                         animate="visible"
-                        custom={3}
-                        className="bg-white dark:bg-[#111215] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-5 sm:p-6"
+                        custom={1}
+                        className="grid grid-cols-1 sm:grid-cols-12 gap-4"
                     >
-                        {/* Header & Controls */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                            <div>
-                                <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                                    Cash Flow Performance
-                                </h2>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    Lent principal vs collected repayments over time
+                        {/* 1: Outstanding Amount (Dominant Card: 6 cols in sm, soft violet surface) */}
+                        <div className="sm:col-span-6 relative p-5 rounded-2xl bg-[#edf0fe] dark:bg-[#15172b] border border-[#d6dbfa] dark:border-primary/30 shadow-[0_2px_8px_rgba(73,79,223,0.04)] flex flex-col justify-between min-h-[148px] group">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                    <Clock className="w-3.5 h-3.5 text-primary" strokeWidth={2.2} />
+                                    <span>Outstanding Amount</span>
+                                    <Info className="w-3.5 h-3.5 text-gray-400 ml-0.5" />
+                                </div>
+                                <Link
+                                    to="/loans"
+                                    aria-label="View all loans"
+                                    className="w-7 h-7 rounded-full bg-white dark:bg-white/10 shadow-2xs flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all"
+                                >
+                                    <ArrowUpRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </div>
+
+                            <div className="my-2">
+                                <p className="text-2xl sm:text-[28px] lg:text-3xl font-bold text-gray-950 dark:text-white tracking-tight tabular-nums">
+                                    {formatCurrency(totalRemaining)}
                                 </p>
                             </div>
 
-                            {/* Period selector */}
-                            <div className="inline-flex items-center p-1 rounded-xl bg-gray-100 dark:bg-black/50 border border-black/[0.04] dark:border-white/[0.06] self-start sm:self-auto">
+                            <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                                <HandCoins className="w-3.5 h-3.5 text-primary shrink-0" />
+                                <span>Total outstanding across {activeLoans} active loans</span>
+                            </div>
+                        </div>
+
+                        {/* 2: Total Collected (3 cols in sm) */}
+                        <Link
+                            to="/payments"
+                            className="sm:col-span-3 relative p-5 rounded-2xl bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all flex flex-col justify-between min-h-[148px] group"
+                        >
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                    <ArrowDownLeft className="w-3.5 h-3.5" strokeWidth={2.2} />
+                                </div>
+                                <span className="truncate">Total Collected</span>
+                            </div>
+
+                            <div className="my-2">
+                                <p className="text-xl sm:text-2xl font-bold text-gray-950 dark:text-white tracking-tight tabular-nums">
+                                    {formatCurrency(totalReceived)}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                <CreditCard className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <span className="truncate">All time collections</span>
+                            </div>
+                        </Link>
+
+                        {/* 3: Projected Interest (3 cols in sm) */}
+                        <div className="sm:col-span-3 relative p-5 rounded-2xl bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[148px]">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-[11px]">
+                                    %
+                                </div>
+                                <span className="truncate">Projected Interest</span>
+                            </div>
+
+                            <div className="my-2">
+                                <p className="text-xl sm:text-2xl font-bold text-gray-950 dark:text-white tracking-tight tabular-nums">
+                                    {formatCurrency(projectedInterest)}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                <TrendingUp className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                                <span className="truncate">From active loans</span>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* ROW 2: LOAN VS COLLECTION CHART */}
+                    <motion.div
+                        variants={fadeUp}
+                        initial="hidden"
+                        animate="visible"
+                        custom={2}
+                        className="bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between gap-3 mb-4">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                    <Wallet className="w-4 h-4" strokeWidth={2} />
+                                </div>
+                                <div>
+                                    <h2 className="text-sm sm:text-base font-bold text-gray-950 dark:text-white leading-tight">
+                                        Loan vs Collection
+                                    </h2>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        Money lent vs money collected over time
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="inline-flex items-center p-0.5 rounded-lg bg-gray-100 dark:bg-black/40 border border-black/[0.04] dark:border-white/[0.06]">
                                 {['6M', '12M', 'YTD'].map((p) => (
                                     <button
                                         key={p}
                                         onClick={() => setPeriod(p)}
-                                        className={`px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer ${
+                                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                                             period === p
-                                                ? 'bg-white dark:bg-[#1c1d22] text-gray-900 dark:text-white shadow-2xs font-semibold'
-                                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                                ? 'bg-primary text-white shadow-xs'
+                                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white'
                                         }`}
                                     >
                                         {p}
@@ -386,70 +338,47 @@ export const Dashboard = () => {
                             </div>
                         </div>
 
-                        {/* Summary totals for selected period */}
-                        <div className="flex flex-wrap items-center gap-6 py-2.5 mb-5 border-y border-black/[0.04] dark:border-white/[0.06] text-xs">
-                            <div className="flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />
-                                <span className="text-gray-500 dark:text-gray-400">Total Lent:</span>
-                                <span className="font-semibold text-gray-900 dark:text-white tabular-nums">
-                                    {formatCurrency(periodTotals.totalLent)}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-                                <span className="text-gray-500 dark:text-gray-400">Total Collected:</span>
-                                <span className="font-semibold text-gray-900 dark:text-white tabular-nums">
-                                    {formatCurrency(periodTotals.totalCollected)}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Chart Area */}
-                        <div style={{ width: '100%', height: 280, minHeight: 280 }}>
+                        {/* Chart Canvas */}
+                        <div style={{ width: '100%', height: 200, minHeight: 200 }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={chartData} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="gLent" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stopColor="#494fdf" stopOpacity={0.20} />
-                                            <stop offset="100%" stopColor="#494fdf" stopOpacity={0} />
-                                        </linearGradient>
-                                        <linearGradient id="gCollected" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stopColor="#00a87e" stopOpacity={0.20} />
-                                            <stop offset="100%" stopColor="#00a87e" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
+                                <BarChart
+                                    data={chartData}
+                                    margin={{ top: 8, right: 8, left: -24, bottom: 0 }}
+                                    barGap={4}
+                                >
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(128,128,128,0.12)" />
                                     <XAxis
                                         dataKey="name"
-                                        tick={{ fontSize: 11, fill: '#8d969e' }}
+                                        tick={{ fontSize: 11, fill: '#8d96a0' }}
                                         axisLine={false}
                                         tickLine={false}
-                                        dy={8}
+                                        dy={4}
                                     />
                                     <YAxis
-                                        tick={{ fontSize: 11, fill: '#8d969e' }}
+                                        tick={{ fontSize: 11, fill: '#8d96a0' }}
                                         axisLine={false}
                                         tickLine={false}
-                                        tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                                        tickFormatter={formatYAxis}
                                     />
                                     <Tooltip
+                                        cursor={{ fill: 'rgba(73, 79, 223, 0.04)', radius: 4 }}
                                         content={({ active, payload, label }) => {
                                             if (!active || !payload?.length) return null;
                                             return (
-                                                <div className="bg-white/95 dark:bg-[#181a20]/95 backdrop-blur-md border border-black/[0.08] dark:border-white/[0.12] rounded-xl p-3 shadow-xl text-xs">
-                                                    <p className="font-semibold text-gray-900 dark:text-white mb-2">{label}</p>
-                                                    <div className="space-y-1.5">
+                                                <div className="bg-white dark:bg-[#181a20] border border-black/[0.08] dark:border-white/[0.12] rounded-xl p-2.5 shadow-xl text-xs">
+                                                    <p className="font-bold text-gray-950 dark:text-white mb-1.5">{label}</p>
+                                                    <div className="space-y-1">
                                                         <div className="flex items-center gap-2">
                                                             <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                                                             <span className="text-gray-500 dark:text-gray-400">Lent:</span>
-                                                            <span className="font-semibold text-gray-900 dark:text-white tabular-nums">
+                                                            <span className="font-bold text-gray-950 dark:text-white tabular-nums">
                                                                 {formatCurrency(payload[0]?.value || 0)}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                                            <span className="w-2 h-2 rounded-full bg-[#121318] dark:bg-gray-400 shrink-0" />
                                                             <span className="text-gray-500 dark:text-gray-400">Collected:</span>
-                                                            <span className="font-semibold text-gray-900 dark:text-white tabular-nums">
+                                                            <span className="font-bold text-gray-950 dark:text-white tabular-nums">
                                                                 {formatCurrency(payload[1]?.value || 0)}
                                                             </span>
                                                         </div>
@@ -458,70 +387,69 @@ export const Dashboard = () => {
                                             );
                                         }}
                                     />
-                                    <Area
-                                        type="monotone"
+                                    <Bar
                                         dataKey="lent"
                                         name="Lent"
-                                        stroke="#494fdf"
-                                        strokeWidth={2.2}
-                                        fillOpacity={1}
-                                        fill="url(#gLent)"
-                                        dot={false}
-                                        activeDot={{ r: 4, strokeWidth: 2, fill: '#fff', stroke: '#494fdf' }}
+                                        fill="#494fdf"
+                                        radius={[4, 4, 0, 0]}
+                                        maxBarSize={24}
                                     />
-                                    <Area
-                                        type="monotone"
+                                    <Bar
                                         dataKey="collected"
                                         name="Collected"
-                                        stroke="#00a87e"
-                                        strokeWidth={2.2}
-                                        fillOpacity={1}
-                                        fill="url(#gCollected)"
-                                        dot={false}
-                                        activeDot={{ r: 4, strokeWidth: 2, fill: '#fff', stroke: '#00a87e' }}
+                                        fill="#121318"
+                                        className="dark:fill-[#4b5563]"
+                                        radius={[4, 4, 0, 0]}
+                                        maxBarSize={24}
                                     />
-                                </AreaChart>
+                                </BarChart>
                             </ResponsiveContainer>
+                        </div>
+
+                        {/* Legend */}
+                        <div className="flex items-center justify-center gap-6 pt-3.5 border-t border-black/[0.04] dark:border-white/[0.06] mt-3.5 text-xs font-medium">
+                            <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+                                <span>Lent</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#121318] dark:bg-gray-400" />
+                                <span>Collected</span>
+                            </div>
                         </div>
                     </motion.div>
 
-                    {/* 6. RECENT ACTIVITY SECTION */}
+                    {/* ROW 3: RECENT ACTIVITY */}
                     <motion.div
                         variants={fadeUp}
                         initial="hidden"
                         animate="visible"
-                        custom={4}
-                        className="bg-white dark:bg-[#111215] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden"
+                        custom={3}
+                        className="bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
                     >
-                        {/* Header + Tabs */}
-                        <div className="px-5 py-4 flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.08]">
-                            <div>
-                                <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                                    Recent Activity
-                                </h2>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    Latest ledger movements & borrower events
-                                </p>
-                            </div>
+                        <div className="flex items-center justify-between pb-3.5 border-b border-black/[0.06] dark:border-white/[0.08]">
+                            <h2 className="text-base font-bold text-gray-950 dark:text-white">
+                                Recent Activity
+                            </h2>
 
-                            {/* Segmented Pill Control */}
-                            <div className="inline-flex items-center p-1 rounded-xl bg-gray-100 dark:bg-black/50 border border-black/[0.04] dark:border-white/[0.06]">
+                            {/* Segmented Pills for Loans & Collections */}
+                            <div className="inline-flex items-center p-0.5 rounded-lg bg-gray-100 dark:bg-black/40 border border-black/[0.04] dark:border-white/[0.06]">
                                 <button
                                     onClick={() => setActivityTab('loans')}
-                                    className={`px-3 py-1 text-xs rounded-lg transition-all cursor-pointer ${
+                                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                                         activityTab === 'loans'
-                                            ? 'bg-white dark:bg-[#1c1d22] text-gray-900 dark:text-white shadow-2xs font-semibold'
-                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium'
+                                            ? 'bg-primary text-white shadow-xs'
+                                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white'
                                     }`}
                                 >
                                     Loans
                                 </button>
                                 <button
                                     onClick={() => setActivityTab('collections')}
-                                    className={`px-3 py-1 text-xs rounded-lg transition-all cursor-pointer ${
+                                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                                         activityTab === 'collections'
-                                            ? 'bg-white dark:bg-[#1c1d22] text-gray-900 dark:text-white shadow-2xs font-semibold'
-                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium'
+                                            ? 'bg-primary text-white shadow-xs'
+                                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white'
                                     }`}
                                 >
                                     Collections
@@ -529,88 +457,102 @@ export const Dashboard = () => {
                             </div>
                         </div>
 
-                        {/* Tab Content */}
-                        <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
+                        <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04] mt-1">
                             {activityTab === 'loans' ? (
                                 <>
-                                    {recentLoansData?.loans?.slice(0, 5).map((loan) => {
+                                    {recentLoansData?.loans?.slice(0, 4).map((loan) => {
                                         const borrowerName = `${loan.customerId?.firstName || 'Unknown'} ${loan.customerId?.lastName || ''}`.trim();
-                                        const outstandingBal = loan.remainingBalance != null ? loan.remainingBalance : (loan.totalAmountPayable || loan.principal);
+                                        const initials = getInitials(borrowerName);
                                         return (
                                             <Link
                                                 key={loan._id}
                                                 to={`/loans/${loan._id}`}
-                                                className="px-5 py-3.5 flex items-center justify-between hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors group"
+                                                className="py-3 flex items-center justify-between hover:bg-gray-50/80 dark:hover:bg-white/[0.02] px-1 rounded-xl transition-colors group"
                                             >
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-primary dark:group-hover:text-primary-bright transition-colors">
-                                                        {borrowerName}
-                                                    </p>
-                                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                                                        {loan.loanNumber}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right ml-4 shrink-0">
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">
-                                                        {formatCurrency(loan.principal)}
-                                                    </p>
-                                                    <div className="flex items-center justify-end gap-2 mt-0.5">
-                                                        <span className="text-[11px] text-gray-500 dark:text-gray-400 tabular-nums">
-                                                            {formatCurrency(outstandingBal)} bal
-                                                        </span>
-                                                        <span
-                                                            className={`inline-block text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
-                                                                loan.status === 'active'
-                                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                                                    : loan.status === 'completed'
-                                                                    ? 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
-                                                                    : loan.status === 'defaulted'
-                                                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                                            }`}
-                                                        >
-                                                            {loan.status}
-                                                        </span>
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-9 h-9 rounded-full bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-bright flex items-center justify-center font-bold text-xs shrink-0">
+                                                        {initials}
                                                     </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-bold text-gray-950 dark:text-white truncate group-hover:text-primary transition-colors">
+                                                            {borrowerName}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                                            Loan created • {relativeDate(loan.createdAt || loan.startDate)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-3 shrink-0 ml-4">
+                                                    <span className="text-sm font-bold text-gray-950 dark:text-white tabular-nums">
+                                                        {formatCurrency(loan.principal)}
+                                                    </span>
+                                                    <span
+                                                        className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize ${
+                                                            loan.status === 'active'
+                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                                                : loan.status === 'completed'
+                                                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                                                : loan.status === 'defaulted'
+                                                                ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                                                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                                        }`}
+                                                    >
+                                                        {loan.status}
+                                                    </span>
+                                                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                                                 </div>
                                             </Link>
                                         );
                                     })}
                                     {(!recentLoansData?.loans || recentLoansData.loans.length === 0) && (
-                                        <div className="px-5 py-10 text-center">
-                                            <p className="text-sm text-gray-400 dark:text-gray-500">No loans recorded yet</p>
-                                            <Link to="/loans/new" className="text-xs text-primary dark:text-primary-bright font-semibold mt-1 inline-block hover:underline">
-                                                Issue your first loan →
+                                        <div className="py-8 text-center">
+                                            <p className="text-xs text-gray-400 dark:text-gray-500">No loans recorded yet</p>
+                                            <Link to="/loans/new" className="text-xs font-semibold text-primary mt-1 inline-block hover:underline">
+                                                Create your first loan →
                                             </Link>
                                         </div>
                                     )}
                                 </>
                             ) : (
                                 <>
-                                    {recentPaymentsData?.payments?.slice(0, 5).map((payment) => {
+                                    {recentPaymentsData?.payments?.slice(0, 4).map((payment) => {
                                         const borrowerName = `${payment.customerId?.firstName || 'Unknown'} ${payment.customerId?.lastName || ''}`.trim();
+                                        const initials = getInitials(borrowerName);
                                         return (
                                             <div
                                                 key={payment._id}
-                                                className="px-5 py-3.5 flex items-center justify-between hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-colors"
+                                                className="py-3 flex items-center justify-between hover:bg-gray-50/80 dark:hover:bg-white/[0.02] px-1 rounded-xl transition-colors"
                                             >
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                        {borrowerName}
-                                                    </p>
-                                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                                                        {relativeDate(payment.paymentDate)} · {payment.paymentMethod || 'Payment'}
-                                                    </p>
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                                        {initials}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-bold text-gray-950 dark:text-white truncate">
+                                                            {borrowerName}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                                            Payment received • {relativeDate(payment.paymentDate)}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 ml-4 shrink-0 tabular-nums">
-                                                    +{formatCurrency(payment.amountPaid)}
-                                                </p>
+
+                                                <div className="flex items-center gap-3 shrink-0 ml-4">
+                                                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                                        +{formatCurrency(payment.amountPaid)}
+                                                    </span>
+                                                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                                        Payment
+                                                    </span>
+                                                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                                                </div>
                                             </div>
                                         );
                                     })}
                                     {(!recentPaymentsData?.payments || recentPaymentsData.payments.length === 0) && (
-                                        <div className="px-5 py-10 text-center">
-                                            <p className="text-sm text-gray-400 dark:text-gray-500">No payments recorded yet</p>
+                                        <div className="py-8 text-center">
+                                            <p className="text-xs text-gray-400 dark:text-gray-500">No payments recorded yet</p>
                                         </div>
                                     )}
                                 </>
@@ -619,94 +561,205 @@ export const Dashboard = () => {
                     </motion.div>
                 </div>
 
-                {/* --------------------------------------------------------------------- */}
-                {/* RIGHT COLUMN: Quick Actions + Portfolio Health + Contextual Insight   */}
-                {/* --------------------------------------------------------------------- */}
-                <div className="space-y-6">
-                    {/* 7. QUICK ACTIONS SECTION */}
+                {/* ===================================================================== */}
+                {/* RIGHT MASTER COLUMN (4 cols): Total Customers + Actions + Alert + Health */}
+                {/* ===================================================================== */}
+                <div className="lg:col-span-4 space-y-5">
+                    {/* ROW 1: TOTAL CUSTOMERS (matches height of left 3 metric cards!) */}
                     <motion.div
                         variants={fadeUp}
                         initial="hidden"
                         animate="visible"
-                        custom={5}
-                        className="bg-white dark:bg-[#111215] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-5"
+                        custom={1}
+                    >
+                        <Link
+                            to="/customers"
+                            className="relative p-5 rounded-2xl bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:border-primary/40 dark:hover:border-primary/40 transition-all flex flex-col justify-between min-h-[148px] group block"
+                        >
+                            <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                <div className="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                                    <Users className="w-3.5 h-3.5" strokeWidth={2} />
+                                </div>
+                                <span>Total Customers</span>
+                            </div>
+
+                            <div className="my-2">
+                                <p className="text-2xl sm:text-[28px] font-bold text-gray-950 dark:text-white tracking-tight tabular-nums">
+                                    {totalCustomers}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                <UserCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                                <span>{activeLoans} active borrowers</span>
+                            </div>
+                        </Link>
+                    </motion.div>
+
+                    {/* ROW 2: QUICK ACTIONS */}
+                    <motion.div
+                        variants={fadeUp}
+                        initial="hidden"
+                        animate="visible"
+                        custom={2}
+                        className="bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
                     >
                         <div className="flex items-center justify-between mb-3.5">
-                            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                            <h2 className="text-base font-bold text-gray-950 dark:text-white">
                                 Quick Actions
                             </h2>
-                            <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500">
-                                Operations
-                            </span>
+                            <span className="text-gray-400 text-xs font-semibold tracking-widest cursor-default">•••</span>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-2.5">
+                            {/* Action 1: New Customer */}
                             <Link
                                 to="/customers/new"
-                                className="flex items-center justify-between p-3 rounded-xl border border-black/[0.04] dark:border-white/[0.06] hover:border-black/[0.12] dark:hover:border-white/[0.15] hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-all group"
+                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:border-primary/40 dark:hover:border-primary/40 hover:-translate-y-0.5 transition-all text-center group"
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center text-gray-700 dark:text-gray-300 group-hover:text-primary dark:group-hover:text-primary-bright transition-colors">
-                                        <UserPlus className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white">New Customer</p>
-                                        <p className="text-xs text-gray-400 dark:text-gray-500">Add a borrower profile</p>
-                                    </div>
+                                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
+                                    <UserPlus className="w-4 h-4" strokeWidth={2} />
                                 </div>
-                                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary dark:group-hover:text-primary-bright group-hover:translate-x-0.5 transition-all" />
+                                <span className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary transition-colors leading-tight">
+                                    New<br />Customer
+                                </span>
                             </Link>
 
+                            {/* Action 2: Create Loan */}
                             <Link
                                 to="/loans/new"
-                                className="flex items-center justify-between p-3 rounded-xl border border-black/[0.04] dark:border-white/[0.06] hover:border-black/[0.12] dark:hover:border-white/[0.15] hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-all group"
+                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:border-primary/40 dark:hover:border-primary/40 hover:-translate-y-0.5 transition-all text-center group"
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center text-gray-700 dark:text-gray-300 group-hover:text-primary dark:group-hover:text-primary-bright transition-colors">
-                                        <FilePlus className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white">Create Loan</p>
-                                        <p className="text-xs text-gray-400 dark:text-gray-500">Issue a new loan agreement</p>
-                                    </div>
+                                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
+                                    <HandCoins className="w-4 h-4" strokeWidth={2} />
                                 </div>
-                                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary dark:group-hover:text-primary-bright group-hover:translate-x-0.5 transition-all" />
+                                <span className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary transition-colors leading-tight">
+                                    Create<br />Loan
+                                </span>
                             </Link>
 
+                            {/* Action 3: Record Payment */}
                             <Link
                                 to="/payments/new"
-                                className="flex items-center justify-between p-3 rounded-xl border border-black/[0.04] dark:border-white/[0.06] hover:border-black/[0.12] dark:hover:border-white/[0.15] hover:bg-black/[0.015] dark:hover:bg-white/[0.02] transition-all group"
+                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:border-primary/40 dark:hover:border-primary/40 hover:-translate-y-0.5 transition-all text-center group"
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center text-gray-700 dark:text-gray-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                                        <ArrowDownLeft className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white">Record Payment</p>
-                                        <p className="text-xs text-gray-400 dark:text-gray-500">Log a received repayment</p>
-                                    </div>
+                                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
+                                    <CreditCard className="w-4 h-4" strokeWidth={2} />
                                 </div>
-                                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+                                <span className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary transition-colors leading-tight">
+                                    Record<br />Payment
+                                </span>
                             </Link>
                         </div>
                     </motion.div>
 
-                    {/* 5. PORTFOLIO HEALTH SECTION */}
+                    {/* ROW 3: ATTENTION NEEDED */}
                     <motion.div
                         variants={fadeUp}
                         initial="hidden"
                         animate="visible"
-                        custom={6}
-                        className="bg-white dark:bg-[#111215] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-5"
+                        custom={3}
+                    >
+                        {needsAttention ? (
+                            <div className="rounded-2xl p-5 bg-[#fef2f2] dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                                <div className="flex items-center justify-between pb-3 border-b border-rose-200/60 dark:border-rose-900/40">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                                            <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2.2} />
+                                        </div>
+                                        <span className="text-sm font-bold text-gray-950 dark:text-white">
+                                            Attention Needed
+                                        </span>
+                                    </div>
+                                    <Link
+                                        to={overdueLoans > 0 ? "/loans" : "/payments"}
+                                        aria-label="Review collections"
+                                        className="w-6 h-6 rounded-full bg-white dark:bg-white/10 shadow-2xs flex items-center justify-center text-rose-600 hover:bg-rose-600 hover:text-white transition-colors"
+                                    >
+                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                    </Link>
+                                </div>
+
+                                <div className="space-y-2.5 pt-3 text-xs">
+                                    {overdueLoans > 0 && (
+                                        <div className="flex items-start gap-2.5">
+                                            <div className="w-5 h-5 rounded-md bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
+                                                <AlertCircle className="w-3 h-3" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900 dark:text-white">
+                                                    {overdueLoans} Overdue Loan{overdueLoans !== 1 ? 's' : ''}
+                                                </p>
+                                                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                    Accounts past EMI grace period requiring follow-up
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {todaysDueEMIs > 0 && (
+                                        <div className="flex items-start gap-2.5">
+                                            <div className="w-5 h-5 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                                                <Calendar className="w-3 h-3" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900 dark:text-white">
+                                                    {todaysDueEMIs} EMI{todaysDueEMIs !== 1 ? 's' : ''} Due Today
+                                                </p>
+                                                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                    Scheduled collections queue for today
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="rounded-2xl p-5 bg-[#f0fdf4] dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                                <div className="flex items-center justify-between pb-3 border-b border-emerald-200/60 dark:border-emerald-900/40">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                            <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.2} />
+                                        </div>
+                                        <span className="text-sm font-bold text-gray-950 dark:text-white">
+                                            Portfolio Healthy
+                                        </span>
+                                    </div>
+                                    <Link
+                                        to="/loans"
+                                        aria-label="View loans"
+                                        className="w-6 h-6 rounded-full bg-white dark:bg-white/10 shadow-2xs flex items-center justify-center text-emerald-600 hover:bg-emerald-600 hover:text-white transition-colors"
+                                    >
+                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                    </Link>
+                                </div>
+
+                                <div className="pt-3 text-xs flex items-center gap-2">
+                                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                                    <p className="text-[11px] text-gray-600 dark:text-gray-400">
+                                        All {activeLoans} active loans are on schedule. No overdue accounts.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </motion.div>
+
+                    {/* ROW 4: PORTFOLIO HEALTH */}
+                    <motion.div
+                        variants={fadeUp}
+                        initial="hidden"
+                        animate="visible"
+                        custom={4}
+                        className="bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
                     >
                         <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.08]">
-                            <div>
-                                <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                </div>
+                                <h2 className="text-base font-bold text-gray-950 dark:text-white">
                                     Portfolio Health
                                 </h2>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    Status breakdown & loan performance
-                                </p>
                             </div>
                             <Link
                                 to="/loans"
@@ -717,144 +770,107 @@ export const Dashboard = () => {
                         </div>
 
                         {/* Status Breakdown Rows */}
-                        <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04] text-sm mt-1">
-                            <Link
-                                to="/loans?status=active"
-                                className="py-2.5 flex items-center justify-between hover:bg-black/[0.015] dark:hover:bg-white/[0.02] px-1 rounded-lg transition-colors"
-                            >
-                                <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-xs font-medium">
-                                    <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                                    Active
-                                </span>
-                                <span className="font-semibold text-gray-900 dark:text-white tabular-nums text-xs">
+                        <div className="space-y-2.5 mt-3.5 text-xs">
+                            {/* Active Loans */}
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Active Loans</span>
+                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-primary rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, Math.max(8, (activeLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                    />
+                                </div>
+                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-6 text-right text-[11px]">
                                     {activeLoans}
                                 </span>
-                            </Link>
+                            </div>
 
-                            <Link
-                                to="/loans?status=completed"
-                                className="py-2.5 flex items-center justify-between hover:bg-black/[0.015] dark:hover:bg-white/[0.02] px-1 rounded-lg transition-colors"
-                            >
-                                <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-xs font-medium">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                                    Completed
-                                </span>
-                                <span className="font-semibold text-gray-900 dark:text-white tabular-nums text-xs">
+                            {/* Completed Loans */}
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Completed Loans</span>
+                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-indigo-200 dark:bg-indigo-900/60 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, Math.max(8, (completedLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                    />
+                                </div>
+                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-6 text-right text-[11px]">
                                     {completedLoans}
                                 </span>
-                            </Link>
+                            </div>
 
-                            <Link
-                                to="/loans?status=foreclosed"
-                                className="py-2.5 flex items-center justify-between hover:bg-black/[0.015] dark:hover:bg-white/[0.02] px-1 rounded-lg transition-colors"
-                            >
-                                <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-xs font-medium">
-                                    <span className="w-2 h-2 rounded-full bg-gray-400 shrink-0" />
-                                    Foreclosed
-                                </span>
-                                <span className="font-semibold text-gray-900 dark:text-white tabular-nums text-xs">
-                                    {foreclosedLoans}
-                                </span>
-                            </Link>
-
-                            <Link
-                                to="/loans"
-                                className="py-2.5 flex items-center justify-between hover:bg-black/[0.015] dark:hover:bg-white/[0.02] px-1 rounded-lg transition-colors"
-                            >
-                                <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-xs font-medium">
-                                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                                    Overdue
-                                </span>
-                                <span className={`font-semibold tabular-nums text-xs ${overdueLoans > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-white'}`}>
+                            {/* Overdue Loans */}
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Overdue Loans</span>
+                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, Math.max(6, (overdueLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                    />
+                                </div>
+                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-6 text-right text-[11px]">
                                     {overdueLoans}
                                 </span>
-                            </Link>
+                            </div>
 
+                            {/* Foreclosed Loans */}
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Foreclosed Loans</span>
+                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-gray-400 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, Math.max(6, (foreclosedLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                    />
+                                </div>
+                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-6 text-right text-[11px]">
+                                    {foreclosedLoans}
+                                </span>
+                            </div>
+
+                            {/* Defaulted Loans */}
                             {defaultedLoans > 0 && (
-                                <Link
-                                    to="/loans?status=defaulted"
-                                    className="py-2.5 flex items-center justify-between hover:bg-black/[0.015] dark:hover:bg-white/[0.02] px-1 rounded-lg transition-colors"
-                                >
-                                    <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-xs font-medium">
-                                        <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
-                                        Defaulted
-                                    </span>
-                                    <span className="font-semibold text-red-600 dark:text-red-400 tabular-nums text-xs">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Defaulted Loans</span>
+                                    <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-rose-500 rounded-full transition-all duration-500"
+                                            style={{ width: `${Math.min(100, Math.max(6, (defaultedLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                        />
+                                    </div>
+                                    <span className="font-bold text-rose-600 tabular-nums w-6 text-right text-[11px]">
                                         {defaultedLoans}
                                     </span>
-                                </Link>
+                                </div>
                             )}
                         </div>
 
-                        {/* Progress Meters */}
-                        <div className="pt-4 border-t border-black/[0.06] dark:border-white/[0.08] space-y-3.5 mt-3">
-                            <div>
-                                <div className="flex justify-between text-xs mb-1.5">
-                                    <span className="text-gray-500 dark:text-gray-400 font-medium">Collection rate</span>
-                                    <span className="font-semibold text-gray-900 dark:text-white tabular-nums">
-                                        {collectionRate}%
-                                    </span>
-                                </div>
-                                <div className="h-2 w-full bg-black/[0.05] dark:bg-white/[0.08] rounded-full overflow-hidden">
+                        {/* Rates Breakdown */}
+                        <div className="pt-3.5 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2.5 mt-3.5 text-xs">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Collection Rate</span>
+                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                                        className="h-full bg-primary rounded-full transition-all duration-500"
                                         style={{ width: `${Math.min(100, Math.max(0, collectionRate))}%` }}
                                     />
                                 </div>
+                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-8 text-right text-[11px]">
+                                    {collectionRate}%
+                                </span>
                             </div>
 
-                            <div>
-                                <div className="flex justify-between text-xs mb-1.5">
-                                    <span className="text-gray-500 dark:text-gray-400 font-medium">Recovery rate</span>
-                                    <span className="font-semibold text-gray-900 dark:text-white tabular-nums">
-                                        {recoveryRate}%
-                                    </span>
-                                </div>
-                                <div className="h-2 w-full bg-black/[0.05] dark:bg-white/[0.08] rounded-full overflow-hidden">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Recovery Rate</span>
+                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-primary rounded-full transition-all duration-500"
                                         style={{ width: `${Math.min(100, Math.max(0, recoveryRate))}%` }}
                                     />
                                 </div>
+                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-8 text-right text-[11px]">
+                                    {recoveryRate}%
+                                </span>
                             </div>
-                        </div>
-                    </motion.div>
-
-                    {/* 8. PORTFOLIO INSIGHT SECTION */}
-                    <motion.div
-                        variants={fadeUp}
-                        initial="hidden"
-                        animate="visible"
-                        custom={7}
-                        className="bg-white dark:bg-[#111215] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-5 flex flex-col justify-between"
-                    >
-                        <div>
-                            <span className="text-[11px] font-semibold text-primary dark:text-primary-bright uppercase tracking-wider">
-                                Portfolio Insight
-                            </span>
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mt-1">
-                                {overdueLoans > 0
-                                    ? "Attention required on overdue accounts"
-                                    : todaysDueEMIs > 0
-                                    ? "Scheduled collections for today"
-                                    : "Operations running smoothly"}
-                            </h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">
-                                {overdueLoans > 0
-                                    ? `${overdueLoans} borrower${overdueLoans !== 1 ? 's are' : ' is'} currently past their EMI grace period. Timely reminders typically recover 80%+ of early overdue balances.`
-                                    : todaysDueEMIs > 0
-                                    ? `${todaysDueEMIs} EMI payment${todaysDueEMIs !== 1 ? 's are' : ' is'} scheduled for collection today. Maintain high collection velocity by logging them promptly.`
-                                    : `Your portfolio collection rate stands at ${collectionRate}% with zero overdue loans. Keep up the consistent repayment discipline across all ${activeLoans} active accounts.`}
-                            </p>
-                        </div>
-                        <div className="pt-3 mt-3 border-t border-black/[0.06] dark:border-white/[0.08]">
-                            <Link
-                                to={overdueLoans > 0 ? "/loans" : todaysDueEMIs > 0 ? "/payments" : "/loans"}
-                                className="text-xs font-semibold text-primary dark:text-primary-bright hover:underline inline-flex items-center gap-1"
-                            >
-                                <span>{overdueLoans > 0 ? "Review overdue loans" : todaysDueEMIs > 0 ? "View today's queue" : "Explore loan portfolio"}</span>
-                                <ChevronRight className="w-3.5 h-3.5" />
-                            </Link>
                         </div>
                     </motion.div>
                 </div>
@@ -862,4 +878,5 @@ export const Dashboard = () => {
         </div>
     );
 };
+
 export default Dashboard;
