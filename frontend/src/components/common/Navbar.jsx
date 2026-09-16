@@ -72,29 +72,14 @@ const Navbar = () => {
                         <Link
                             to="/"
                             className="flex items-center gap-2.5 shrink-0 group focus:outline-none"
-                            aria-label="SLOBE Dashboard"
+                            aria-label="Dashboard"
                         >
                             <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-2xs">
                                 <Landmark className="w-4 h-4 text-white" strokeWidth={2.2} />
                             </div>
-                            <div className="flex flex-col min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-[13px] font-bold tracking-tight text-gray-900 dark:text-white leading-none">
-                                        SLOBE
-                                    </span>
-                                    <span className="hidden sm:inline-block text-[10px] font-mono font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide px-1 py-0.5 rounded bg-gray-100 dark:bg-white/[0.06] leading-none">
-                                        Lending
-                                    </span>
-                                </div>
-                                {businessName && (
-                                    <span
-                                        className="text-[11px] font-medium text-gray-500 dark:text-gray-400 truncate max-w-[120px] sm:max-w-[150px] md:max-w-[180px] leading-tight mt-0.5"
-                                        title={businessName}
-                                    >
-                                        {businessName}
-                                    </span>
-                                )}
-                            </div>
+                            <span className="text-[15px] font-semibold text-gray-900 dark:text-white tracking-tight">
+                                {businessName || 'Money Lender'}
+                            </span>
                         </Link>
 
                         {/* Desktop & Tablet Navigation */}
