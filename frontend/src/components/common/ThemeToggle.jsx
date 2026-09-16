@@ -3,8 +3,31 @@ import { motion } from 'framer-motion';
 import { Sun, Moon, Laptop } from 'lucide-react';
 import useTheme from '../../hooks/useTheme';
 
-export const ThemeToggle = ({ className = '' }) => {
+export const ThemeToggle = ({ className = '', compact = false }) => {
     const { theme, setTheme } = useTheme();
+
+    if (compact) {
+        const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
+        const CurrentIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Laptop;
+        const currentLabel = theme.charAt(0).toUpperCase() + theme.slice(1);
+        return (
+            <button
+                type="button"
+                onClick={() => setTheme(nextTheme)}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-primary focus:outline-none relative group ${className}`}
+                title={`Theme: ${currentLabel} (Click to switch)`}
+                aria-label={`Current theme: ${currentLabel}. Click to switch theme.`}
+            >
+                <CurrentIcon className="w-4 h-4" strokeWidth={1.8} />
+                <div
+                    role="tooltip"
+                    className="absolute left-full ml-3 px-2.5 py-1 bg-gray-900 dark:bg-gray-800 text-white text-[12px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 shadow-lg z-50"
+                >
+                    Theme: {currentLabel}
+                </div>
+            </button>
+        );
+    }
 
     const options = [
         { id: 'light', label: 'Light', icon: Sun },
