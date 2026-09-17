@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sun, Moon, Laptop } from 'lucide-react';
+import { Sun, Moon, Laptop, CircleHalf } from '@phosphor-icons/react';
 import useTheme from '../../hooks/useTheme';
 
 export const ThemeToggle = ({ className = '', compact = false, sidebar = false }) => {
@@ -8,21 +8,19 @@ export const ThemeToggle = ({ className = '', compact = false, sidebar = false }
 
     if (sidebar) {
         const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
-        const CurrentIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Laptop;
         const currentLabel = theme.charAt(0).toUpperCase() + theme.slice(1);
         return (
             <button
                 type="button"
                 onClick={() => setTheme(nextTheme)}
-                className={`w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors focus-visible:ring-2 focus-visible:ring-primary focus:outline-none cursor-pointer ${className}`}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#0c0d12] dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-primary focus:outline-none cursor-pointer ${className}`}
                 title={`Theme: ${currentLabel} (Click to switch)`}
                 aria-label={`Current theme: ${currentLabel}. Click to switch theme.`}
             >
                 <div className="flex items-center gap-3">
-                    <CurrentIcon className="w-4 h-4 text-gray-400" strokeWidth={1.8} />
+                    <CircleHalf size={18} weight="regular" className="text-[#0c0d12] dark:text-gray-300" />
                     <span>Theme</span>
                 </div>
-                <span className="text-[11px] font-semibold text-gray-400 capitalize">{currentLabel}</span>
             </button>
         );
     }
@@ -39,7 +37,7 @@ export const ThemeToggle = ({ className = '', compact = false, sidebar = false }
                 title={`Theme: ${currentLabel} (Click to switch)`}
                 aria-label={`Current theme: ${currentLabel}. Click to switch theme.`}
             >
-                <CurrentIcon className="w-4 h-4" strokeWidth={1.8} />
+                <CurrentIcon size={18} weight="regular" />
                 <div
                     role="tooltip"
                     className="absolute left-full ml-3 px-2.5 py-1 bg-gray-900 dark:bg-gray-800 text-white text-[12px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 shadow-lg z-50"
@@ -86,7 +84,7 @@ export const ThemeToggle = ({ className = '', compact = false, sidebar = false }
                             />
                         )}
                         <span className="relative z-10 flex items-center gap-1">
-                            <Icon className="w-3.5 h-3.5" />
+                            <Icon size={14} weight="regular" />
                             <span className="hidden sm:inline text-[11px]">{label}</span>
                         </span>
                     </button>

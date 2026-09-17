@@ -2,19 +2,20 @@ import React, { useState, useEffect, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Landmark,
-    LayoutDashboard,
+    Coins,
+    House,
     Users,
-    HandCoins,
     CreditCard,
     FileText,
+    Receipt,
     Calculator,
-    Settings,
-    LogOut,
-    Menu,
+    Gear,
+    SignOut,
+    List,
     X,
-    Inbox,
-} from 'lucide-react';
+    Bell,
+    Bank,
+} from '@phosphor-icons/react';
 import { useLender } from '../../hooks/useLender';
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
@@ -22,12 +23,12 @@ import NotificationBadge from '../notifications/NotificationBadge';
 import ThemeToggle from './ThemeToggle';
 
 const navLinks = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard, matchExact: true },
+    { to: '/', label: 'Dashboard', icon: House, matchExact: true },
     { to: '/customers', label: 'Customers', icon: Users },
-    { to: '/loans', label: 'Loans', icon: HandCoins },
+    { to: '/loans', label: 'Loans', icon: FileText },
     { to: '/payments', label: 'Payments', icon: CreditCard },
-    { to: '/invoices', label: 'Invoices', icon: FileText },
-    { to: '/loan-requests', label: 'Requests', icon: Inbox, badgeKey: 'requests' },
+    { to: '/invoices', label: 'Invoices', icon: Receipt },
+    { to: '/loan-requests', label: 'Loan Requests', icon: Bell, badgeKey: 'requests' },
     { to: '/calculator', label: 'Calculator', icon: Calculator, public: true },
 ];
 
@@ -76,44 +77,35 @@ const Navbar = () => {
     return (
         <>
             {/* ========================================================================= */}
-            {/* DESKTOP VERTICAL NAVIGATION RAIL (md and above)                            */}
-            {/* ========================================================================= */}
-            {/* DESKTOP WIDE LABELLED SIDEBAR (md and above, 240px)                       */}
+            {/* DESKTOP WIDE LABELLED SIDEBAR (md and above, 230px Floating Panel)        */}
+            {/* Pale Pastel Blue with 24px rounded corners matching reference screenshot  */}
             {/* ========================================================================= */}
             <aside
                 aria-label="Lending workspace navigation"
-                className="hidden md:flex fixed inset-y-0 left-0 w-[240px] z-40 bg-[#0c0d12] border-r border-white/[0.08] flex-col justify-between py-5 px-3 select-none transition-colors"
+                className="hidden md:flex fixed top-3 left-3 bottom-3 w-[230px] z-40 bg-[#d2e2fa] dark:bg-[#12151d] border border-[#bdd5f5] dark:border-white/[0.08] rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex-col justify-between py-5 px-3 select-none transition-colors"
             >
                 {/* Top Section: Business Brand Mark with Title */}
                 <div className="w-full">
                     <Link
                         to="/"
-                        className="flex items-center gap-3 px-2 py-1 mb-4 rounded-xl group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
+                        className="flex items-center gap-3 px-2 py-1 mb-5 rounded-2xl group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
                         aria-label={businessName ? `${businessName} Dashboard` : 'Money Lender Dashboard'}
                     >
-                        <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
-                            {lender?.companyStamp ? (
-                                <img
-                                    src={lender.companyStamp}
-                                    alt="Company Stamp"
-                                    className="w-full h-full object-cover rounded-2xl"
-                                />
-                            ) : (
-                                <Landmark className="w-5 h-5 text-white" strokeWidth={2.2} />
-                            )}
+                        <div className="w-10 h-10 rounded-2xl bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shrink-0 shadow-sm transition-colors">
+                            <Coins size={20} weight="regular" />
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-bold text-white tracking-tight leading-tight truncate">
+                            <span className="text-sm font-bold text-[#0c0d12] dark:text-white tracking-tight leading-tight truncate">
                                 Money
                             </span>
-                            <span className="text-sm font-bold text-white tracking-tight leading-tight truncate">
+                            <span className="text-sm font-bold text-[#0c0d12] dark:text-white tracking-tight leading-tight truncate">
                                 Lender
                             </span>
                         </div>
                     </Link>
 
                     {/* Navigation Links with Icons and Full Labels */}
-                    <nav className="flex flex-col gap-1 w-full" aria-label="Main menu">
+                    <nav className="flex flex-col gap-1.5 w-full" aria-label="Main menu">
                         {visibleLinks.map((link) => {
                             const Icon = link.icon;
                             const active = checkActive(link);
@@ -124,24 +116,25 @@ const Navbar = () => {
                                     key={link.to}
                                     to={link.to}
                                     aria-current={active ? 'page' : undefined}
-                                    className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
+                                    className={`relative flex items-center justify-between px-4 py-2.5 rounded-full text-sm font-medium transition-all group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
                                         active
-                                            ? 'bg-primary/25 text-white font-semibold shadow-xs'
-                                            : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                                            ? 'bg-[#0c0d12] text-white font-semibold shadow-sm'
+                                            : 'text-[#0c0d12] dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                                     }`}
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <Icon
-                                            className={`w-4 h-4 shrink-0 transition-colors ${
-                                                active ? 'text-primary-bright' : 'text-gray-400 group-hover:text-gray-200'
+                                            size={18}
+                                            weight="regular"
+                                            className={`shrink-0 transition-colors ${
+                                                active ? 'text-white' : 'text-[#0c0d12] dark:text-gray-300'
                                             }`}
-                                            strokeWidth={active ? 2.2 : 1.8}
                                         />
                                         <span className="truncate">{link.label}</span>
                                     </div>
 
                                     {badge > 0 && (
-                                        <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[10px] font-bold text-white bg-rose-500 rounded-full shadow-xs">
+                                        <span className="flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-bold text-white bg-[#ff4d4f] rounded-full shadow-xs">
                                             {badge > 99 ? '99+' : badge}
                                         </span>
                                     )}
@@ -152,17 +145,17 @@ const Navbar = () => {
                 </div>
 
                 {/* Bottom Section: Settings, Theme, User Profile & Logout */}
-                <div className="flex flex-col gap-1 w-full pt-4 border-t border-white/[0.08]">
+                <div className="flex flex-col gap-1 w-full pt-4 border-t border-[#c0d6f6] dark:border-white/[0.08]">
                     {user && (
                         <Link
                             to="/settings"
-                            className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm font-medium transition-all group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
+                            className={`flex items-center gap-3 px-4 py-2 rounded-full text-sm font-medium transition-all group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
                                 location.pathname.startsWith('/settings')
-                                    ? 'bg-primary/20 text-white font-semibold'
-                                    : 'text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                                    ? 'bg-white/80 dark:bg-white/10 text-[#0c0d12] dark:text-white font-semibold'
+                                    : 'text-[#0c0d12] dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                             }`}
                         >
-                            <Settings className="w-4 h-4 text-gray-400 group-hover:text-gray-200" strokeWidth={1.8} />
+                            <Gear size={18} weight="regular" className="text-[#0c0d12] dark:text-gray-300" />
                             <span>Settings</span>
                         </Link>
                     )}
@@ -175,10 +168,10 @@ const Navbar = () => {
                             {/* User Profile Card */}
                             <Link
                                 to="/settings"
-                                className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.06] transition-colors mt-1 group"
+                                className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/60 dark:hover:bg-white/[0.06] transition-colors mt-1 group"
                                 aria-label={`Workspace Profile: ${user.username}`}
                             >
-                                <div className="w-9 h-9 rounded-full overflow-hidden bg-primary text-white flex items-center justify-center font-bold text-xs shrink-0 border border-white/[0.12] shadow-2xs">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs transition-colors">
                                     {lender?.companyStamp ? (
                                         <img
                                             src={lender.companyStamp}
@@ -190,10 +183,10 @@ const Navbar = () => {
                                     )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-bold text-white truncate leading-tight">
+                                    <p className="text-xs font-bold text-[#0c0d12] dark:text-white truncate leading-tight">
                                         {displayName || user.username}
                                     </p>
-                                    <p className="text-[11px] text-gray-400 truncate leading-tight mt-0.5">
+                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate leading-tight mt-0.5">
                                         Lender
                                     </p>
                                 </div>
@@ -206,9 +199,9 @@ const Navbar = () => {
                                     window.location.href = '/signout';
                                 }}
                                 aria-label="Log out"
-                                className="flex items-center gap-3 w-full text-left px-3.5 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-rose-400 hover:bg-rose-950/20 transition-colors cursor-pointer"
+                                className="flex items-center gap-3 w-full text-left px-4 py-2 rounded-full text-sm font-medium text-[#0c0d12] dark:text-gray-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white/60 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
                             >
-                                <LogOut className="w-4 h-4" strokeWidth={1.8} />
+                                <SignOut size={18} weight="regular" />
                                 <span>Log Out</span>
                             </button>
                         </>
@@ -229,7 +222,7 @@ const Navbar = () => {
                     className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
                     aria-label="Dashboard"
                 >
-                    <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+                    <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shrink-0 shadow-2xs overflow-hidden transition-colors">
                         {lender?.companyStamp ? (
                             <img
                                 src={lender.companyStamp}
@@ -237,7 +230,7 @@ const Navbar = () => {
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <Landmark className="w-4 h-4 text-white" strokeWidth={2.2} />
+                            <Bank size={18} weight="regular" />
                         )}
                     </div>
                     <span className="text-[14px] font-semibold text-gray-900 dark:text-white tracking-tight truncate max-w-[180px]">
@@ -255,7 +248,7 @@ const Navbar = () => {
                         aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
                         aria-expanded={mobileOpen}
                     >
-                        {mobileOpen ? <X className="w-5 h-5" strokeWidth={2} /> : <Menu className="w-5 h-5" strokeWidth={2} />}
+                        {mobileOpen ? <X size={20} weight="regular" /> : <List size={20} weight="regular" />}
                     </button>
                 </div>
             </header>
@@ -291,7 +284,7 @@ const Navbar = () => {
                             {/* Drawer Header */}
                             <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.08]">
                                 <div className="flex items-center gap-2.5 min-w-0">
-                                    <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 overflow-hidden">
+                                    <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shrink-0 overflow-hidden transition-colors">
                                         {lender?.companyStamp ? (
                                             <img
                                                 src={lender.companyStamp}
@@ -299,7 +292,7 @@ const Navbar = () => {
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (
-                                            <Landmark className="w-4 h-4 text-white" strokeWidth={2.2} />
+                                            <Bank size={18} weight="regular" />
                                         )}
                                     </div>
                                     <div className="min-w-0">
@@ -317,7 +310,7 @@ const Navbar = () => {
                                     className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
                                     aria-label="Close navigation"
                                 >
-                                    <X className="w-4 h-4" strokeWidth={2} />
+                                    <X size={18} weight="regular" />
                                 </button>
                             </div>
 
@@ -340,12 +333,13 @@ const Navbar = () => {
                                             }`}
                                         >
                                             <Icon
-                                                className={`w-4 h-4 shrink-0 ${
+                                                size={18}
+                                                weight="regular"
+                                                className={`shrink-0 ${
                                                     active
                                                         ? 'text-primary dark:text-primary-bright'
                                                         : 'text-gray-400 dark:text-gray-500'
                                                 }`}
-                                                strokeWidth={1.8}
                                             />
                                             <span className="truncate">{link.label}</span>
                                             {badge > 0 && (
@@ -363,7 +357,7 @@ const Navbar = () => {
                                         to="/settings"
                                         className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
                                     >
-                                        <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center overflow-hidden shrink-0">
+                                        <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center overflow-hidden shrink-0 transition-colors">
                                             {lender?.companyStamp ? (
                                                 <img
                                                     src={lender.companyStamp}
@@ -371,7 +365,7 @@ const Navbar = () => {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <span className="text-[12px] font-bold text-white leading-none">
+                                                <span className="text-[12px] font-bold leading-none">
                                                     {user.username?.charAt(0).toUpperCase() || 'U'}
                                                 </span>
                                             )}
@@ -384,7 +378,7 @@ const Navbar = () => {
                                                 Workspace Settings
                                             </p>
                                         </div>
-                                        <Settings className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                                        <Gear size={18} weight="regular" className="text-gray-400 dark:text-gray-500 shrink-0" />
                                     </Link>
 
                                     <button
@@ -395,7 +389,7 @@ const Navbar = () => {
                                         }}
                                         className="flex items-center gap-2.5 w-full text-left px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-red-600 dark:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/20 transition-colors"
                                     >
-                                        <LogOut className="w-4 h-4" strokeWidth={1.8} />
+                                        <SignOut size={18} weight="regular" />
                                         <span>Log out</span>
                                     </button>
                                 </div>
