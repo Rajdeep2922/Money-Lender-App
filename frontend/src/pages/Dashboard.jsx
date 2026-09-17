@@ -11,28 +11,36 @@ import {
     ResponsiveContainer
 } from 'recharts';
 import {
-    RefreshCw,
+    ArrowClockwise,
     Clock,
     Info,
     ArrowUpRight,
-    HandCoins,
-    ArrowDownLeft,
+    ArrowDown,
+    Plus,
+    FileText,
+    FilePlus,
     CreditCard,
-    TrendingUp,
+    TrendUp,
     Users,
-    UserCheck,
-    Wallet,
+    User,
     UserPlus,
-    AlertTriangle,
-    CheckCircle2,
+    Warning,
+    CheckCircle,
     ShieldCheck,
-    ChevronRight,
-    Sparkles,
-    Calendar,
-    AlertCircle,
-    Search,
-    Bell
-} from 'lucide-react';
+    CaretRight,
+    CalendarBlank,
+    MagnifyingGlass,
+    Bell,
+    ChartBar,
+    ArrowRight,
+    Wallet,
+    Coins,
+    Lightning,
+    DotsThree,
+    ChartPie,
+    Prohibit,
+    XCircle,
+} from '@phosphor-icons/react';
 import { useLoans } from '../hooks/useLoans';
 import { usePayments } from '../hooks/usePayments';
 import { useStats } from '../hooks/useStats';
@@ -50,16 +58,11 @@ const fadeUp = {
     }),
 };
 
-function relativeDate(dateStr) {
+function formatDisplayDate(dateStr) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now - d;
-    const diffDays = Math.floor(diffMs / 86400000);
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function getInitials(name) {
@@ -99,7 +102,7 @@ export const Dashboard = () => {
         setTimeout(() => setIsRefreshing(false), 400);
     };
 
-    const ownerName = lender?.ownerName || 'Rajdeep';
+    const ownerName = lender?.ownerName || 'Animo';
 
     const {
         totalCustomers = 0,
@@ -152,20 +155,20 @@ export const Dashboard = () => {
     return (
         <div className="space-y-5 pb-8">
             {/* ========================================================================= */}
-            {/* A. WORKSPACE HEADER (Spacious, greeting on left, fintech pill on right)    */}
+            {/* A. WORKSPACE HEADER                                                       */}
             {/* ========================================================================= */}
             <motion.div
                 variants={fadeUp}
                 initial="hidden"
                 animate="visible"
                 custom={0}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 mb-2"
             >
                 <div>
-                    <h1 className="text-2xl sm:text-[28px] font-bold text-gray-950 dark:text-white tracking-tight">
+                    <h1 className="text-2xl sm:text-[28px] font-bold text-[#0c0d12] dark:text-white tracking-tight">
                         Hello, {ownerName}!
                     </h1>
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    <p className="text-xs sm:text-sm text-[#717e95] dark:text-gray-400 mt-0.5">
                         Here's an overview of your lending business.
                     </p>
                 </div>
@@ -173,41 +176,43 @@ export const Dashboard = () => {
                 {/* Right Header Controls matching reference screenshot */}
                 <div className="flex items-center gap-3 self-start sm:self-auto">
                     {/* Search Pill */}
-                    <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] text-xs text-gray-400 w-52 lg:w-60 shadow-2xs">
-                        <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    <div className="hidden md:flex items-center gap-2.5 px-4 py-2 rounded-full bg-white dark:bg-[#141722] border border-black/[0.05] dark:border-white/[0.08] text-xs text-[#94a3b8] w-64 lg:w-72 shadow-2xs">
+                        <MagnifyingGlass size={16} weight="regular" className="text-[#94a3b8] shrink-0" />
                         <span className="truncate">Search customers, loans, payments...</span>
                     </div>
 
                     {/* Notification Bell */}
-                    <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] text-gray-600 dark:text-gray-300 shadow-2xs">
-                        <Bell className="w-3.5 h-3.5" />
+                    <Link
+                        to="/loan-requests"
+                        aria-label="Notifications"
+                        className="relative flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-[#141722] border border-black/[0.05] dark:border-white/[0.08] text-[#0c0d12] dark:text-gray-300 shadow-2xs hover:bg-gray-50 transition-colors"
+                    >
+                        <Bell size={18} weight="regular" />
                         {totalUnread > 0 && (
-                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-[#141722]" />
+                            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ff4d4f] ring-2 ring-white dark:ring-[#141722]" />
                         )}
-                    </div>
+                    </Link>
 
-                    {/* User Initials Avatar */}
-                    <div className="w-8 h-8 rounded-full bg-primary/20 text-primary dark:text-primary-bright font-bold text-xs flex items-center justify-center shadow-2xs">
+                    {/* User Initials Badge */}
+                    <div className="w-9 h-9 rounded-full bg-[#dbeafe] dark:bg-blue-950/50 text-[#2563eb] dark:text-blue-400 font-bold text-xs flex items-center justify-center shadow-2xs">
                         {getInitials(ownerName)}
                     </div>
 
-                    {/* Refresh Button */}
+                    {/* Refresh Live Data Button */}
                     <button
                         onClick={handleRefresh}
                         disabled={isRefreshing}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-[#141722] border border-black/[0.08] dark:border-white/[0.08] rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all active:scale-[0.98] disabled:opacity-50 shadow-2xs cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
+                        className="flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-[#141722] border border-black/[0.05] dark:border-white/[0.08] text-[#0c0d12] dark:text-gray-300 shadow-2xs hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                         aria-label="Refresh dashboard data"
                         title="Refresh live data"
                     >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        <span className="hidden sm:inline">Refresh</span>
+                        <ArrowClockwise size={16} weight="regular" className={`text-gray-600 dark:text-gray-300 ${isRefreshing ? 'animate-spin' : ''}`} />
                     </button>
                 </div>
             </motion.div>
 
             {/* ========================================================================= */}
             {/* TWO-COLUMN MASTER GRID (8 cols Left / 4 cols Right on desktop)             */}
-            {/* Matches the reference screenshot's structural alignment perfectly!        */}
             {/* ========================================================================= */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                 {/* ===================================================================== */}
@@ -220,78 +225,140 @@ export const Dashboard = () => {
                         initial="hidden"
                         animate="visible"
                         custom={1}
-                        className="grid grid-cols-1 sm:grid-cols-12 gap-4"
+                        className="grid grid-cols-1 sm:grid-cols-12 gap-4.5"
                     >
-                        {/* 1: Outstanding Amount (Dominant Card: 6 cols in sm, soft violet surface) */}
-                        <div className="sm:col-span-6 relative p-5 rounded-2xl bg-[#edf0fe] dark:bg-[#15172b] border border-[#d6dbfa] dark:border-primary/30 shadow-[0_2px_8px_rgba(73,79,223,0.04)] flex flex-col justify-between min-h-[148px] group">
+                        {/* 1: Outstanding Amount (Dominant Card: 6 cols in sm, soft pastel blue surface) */}
+                        <div className="sm:col-span-6 relative p-5 rounded-[24px] bg-[#dce9fa] dark:bg-[#141926] border border-[#c8ddfa] dark:border-blue-900/30 shadow-[0_2px_8px_rgba(37,99,235,0.04)] flex flex-col justify-between min-h-[190px]">
+                            {/* Card Top Row */}
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                    <Clock className="w-3.5 h-3.5 text-primary" strokeWidth={2.2} />
+                                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0c0d12] dark:text-white">
+                                    <Wallet size={18} weight="regular" className="text-[#0c0d12] dark:text-white" />
                                     <span>Outstanding Amount</span>
-                                    <Info className="w-3.5 h-3.5 text-gray-400 ml-0.5" />
+                                    <Info size={14} weight="regular" className="text-gray-400 ml-0.5" />
                                 </div>
                                 <Link
                                     to="/loans"
                                     aria-label="View all loans"
-                                    className="w-7 h-7 rounded-full bg-white dark:bg-white/10 shadow-2xs flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all"
+                                    className="w-7 h-7 rounded-full bg-white dark:bg-white/10 shadow-xs flex items-center justify-center text-[#0c0d12] dark:text-white hover:bg-white/80 transition-all"
                                 >
-                                    <ArrowUpRight className="w-3.5 h-3.5" />
+                                    <ArrowRight size={15} weight="regular" />
                                 </Link>
                             </div>
 
-                            <div className="my-2">
-                                <p className="text-2xl sm:text-[28px] lg:text-3xl font-bold text-gray-950 dark:text-white tracking-tight tabular-nums">
+                            {/* Currency Amount */}
+                            <div className="my-1.5">
+                                <p className="text-3xl lg:text-[32px] font-extrabold text-[#0c0d12] dark:text-white tracking-tight tabular-nums">
                                     {formatCurrency(totalRemaining)}
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
-                                <HandCoins className="w-3.5 h-3.5 text-primary shrink-0" />
+                            {/* Subtitle indicator matching reference */}
+                            <div className="flex items-center gap-1.5 text-xs text-[#526077] dark:text-gray-400 mb-2">
+                                <TrendUp size={15} weight="regular" className="text-[#0c0d12]/70 dark:text-gray-300 shrink-0" />
                                 <span>Total outstanding across {activeLoans} active loans</span>
+                            </div>
+
+                            {/* 4 Compact Circular Action Buttons */}
+                            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.06]">
+                                {/* View Loans */}
+                                <Link
+                                    to="/loans"
+                                    className="flex flex-col items-center group cursor-pointer"
+                                    title="View Loans"
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] text-white flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+                                        <ArrowUpRight size={18} weight="regular" />
+                                    </div>
+                                    <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
+                                        View Loans
+                                    </span>
+                                </Link>
+
+                                {/* Record Payment */}
+                                <Link
+                                    to="/payments/new"
+                                    className="flex flex-col items-center group cursor-pointer"
+                                    title="Record Payment"
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] text-white flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+                                        <ArrowDown size={18} weight="regular" />
+                                    </div>
+                                    <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
+                                        Record Payment
+                                    </span>
+                                </Link>
+
+                                {/* Generate Report */}
+                                <Link
+                                    to="/invoices"
+                                    className="flex flex-col items-center group cursor-pointer"
+                                    title="Generate Report"
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] text-white flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+                                        <FileText size={18} weight="regular" />
+                                    </div>
+                                    <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
+                                        Generate Report
+                                    </span>
+                                </Link>
+
+                                {/* New Loan */}
+                                <Link
+                                    to="/loans/new"
+                                    className="flex flex-col items-center group cursor-pointer"
+                                    title="New Loan"
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] text-white flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+                                        <Plus size={18} weight="regular" />
+                                    </div>
+                                    <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
+                                        New Loan
+                                    </span>
+                                </Link>
                             </div>
                         </div>
 
                         {/* 2: Total Collected (3 cols in sm) */}
                         <Link
                             to="/payments"
-                            className="sm:col-span-3 relative p-5 rounded-2xl bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all flex flex-col justify-between min-h-[148px] group"
+                            className="sm:col-span-3 relative p-5 rounded-[24px] bg-white dark:bg-[#141722] border border-black/[0.04] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:border-black/10 transition-all flex flex-col justify-between min-h-[190px] group"
                         >
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                                    <ArrowDownLeft className="w-3.5 h-3.5" strokeWidth={2.2} />
-                                </div>
-                                <span className="truncate">Total Collected</span>
+                            <div className="flex items-center gap-2">
+                                <Coins size={20} weight="regular" className="text-[#0c0d12] dark:text-white shrink-0" />
+                                <span className="text-xs font-semibold text-[#0c0d12] dark:text-white truncate">
+                                    Total Collected
+                                </span>
                             </div>
 
                             <div className="my-2">
-                                <p className="text-xl sm:text-2xl font-bold text-gray-950 dark:text-white tracking-tight tabular-nums">
+                                <p className="text-2xl sm:text-[26px] font-bold text-[#0c0d12] dark:text-white tracking-tight tabular-nums">
                                     {formatCurrency(totalReceived)}
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                <CreditCard className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <div className="flex items-center gap-1.5 text-xs text-[#717e95] dark:text-gray-400">
+                                <CreditCard size={15} weight="regular" className="text-gray-600 dark:text-gray-400 shrink-0" />
                                 <span className="truncate">All time collections</span>
                             </div>
                         </Link>
 
                         {/* 3: Projected Interest (3 cols in sm) */}
-                        <div className="sm:col-span-3 relative p-5 rounded-2xl bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[148px]">
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-[11px]">
-                                    %
-                                </div>
-                                <span className="truncate">Projected Interest</span>
+                        <div className="sm:col-span-3 relative p-5 rounded-[24px] bg-white dark:bg-[#141722] border border-black/[0.04] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[190px]">
+                            <div className="flex items-center gap-2">
+                                <TrendUp size={20} weight="regular" className="text-[#0c0d12] dark:text-white shrink-0" />
+                                <span className="text-xs font-semibold text-[#0c0d12] dark:text-white truncate">
+                                    Projected Interest
+                                </span>
                             </div>
 
                             <div className="my-2">
-                                <p className="text-xl sm:text-2xl font-bold text-gray-950 dark:text-white tracking-tight tabular-nums">
+                                <p className="text-2xl sm:text-[26px] font-bold text-[#0c0d12] dark:text-white tracking-tight tabular-nums">
                                     {formatCurrency(projectedInterest)}
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                <TrendingUp className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                            <div className="flex items-center gap-1.5 text-xs text-[#717e95] dark:text-gray-400">
+                                <ChartBar size={15} weight="regular" className="text-gray-600 dark:text-gray-400 shrink-0" />
                                 <span className="truncate">From active loans</span>
                             </div>
                         </div>
@@ -303,34 +370,34 @@ export const Dashboard = () => {
                         initial="hidden"
                         animate="visible"
                         custom={2}
-                        className="bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between"
+                        className="bg-white dark:bg-[#141722] border border-black/[0.04] dark:border-white/[0.08] rounded-[24px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between gap-3 mb-4">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                                    <Wallet className="w-4 h-4" strokeWidth={2} />
+                                <div className="w-8 h-8 rounded-xl bg-[#f4f5f7] dark:bg-white/[0.06] text-[#0c0d12] dark:text-white flex items-center justify-center shrink-0">
+                                    <ChartBar size={18} weight="regular" />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm sm:text-base font-bold text-gray-950 dark:text-white leading-tight">
+                                    <h2 className="text-sm sm:text-base font-bold text-[#0c0d12] dark:text-white leading-tight">
                                         Loan vs Collection
                                     </h2>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    <p className="text-xs text-[#717e95] dark:text-gray-400 mt-0.5">
                                         Money lent vs money collected over time
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="inline-flex items-center p-0.5 rounded-lg bg-gray-100 dark:bg-black/40 border border-black/[0.04] dark:border-white/[0.06]">
+                            {/* Period Filter Capsule */}
+                            <div className="inline-flex items-center p-0.5 rounded-full bg-[#f1f5f9] dark:bg-black/40 border border-black/[0.04] dark:border-white/[0.06]">
                                 {['6M', '12M', 'YTD'].map((p) => (
                                     <button
                                         key={p}
                                         onClick={() => setPeriod(p)}
-                                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                                            period === p
-                                                ? 'bg-primary text-white shadow-xs'
-                                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white'
-                                        }`}
+                                        className={`px-3 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${period === p
+                                                ? 'bg-[#0c0d12] text-white shadow-xs'
+                                                : 'text-gray-600 dark:text-gray-400 hover:text-[#0c0d12] dark:hover:text-white'
+                                            }`}
                                     >
                                         {p}
                                     </button>
@@ -346,39 +413,39 @@ export const Dashboard = () => {
                                     margin={{ top: 8, right: 8, left: -24, bottom: 0 }}
                                     barGap={4}
                                 >
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(128,128,128,0.12)" />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                     <XAxis
                                         dataKey="name"
-                                        tick={{ fontSize: 11, fill: '#8d96a0' }}
+                                        tick={{ fontSize: 11, fill: '#94a3b8' }}
                                         axisLine={false}
                                         tickLine={false}
                                         dy={4}
                                     />
                                     <YAxis
-                                        tick={{ fontSize: 11, fill: '#8d96a0' }}
+                                        tick={{ fontSize: 11, fill: '#94a3b8' }}
                                         axisLine={false}
                                         tickLine={false}
                                         tickFormatter={formatYAxis}
                                     />
                                     <Tooltip
-                                        cursor={{ fill: 'rgba(73, 79, 223, 0.04)', radius: 4 }}
+                                        cursor={{ fill: 'rgba(59, 130, 246, 0.04)', radius: 4 }}
                                         content={({ active, payload, label }) => {
                                             if (!active || !payload?.length) return null;
                                             return (
-                                                <div className="bg-white dark:bg-[#181a20] border border-black/[0.08] dark:border-white/[0.12] rounded-xl p-2.5 shadow-xl text-xs">
-                                                    <p className="font-bold text-gray-950 dark:text-white mb-1.5">{label}</p>
+                                                <div className="bg-white dark:bg-[#181a20] border border-black/[0.06] dark:border-white/[0.12] rounded-xl p-2.5 shadow-lg text-xs">
+                                                    <p className="font-bold text-[#0c0d12] dark:text-white mb-1.5">{label}</p>
                                                     <div className="space-y-1">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                                                            <span className="w-2 h-2 rounded-full bg-[#3b82f6] shrink-0" />
                                                             <span className="text-gray-500 dark:text-gray-400">Lent:</span>
-                                                            <span className="font-bold text-gray-950 dark:text-white tabular-nums">
+                                                            <span className="font-bold text-[#0c0d12] dark:text-white tabular-nums">
                                                                 {formatCurrency(payload[0]?.value || 0)}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="w-2 h-2 rounded-full bg-[#121318] dark:bg-gray-400 shrink-0" />
+                                                            <span className="w-2 h-2 rounded-full bg-[#0c0d12] dark:bg-gray-300 shrink-0" />
                                                             <span className="text-gray-500 dark:text-gray-400">Collected:</span>
-                                                            <span className="font-bold text-gray-950 dark:text-white tabular-nums">
+                                                            <span className="font-bold text-[#0c0d12] dark:text-white tabular-nums">
                                                                 {formatCurrency(payload[1]?.value || 0)}
                                                             </span>
                                                         </div>
@@ -390,30 +457,30 @@ export const Dashboard = () => {
                                     <Bar
                                         dataKey="lent"
                                         name="Lent"
-                                        fill="#494fdf"
+                                        fill="#3b82f6"
                                         radius={[4, 4, 0, 0]}
-                                        maxBarSize={24}
+                                        maxBarSize={20}
                                     />
                                     <Bar
                                         dataKey="collected"
                                         name="Collected"
-                                        fill="#121318"
-                                        className="dark:fill-[#4b5563]"
+                                        fill="#0c0d12"
+                                        className="dark:fill-gray-300"
                                         radius={[4, 4, 0, 0]}
-                                        maxBarSize={24}
+                                        maxBarSize={20}
                                     />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
 
                         {/* Legend */}
-                        <div className="flex items-center justify-center gap-6 pt-3.5 border-t border-black/[0.04] dark:border-white/[0.06] mt-3.5 text-xs font-medium">
-                            <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                                <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+                        <div className="flex items-center justify-center gap-6 pt-3 mt-3 text-xs font-medium">
+                            <div className="flex items-center gap-2 text-[#0c0d12] dark:text-gray-300">
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
                                 <span>Lent</span>
                             </div>
-                            <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                                <span className="w-2.5 h-2.5 rounded-full bg-[#121318] dark:bg-gray-400" />
+                            <div className="flex items-center gap-2 text-[#0c0d12] dark:text-gray-300">
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#0c0d12] dark:bg-gray-300" />
                                 <span>Collected</span>
                             </div>
                         </div>
@@ -425,82 +492,86 @@ export const Dashboard = () => {
                         initial="hidden"
                         animate="visible"
                         custom={3}
-                        className="bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                        className="bg-white dark:bg-[#141722] border border-black/[0.04] dark:border-white/[0.08] rounded-[24px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
                     >
-                        <div className="flex items-center justify-between pb-3.5 border-b border-black/[0.06] dark:border-white/[0.08]">
-                            <h2 className="text-base font-bold text-gray-950 dark:text-white">
-                                Recent Activity
-                            </h2>
+                        <div className="flex items-center justify-between pb-3.5 border-b border-black/[0.04] dark:border-white/[0.08]">
+                            <div className="flex items-center gap-2">
+                                <Clock size={18} weight="regular" className="text-[#0c0d12] dark:text-white" />
+                                <h2 className="text-base font-bold text-[#0c0d12] dark:text-white">
+                                    Recent Activity
+                                </h2>
+                            </div>
 
-                            {/* Segmented Pills for Loans & Collections */}
-                            <div className="inline-flex items-center p-0.5 rounded-lg bg-gray-100 dark:bg-black/40 border border-black/[0.04] dark:border-white/[0.06]">
-                                <button
-                                    onClick={() => setActivityTab('loans')}
-                                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                                        activityTab === 'loans'
-                                            ? 'bg-primary text-white shadow-xs'
-                                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white'
-                                    }`}
-                                >
-                                    Loans
-                                </button>
-                                <button
-                                    onClick={() => setActivityTab('collections')}
-                                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                                        activityTab === 'collections'
-                                            ? 'bg-primary text-white shadow-xs'
-                                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white'
-                                    }`}
-                                >
-                                    Collections
-                                </button>
+                            {/* Segmented Pills for Loans & Collections + More button */}
+                            <div className="flex items-center gap-2">
+                                <div className="inline-flex items-center p-0.5 rounded-full bg-[#f1f5f9] dark:bg-black/40 border border-black/[0.04] dark:border-white/[0.06]">
+                                    <button
+                                        onClick={() => setActivityTab('loans')}
+                                        className={`px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${activityTab === 'loans'
+                                                ? 'bg-[#0c0d12] text-white shadow-xs'
+                                                : 'text-gray-600 dark:text-gray-400 hover:text-[#0c0d12] dark:hover:text-white'
+                                            }`}
+                                    >
+                                        Loans
+                                    </button>
+                                    <button
+                                        onClick={() => setActivityTab('collections')}
+                                        className={`px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${activityTab === 'collections'
+                                                ? 'bg-[#0c0d12] text-white shadow-xs'
+                                                : 'text-gray-600 dark:text-gray-400 hover:text-[#0c0d12] dark:hover:text-white'
+                                            }`}
+                                    >
+                                        Collections
+                                    </button>
+                                </div>
+                                <DotsThree size={20} weight="bold" className="text-gray-400 ml-0.5" />
                             </div>
                         </div>
 
-                        <div className="divide-y divide-black/[0.04] dark:divide-white/[0.04] mt-1">
+                        <div className="divide-y divide-black/[0.03] dark:divide-white/[0.04] mt-1">
                             {activityTab === 'loans' ? (
                                 <>
                                     {recentLoansData?.loans?.slice(0, 4).map((loan) => {
                                         const borrowerName = `${loan.customerId?.firstName || 'Unknown'} ${loan.customerId?.lastName || ''}`.trim();
                                         const initials = getInitials(borrowerName);
+                                        const formattedDate = formatDisplayDate(loan.createdAt || loan.startDate);
                                         return (
                                             <Link
                                                 key={loan._id}
                                                 to={`/loans/${loan._id}`}
-                                                className="py-3 flex items-center justify-between hover:bg-gray-50/80 dark:hover:bg-white/[0.02] px-1 rounded-xl transition-colors group"
+                                                className="py-3.5 flex items-center justify-between hover:bg-gray-50/80 dark:hover:bg-white/[0.02] px-1 rounded-xl transition-colors group"
                                             >
                                                 <div className="flex items-center gap-3 min-w-0">
-                                                    <div className="w-9 h-9 rounded-full bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-bright flex items-center justify-center font-bold text-xs shrink-0">
+                                                    <div className="w-9 h-9 rounded-full bg-[#dbe8fa] dark:bg-blue-950/40 text-[#1a56db] dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
                                                         {initials}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-bold text-gray-950 dark:text-white truncate group-hover:text-primary transition-colors">
+                                                        <p className="text-sm font-bold text-[#0c0d12] dark:text-white truncate group-hover:text-[#2563eb] transition-colors">
                                                             {borrowerName}
                                                         </p>
-                                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                                                            Loan created • {relativeDate(loan.createdAt || loan.startDate)}
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                            Loan created • {formattedDate}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-3 shrink-0 ml-4">
-                                                    <span className="text-sm font-bold text-gray-950 dark:text-white tabular-nums">
+                                                <div className="flex items-center gap-3.5 shrink-0 ml-4">
+                                                    <span className="text-sm font-bold text-[#0c0d12] dark:text-white tabular-nums">
                                                         {formatCurrency(loan.principal)}
                                                     </span>
                                                     <span
-                                                        className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize ${
-                                                            loan.status === 'active'
-                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                                        className={`text-[11px] font-semibold px-3 py-0.5 rounded-full capitalize ${loan.status === 'active'
+                                                                ? 'bg-[#e6f4ea] text-[#137333] dark:bg-emerald-950/40 dark:text-emerald-400'
                                                                 : loan.status === 'completed'
-                                                                ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                                                                : loan.status === 'defaulted'
-                                                                ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                                                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                                        }`}
+                                                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
+                                                                    : loan.status === 'defaulted'
+                                                                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                                                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                                                            }`}
                                                     >
                                                         {loan.status}
                                                     </span>
-                                                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                                                    <CaretRight size={16} weight="regular" className="text-gray-400 group-hover:text-[#0c0d12] dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
                                                 </div>
                                             </Link>
                                         );
@@ -508,7 +579,7 @@ export const Dashboard = () => {
                                     {(!recentLoansData?.loans || recentLoansData.loans.length === 0) && (
                                         <div className="py-8 text-center">
                                             <p className="text-xs text-gray-400 dark:text-gray-500">No loans recorded yet</p>
-                                            <Link to="/loans/new" className="text-xs font-semibold text-primary mt-1 inline-block hover:underline">
+                                            <Link to="/loans/new" className="text-xs font-semibold text-[#2563eb] mt-1 inline-block hover:underline">
                                                 Create your first loan →
                                             </Link>
                                         </div>
@@ -519,33 +590,34 @@ export const Dashboard = () => {
                                     {recentPaymentsData?.payments?.slice(0, 4).map((payment) => {
                                         const borrowerName = `${payment.customerId?.firstName || 'Unknown'} ${payment.customerId?.lastName || ''}`.trim();
                                         const initials = getInitials(borrowerName);
+                                        const formattedDate = formatDisplayDate(payment.paymentDate);
                                         return (
                                             <div
                                                 key={payment._id}
-                                                className="py-3 flex items-center justify-between hover:bg-gray-50/80 dark:hover:bg-white/[0.02] px-1 rounded-xl transition-colors"
+                                                className="py-3.5 flex items-center justify-between hover:bg-gray-50/80 dark:hover:bg-white/[0.02] px-1 rounded-xl transition-colors"
                                             >
                                                 <div className="flex items-center gap-3 min-w-0">
-                                                    <div className="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                                    <div className="w-9 h-9 rounded-full bg-[#dbe8fa] dark:bg-blue-950/40 text-[#1a56db] dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
                                                         {initials}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-bold text-gray-950 dark:text-white truncate">
+                                                        <p className="text-sm font-bold text-[#0c0d12] dark:text-white truncate">
                                                             {borrowerName}
                                                         </p>
-                                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                                                            Payment received • {relativeDate(payment.paymentDate)}
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                            Payment received • {formattedDate}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-3 shrink-0 ml-4">
-                                                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                                <div className="flex items-center gap-3.5 shrink-0 ml-4">
+                                                    <span className="text-sm font-bold text-[#0c0d12] dark:text-white tabular-nums">
                                                         +{formatCurrency(payment.amountPaid)}
                                                     </span>
-                                                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                                    <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-[#f1f5f9] text-[#475569] dark:bg-white/[0.06] dark:text-gray-300">
                                                         Payment
                                                     </span>
-                                                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                                                    <CaretRight size={16} weight="regular" className="text-gray-400" />
                                                 </div>
                                             </div>
                                         );
@@ -574,23 +646,21 @@ export const Dashboard = () => {
                     >
                         <Link
                             to="/customers"
-                            className="relative p-5 rounded-2xl bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:border-primary/40 dark:hover:border-primary/40 transition-all flex flex-col justify-between min-h-[148px] group block"
+                            className="relative p-5 rounded-[24px] bg-white dark:bg-[#141722] border border-black/[0.04] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:border-black/10 transition-all flex flex-col justify-between min-h-[190px] group block"
                         >
-                            <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                <div className="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                                    <Users className="w-3.5 h-3.5" strokeWidth={2} />
-                                </div>
+                            <div className="flex items-center gap-2 text-xs font-semibold text-[#0c0d12] dark:text-white">
+                                <Users size={20} weight="regular" className="text-[#0c0d12] dark:text-white shrink-0" />
                                 <span>Total Customers</span>
                             </div>
 
                             <div className="my-2">
-                                <p className="text-2xl sm:text-[28px] font-bold text-gray-950 dark:text-white tracking-tight tabular-nums">
+                                <p className="text-2xl sm:text-[28px] font-bold text-[#0c0d12] dark:text-white tracking-tight tabular-nums">
                                     {totalCustomers}
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                <UserCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                            <div className="flex items-center gap-1.5 text-xs text-[#526077] dark:text-gray-400">
+                                <User size={15} weight="regular" className="text-gray-600 dark:text-gray-400 shrink-0" />
                                 <span>{activeLoans} active borrowers</span>
                             </div>
                         </Link>
@@ -602,25 +672,26 @@ export const Dashboard = () => {
                         initial="hidden"
                         animate="visible"
                         custom={2}
-                        className="bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                        className="bg-white dark:bg-[#141722] border border-black/[0.04] dark:border-white/[0.08] rounded-[24px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
                     >
                         <div className="flex items-center justify-between mb-3.5">
-                            <h2 className="text-base font-bold text-gray-950 dark:text-white">
-                                Quick Actions
-                            </h2>
-                            <span className="text-gray-400 text-xs font-semibold tracking-widest cursor-default">•••</span>
+                            <div className="flex items-center gap-2">
+                                <Lightning size={18} weight="regular" className="text-[#0c0d12] dark:text-white" />
+                                <h2 className="text-base font-bold text-[#0c0d12] dark:text-white">
+                                    Quick Actions
+                                </h2>
+                            </div>
+                            <DotsThree size={20} weight="bold" className="text-gray-400" />
                         </div>
 
                         <div className="grid grid-cols-3 gap-2.5">
                             {/* Action 1: New Customer */}
                             <Link
                                 to="/customers/new"
-                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:border-primary/40 dark:hover:border-primary/40 hover:-translate-y-0.5 transition-all text-center group"
+                                className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-[#f4f6fa] dark:bg-white/[0.03] border border-transparent hover:border-black/[0.06] dark:hover:border-white/10 hover:bg-[#edf2f7] dark:hover:bg-white/[0.06] transition-all text-center group min-h-[96px]"
                             >
-                                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
-                                    <UserPlus className="w-4 h-4" strokeWidth={2} />
-                                </div>
-                                <span className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary transition-colors leading-tight">
+                                <UserPlus size={22} weight="regular" className="text-[#0c0d12] dark:text-white mb-2 group-hover:scale-105 transition-transform" />
+                                <span className="text-[11px] font-semibold text-[#0c0d12] dark:text-gray-200 leading-tight">
                                     New<br />Customer
                                 </span>
                             </Link>
@@ -628,12 +699,10 @@ export const Dashboard = () => {
                             {/* Action 2: Create Loan */}
                             <Link
                                 to="/loans/new"
-                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:border-primary/40 dark:hover:border-primary/40 hover:-translate-y-0.5 transition-all text-center group"
+                                className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-[#f4f6fa] dark:bg-white/[0.03] border border-transparent hover:border-black/[0.06] dark:hover:border-white/10 hover:bg-[#edf2f7] dark:hover:bg-white/[0.06] transition-all text-center group min-h-[96px]"
                             >
-                                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
-                                    <HandCoins className="w-4 h-4" strokeWidth={2} />
-                                </div>
-                                <span className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary transition-colors leading-tight">
+                                <FilePlus size={22} weight="regular" className="text-[#0c0d12] dark:text-white mb-2 group-hover:scale-105 transition-transform" />
+                                <span className="text-[11px] font-semibold text-[#0c0d12] dark:text-gray-200 leading-tight">
                                     Create<br />Loan
                                 </span>
                             </Link>
@@ -641,12 +710,10 @@ export const Dashboard = () => {
                             {/* Action 3: Record Payment */}
                             <Link
                                 to="/payments/new"
-                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] hover:border-primary/40 dark:hover:border-primary/40 hover:-translate-y-0.5 transition-all text-center group"
+                                className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-[#f4f6fa] dark:bg-white/[0.03] border border-transparent hover:border-black/[0.06] dark:hover:border-white/10 hover:bg-[#edf2f7] dark:hover:bg-white/[0.06] transition-all text-center group min-h-[96px]"
                             >
-                                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
-                                    <CreditCard className="w-4 h-4" strokeWidth={2} />
-                                </div>
-                                <span className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary transition-colors leading-tight">
+                                <CreditCard size={22} weight="regular" className="text-[#0c0d12] dark:text-white mb-2 group-hover:scale-105 transition-transform" />
+                                <span className="text-[11px] font-semibold text-[#0c0d12] dark:text-gray-200 leading-tight">
                                     Record<br />Payment
                                 </span>
                             </Link>
@@ -661,36 +728,34 @@ export const Dashboard = () => {
                         custom={3}
                     >
                         {needsAttention ? (
-                            <div className="rounded-2xl p-5 bg-[#fef2f2] dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/40 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-                                <div className="flex items-center justify-between pb-3 border-b border-rose-200/60 dark:border-rose-900/40">
+                            <div className="rounded-[24px] p-5 bg-[#fef2f2] dark:bg-rose-950/20 border border-[#fee4e2] dark:border-rose-900/30 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                                <div className="flex items-center justify-between pb-3 border-b border-rose-200/50 dark:border-rose-900/40">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-                                            <AlertTriangle className="w-3.5 h-3.5" strokeWidth={2.2} />
+                                        <div className="w-7 h-7 rounded-lg bg-[#fde8e8] dark:bg-rose-900/40 text-[#ef4444] flex items-center justify-center">
+                                            <Warning size={18} weight="regular" className="text-[#ef4444]" />
                                         </div>
-                                        <span className="text-sm font-bold text-gray-950 dark:text-white">
+                                        <span className="text-sm font-bold text-[#0c0d12] dark:text-white">
                                             Attention Needed
                                         </span>
                                     </div>
                                     <Link
                                         to={overdueLoans > 0 ? "/loans" : "/payments"}
-                                        aria-label="Review collections"
-                                        className="w-6 h-6 rounded-full bg-white dark:bg-white/10 shadow-2xs flex items-center justify-center text-rose-600 hover:bg-rose-600 hover:text-white transition-colors"
+                                        aria-label="Review overdue loans"
+                                        className="w-7 h-7 rounded-full bg-white dark:bg-white/10 shadow-xs flex items-center justify-center text-[#ef4444] hover:bg-[#ef4444] hover:text-white transition-colors"
                                     >
-                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                        <ArrowRight size={15} weight="regular" />
                                     </Link>
                                 </div>
 
                                 <div className="space-y-2.5 pt-3 text-xs">
                                     {overdueLoans > 0 && (
                                         <div className="flex items-start gap-2.5">
-                                            <div className="w-5 h-5 rounded-md bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
-                                                <AlertCircle className="w-3 h-3" />
-                                            </div>
+                                            <Clock size={16} weight="regular" className="text-[#ef4444] shrink-0 mt-0.5" />
                                             <div>
-                                                <p className="font-bold text-gray-900 dark:text-white">
+                                                <p className="font-bold text-[#0c0d12] dark:text-white">
                                                     {overdueLoans} Overdue Loan{overdueLoans !== 1 ? 's' : ''}
                                                 </p>
-                                                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                <p className="text-[11px] text-[#717e95] dark:text-gray-400 mt-0.5">
                                                     Accounts past EMI grace period requiring follow-up
                                                 </p>
                                             </div>
@@ -699,14 +764,12 @@ export const Dashboard = () => {
 
                                     {todaysDueEMIs > 0 && (
                                         <div className="flex items-start gap-2.5">
-                                            <div className="w-5 h-5 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
-                                                <Calendar className="w-3 h-3" />
-                                            </div>
+                                            <CalendarBlank size={16} weight="regular" className="text-amber-600 shrink-0 mt-0.5" />
                                             <div>
-                                                <p className="font-bold text-gray-900 dark:text-white">
+                                                <p className="font-bold text-[#0c0d12] dark:text-white">
                                                     {todaysDueEMIs} EMI{todaysDueEMIs !== 1 ? 's' : ''} Due Today
                                                 </p>
-                                                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                <p className="text-[11px] text-[#717e95] dark:text-gray-400 mt-0.5">
                                                     Scheduled collections queue for today
                                                 </p>
                                             </div>
@@ -715,27 +778,27 @@ export const Dashboard = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="rounded-2xl p-5 bg-[#f0fdf4] dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
-                                <div className="flex items-center justify-between pb-3 border-b border-emerald-200/60 dark:border-emerald-900/40">
+                            <div className="rounded-[24px] p-5 bg-[#f0fdf4] dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                                <div className="flex items-center justify-between pb-3 border-b border-emerald-200/50 dark:border-emerald-900/40">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                                            <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.2} />
+                                        <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                            <CheckCircle size={18} weight="regular" />
                                         </div>
-                                        <span className="text-sm font-bold text-gray-950 dark:text-white">
+                                        <span className="text-sm font-bold text-[#0c0d12] dark:text-white">
                                             Portfolio Healthy
                                         </span>
                                     </div>
                                     <Link
                                         to="/loans"
                                         aria-label="View loans"
-                                        className="w-6 h-6 rounded-full bg-white dark:bg-white/10 shadow-2xs flex items-center justify-center text-emerald-600 hover:bg-emerald-600 hover:text-white transition-colors"
+                                        className="w-7 h-7 rounded-full bg-white dark:bg-white/10 shadow-xs flex items-center justify-center text-emerald-600 hover:bg-emerald-600 hover:text-white transition-colors"
                                     >
-                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                        <ArrowRight size={15} weight="regular" />
                                     </Link>
                                 </div>
 
                                 <div className="pt-3 text-xs flex items-center gap-2">
-                                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                                    <ShieldCheck size={16} weight="regular" className="text-emerald-600 shrink-0" />
                                     <p className="text-[11px] text-gray-600 dark:text-gray-400">
                                         All {activeLoans} active loans are on schedule. No overdue accounts.
                                     </p>
@@ -750,20 +813,18 @@ export const Dashboard = () => {
                         initial="hidden"
                         animate="visible"
                         custom={4}
-                        className="bg-white dark:bg-[#141722] border border-black/[0.06] dark:border-white/[0.08] rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
+                        className="bg-white dark:bg-[#141722] border border-black/[0.04] dark:border-white/[0.08] rounded-[24px] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]"
                     >
-                        <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.08]">
+                        <div className="flex items-center justify-between pb-3 border-b border-black/[0.04] dark:border-white/[0.08]">
                             <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center">
-                                    <Sparkles className="w-3.5 h-3.5" />
-                                </div>
-                                <h2 className="text-base font-bold text-gray-950 dark:text-white">
+                                <ChartPie size={18} weight="regular" className="text-[#0c0d12] dark:text-white" />
+                                <h2 className="text-base font-bold text-[#0c0d12] dark:text-white">
                                     Portfolio Health
                                 </h2>
                             </div>
                             <Link
                                 to="/loans"
-                                className="text-xs font-semibold text-primary dark:text-primary-bright hover:underline"
+                                className="text-xs font-semibold text-[#2563eb] hover:underline"
                             >
                                 View all
                             </Link>
@@ -773,101 +834,114 @@ export const Dashboard = () => {
                         <div className="space-y-2.5 mt-3.5 text-xs">
                             {/* Active Loans */}
                             <div className="flex items-center justify-between gap-3">
-                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Active Loans</span>
-                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                <div className="flex items-center gap-2 w-32 shrink-0">
+                                    <FileText size={15} weight="regular" className="text-gray-600 dark:text-gray-400 shrink-0" />
+                                    <span className="text-gray-600 dark:text-gray-400 font-medium text-[11px] truncate">Active Loans</span>
+                                </div>
+                                <div className="flex-1 h-2 bg-[#f1f5f9] dark:bg-white/[0.06] rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-primary rounded-full transition-all duration-500"
-                                        style={{ width: `${Math.min(100, Math.max(8, (activeLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                        className="h-full bg-[#3b82f6] rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, Math.max(activeLoans > 0 ? 8 : 0, (activeLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
                                     />
                                 </div>
-                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-6 text-right text-[11px]">
+                                <span className="font-bold text-[#0c0d12] dark:text-white tabular-nums w-4 text-right text-[11px]">
                                     {activeLoans}
                                 </span>
                             </div>
 
                             {/* Completed Loans */}
                             <div className="flex items-center justify-between gap-3">
-                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Completed Loans</span>
-                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                <div className="flex items-center gap-2 w-32 shrink-0">
+                                    <CheckCircle size={15} weight="regular" className="text-gray-600 dark:text-gray-400 shrink-0" />
+                                    <span className="text-gray-600 dark:text-gray-400 font-medium text-[11px] truncate">Completed Loans</span>
+                                </div>
+                                <div className="flex-1 h-2 bg-[#f1f5f9] dark:bg-white/[0.06] rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-indigo-200 dark:bg-indigo-900/60 rounded-full transition-all duration-500"
-                                        style={{ width: `${Math.min(100, Math.max(8, (completedLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                        className="h-full bg-[#bfdbfe] dark:bg-blue-900/60 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, Math.max(completedLoans > 0 ? 8 : 0, (completedLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
                                     />
                                 </div>
-                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-6 text-right text-[11px]">
+                                <span className="font-bold text-[#0c0d12] dark:text-white tabular-nums w-4 text-right text-[11px]">
                                     {completedLoans}
                                 </span>
                             </div>
 
                             {/* Overdue Loans */}
                             <div className="flex items-center justify-between gap-3">
-                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Overdue Loans</span>
-                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                <div className="flex items-center gap-2 w-32 shrink-0">
+                                    <Clock size={15} weight="regular" className="text-gray-600 dark:text-gray-400 shrink-0" />
+                                    <span className="text-gray-600 dark:text-gray-400 font-medium text-[11px] truncate">Overdue Loans</span>
+                                </div>
+                                <div className="flex-1 h-2 bg-[#f1f5f9] dark:bg-white/[0.06] rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                                        style={{ width: `${Math.min(100, Math.max(6, (overdueLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                        className="h-full bg-[#f97316] rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, Math.max(overdueLoans > 0 ? 8 : 0, (overdueLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
                                     />
                                 </div>
-                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-6 text-right text-[11px]">
+                                <span className="font-bold text-[#0c0d12] dark:text-white tabular-nums w-4 text-right text-[11px]">
                                     {overdueLoans}
                                 </span>
                             </div>
 
                             {/* Foreclosed Loans */}
                             <div className="flex items-center justify-between gap-3">
-                                <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Foreclosed Loans</span>
-                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                <div className="flex items-center gap-2 w-32 shrink-0">
+                                    <Prohibit size={15} weight="regular" className="text-gray-600 dark:text-gray-400 shrink-0" />
+                                    <span className="text-gray-600 dark:text-gray-400 font-medium text-[11px] truncate">Foreclosed Loans</span>
+                                </div>
+                                <div className="flex-1 h-2 bg-[#f1f5f9] dark:bg-white/[0.06] rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-gray-400 rounded-full transition-all duration-500"
-                                        style={{ width: `${Math.min(100, Math.max(6, (foreclosedLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                        className="h-full bg-[#cbd5e1] dark:bg-gray-600 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, Math.max(foreclosedLoans > 0 ? 8 : 0, (foreclosedLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
                                     />
                                 </div>
-                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-6 text-right text-[11px]">
+                                <span className="font-bold text-[#0c0d12] dark:text-white tabular-nums w-4 text-right text-[11px]">
                                     {foreclosedLoans}
                                 </span>
                             </div>
 
                             {/* Defaulted Loans */}
-                            {defaultedLoans > 0 && (
-                                <div className="flex items-center justify-between gap-3">
-                                    <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Defaulted Loans</span>
-                                    <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-rose-500 rounded-full transition-all duration-500"
-                                            style={{ width: `${Math.min(100, Math.max(6, (defaultedLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
-                                        />
-                                    </div>
-                                    <span className="font-bold text-rose-600 tabular-nums w-6 text-right text-[11px]">
-                                        {defaultedLoans}
-                                    </span>
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 w-32 shrink-0">
+                                    <XCircle size={15} weight="regular" className="text-gray-600 dark:text-gray-400 shrink-0" />
+                                    <span className="text-gray-600 dark:text-gray-400 font-medium text-[11px] truncate">Defaulted Loans</span>
                                 </div>
-                            )}
+                                <div className="flex-1 h-2 bg-[#f1f5f9] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-[#cbd5e1] dark:bg-gray-600 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, Math.max(defaultedLoans > 0 ? 8 : 0, (defaultedLoans / Math.max(1, totalLoansCount)) * 100))}%` }}
+                                    />
+                                </div>
+                                <span className="font-bold text-[#0c0d12] dark:text-white tabular-nums w-4 text-right text-[11px]">
+                                    {defaultedLoans}
+                                </span>
+                            </div>
                         </div>
 
                         {/* Rates Breakdown */}
-                        <div className="pt-3.5 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2.5 mt-3.5 text-xs">
+                        <div className="pt-3.5 border-t border-black/[0.04] dark:border-white/[0.08] space-y-2.5 mt-3.5 text-xs">
                             <div className="flex items-center justify-between gap-3">
                                 <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Collection Rate</span>
-                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                <div className="flex-1 h-2.5 bg-[#f1f5f9] dark:bg-white/[0.06] rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-primary rounded-full transition-all duration-500"
+                                        className="h-full bg-[#2563eb] rounded-full transition-all duration-500"
                                         style={{ width: `${Math.min(100, Math.max(0, collectionRate))}%` }}
                                     />
                                 </div>
-                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-8 text-right text-[11px]">
+                                <span className="font-bold text-[#0c0d12] dark:text-white tabular-nums w-8 text-right text-[11px]">
                                     {collectionRate}%
                                 </span>
                             </div>
 
                             <div className="flex items-center justify-between gap-3">
                                 <span className="text-gray-600 dark:text-gray-400 w-28 font-medium text-[11px]">Recovery Rate</span>
-                                <div className="flex-1 h-2.5 bg-black/[0.04] dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                <div className="flex-1 h-2.5 bg-[#f1f5f9] dark:bg-white/[0.06] rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-primary rounded-full transition-all duration-500"
+                                        className="h-full bg-[#2563eb] rounded-full transition-all duration-500"
                                         style={{ width: `${Math.min(100, Math.max(0, recoveryRate))}%` }}
                                     />
                                 </div>
-                                <span className="font-bold text-gray-950 dark:text-white tabular-nums w-8 text-right text-[11px]">
+                                <span className="font-bold text-[#0c0d12] dark:text-white tabular-nums w-8 text-right text-[11px]">
                                     {recoveryRate}%
                                 </span>
                             </div>
