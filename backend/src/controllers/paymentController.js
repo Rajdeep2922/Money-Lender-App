@@ -164,7 +164,7 @@ exports.recordPayment = async (req, res, next) => {
             amountPaid,
             principalPortion,
             interestPortion,
-            paymentMethod,
+            paymentMethod: paymentMethod ? paymentMethod.toLowerCase() : 'bank_transfer',
             paymentDate: paymentDate || new Date(),
             referenceId,
             balanceAfterPayment: newRemainingBalance,

@@ -33,7 +33,17 @@ const paymentSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: Object.values(PAYMENT_METHODS),
+        set: (v) => (typeof v === 'string' ? v.toLowerCase() : v),
+        enum: [
+            ...Object.values(PAYMENT_METHODS),
+            'CASH',
+            'BANK_TRANSFER',
+            'UPI',
+            'CHEQUE',
+            'IMPS',
+            'NEFT',
+            'OTHER',
+        ],
         default: PAYMENT_METHODS.BANK_TRANSFER,
     },
     paymentDate: {

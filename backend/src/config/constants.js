@@ -70,13 +70,13 @@ module.exports = {
 
     // Payment methods
     PAYMENT_METHODS: {
-        CASH: 'CASH',
-        BANK_TRANSFER: 'BANK_TRANSFER',
-        UPI: 'UPI',
-        CHEQUE: 'CHEQUE',
-        IMPS: 'IMPS',
-        NEFT: 'NEFT',
-        OTHER: 'OTHER',
+        CASH: 'cash',
+        BANK_TRANSFER: 'bank_transfer',
+        UPI: 'upi',
+        CHEQUE: 'cheque',
+        IMPS: 'imps',
+        NEFT: 'neft',
+        OTHER: 'other',
     },
 
     // Invoice types

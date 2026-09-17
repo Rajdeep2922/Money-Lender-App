@@ -67,7 +67,24 @@ const loanSchema = Joi.object({
 const paymentSchema = Joi.object({
     loanId: Joi.string().required(),
     amountPaid: Joi.number().min(1).required(),
-    paymentMethod: Joi.string().valid('cash', 'bank_transfer', 'upi', 'cheque', 'other').default('bank_transfer'),
+    paymentMethod: Joi.string()
+        .valid(
+            'cash',
+            'bank_transfer',
+            'upi',
+            'cheque',
+            'imps',
+            'neft',
+            'other',
+            'CASH',
+            'BANK_TRANSFER',
+            'UPI',
+            'CHEQUE',
+            'IMPS',
+            'NEFT',
+            'OTHER'
+        )
+        .default('bank_transfer'),
     paymentDate: Joi.date().default(new Date()),
     referenceId: Joi.string().trim().allow(''),
     notes: Joi.string().trim().allow(''),
