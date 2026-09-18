@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, CheckCircle, Star, MapPin, Loader2, X } from 'lucide-react';
+import { InputClear } from '../../components/common/InputClear';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -118,11 +119,12 @@ const PublicLoanFlow = ({ onClose }) => {
                             <motion.div key="step0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="p-6 space-y-4">
                                 <p className="text-gray-400 text-sm">Select the lender you want to request a loan from.</p>
 
-                                {/* Search */}
-                                <input
-                                    type="text" value={search} onChange={e => setSearch(e.target.value)}
+                                {/* Search with Transitions.dev InputClear */}
+                                <InputClear
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
                                     placeholder="Search by name or city…"
-                                    className="w-full bg-black/40 border border-white/[0.1] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+                                    className="w-full bg-black/40 border border-white/[0.1] rounded-xl h-11 text-white text-sm shadow-xs"
                                 />
 
                                 {/* Lender list */}

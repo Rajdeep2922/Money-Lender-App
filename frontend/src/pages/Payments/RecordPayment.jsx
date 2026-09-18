@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useLoans } from '../../hooks/useLoans';
 import { useRecordPayment, useDownloadReceipt } from '../../hooks/usePayments';
 import { PageLoader } from '../../components/common/LoadingSpinner';
+import { InputClear } from '../../components/common/InputClear';
 import { formatCurrency } from '../../utils/formatters';
 
 export const RecordPayment = () => {
@@ -212,16 +213,12 @@ export const RecordPayment = () => {
                     {!selectedLoan ? (
                         <>
                             {/* Search filter inside loan selector */}
-                            <div className="relative">
-                                <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Filter by loan #, customer name, or phone..."
-                                    value={loanSearch}
-                                    onChange={(e) => setLoanSearch(e.target.value)}
-                                    className="input pl-10 rounded-xl h-10 text-xs border-hairline-light dark:border-hairline-dark bg-gray-50 dark:bg-surface-deep/50"
-                                />
-                            </div>
+                            <InputClear
+                                value={loanSearch}
+                                onChange={(e) => setLoanSearch(e.target.value)}
+                                placeholder="Filter by loan #, customer name, or phone..."
+                                className="w-full rounded-xl h-10 text-xs border border-hairline-light dark:border-hairline-dark bg-gray-50 dark:bg-surface-deep/50 shadow-2xs"
+                            />
 
                             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                                 {filteredLoans.map((loan) => (

@@ -7,6 +7,7 @@ import { useLoans, useUpdateLoanStatus, useDeleteLoan } from '../../hooks/useLoa
 import { useDebounce } from '../../hooks/useDebounce';
 import { TableSkeleton } from '../../components/common/Skeletons';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
+import { InputClear } from '../../components/common/InputClear';
 import { formatCurrency, formatDate, formatStatus, getStatusColor } from '../../utils/formatters';
 
 const containerVariants = {
@@ -125,14 +126,12 @@ export const LoanList = () => {
             {/* Filters: Search + Segmented Status Tabs */}
             <motion.div variants={itemVariants} className="space-y-3">
                 <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
-                        <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by loan #, customer name, or email..."
+                    <div className="flex-1">
+                        <InputClear
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="input pl-10 rounded-xl h-11 text-sm border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated"
+                            placeholder="Search by loan #, customer name, or email..."
+                            className="w-full rounded-xl h-11 text-sm border border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated shadow-2xs"
                         />
                     </div>
                 </div>

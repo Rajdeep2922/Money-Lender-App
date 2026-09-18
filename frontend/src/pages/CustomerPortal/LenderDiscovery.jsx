@@ -4,6 +4,7 @@ import { lenderDiscoveryAPI } from '../../services/api';
 import LenderCard from '../../components/lenders/LenderCard';
 import LoanRequestForm from './LoanRequestForm';
 import { useDebounce } from '../../hooks/useDebounce';
+import { InputClear } from '../../components/common/InputClear';
 import { FiSearch, FiAlertCircle } from 'react-icons/fi';
 
 /**
@@ -40,14 +41,12 @@ const LenderDiscovery = () => {
             </div>
 
             {/* Search */}
-            <div className="relative max-w-md">
-                <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-base" />
-                <input
-                    type="text"
+            <div className="max-w-md">
+                <InputClear
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by lender, owner, or city…"
-                    className="w-full bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary transition-colors shadow-xs"
+                    className="w-full rounded-xl h-11 text-sm border border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated shadow-xs"
                 />
             </div>
 
