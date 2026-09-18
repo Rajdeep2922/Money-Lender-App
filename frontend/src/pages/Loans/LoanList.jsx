@@ -131,7 +131,7 @@ export const LoanList = () => {
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
                             placeholder="Search by loan #, customer name, or email..."
-                            className="w-full rounded-xl h-11 text-sm border border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated shadow-2xs"
+                            className="w-full rounded-xl h-11 text-sm bg-white"
                         />
                     </div>
                 </div>
@@ -145,13 +145,23 @@ export const LoanList = () => {
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setStatus(tab.id)}
-                                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                                className={`relative px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                                     isActive
-                                        ? 'bg-primary text-white shadow-sm font-semibold'
+                                        ? 'text-white font-semibold'
                                         : 'bg-white dark:bg-surface-elevated text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-hairline-light dark:border-hairline-dark'
                                 }`}
                             >
-                                {tab.label}
+                                {isActive && (
+                                    <motion.span
+                                        layoutId="loanStatusTabPill"
+                                        className="absolute inset-0 rounded-full bg-primary shadow-xs z-0"
+                                        transition={{
+                                            duration: 0.25,
+                                            ease: [0.22, 1, 0.36, 1],
+                                        }}
+                                    />
+                                )}
+                                <span className="relative z-10">{tab.label}</span>
                             </button>
                         );
                     })}
@@ -166,11 +176,11 @@ export const LoanList = () => {
                             <th className="py-3.5 px-4 font-semibold">Loan #</th>
                             <th className="py-3.5 px-4 font-semibold">Customer</th>
                             <th className="py-3.5 px-4 font-semibold text-right">Principal</th>
-                            <th className="py-3.5 px-4 font-semibold text-right">EMI</th>
-                            <th className="py-3.5 px-4 font-semibold text-center">Rate</th>
-                            <th className="py-3.5 px-4 font-semibold text-right">Balance</th>
+                            <th className="py-3.5 px-4 font-semibold text-right">Monthly EMI</th>
+                            <th className="py-3.5 px-4 font-semibold text-center">Interest</th>
+                            <th className="py-3.5 px-4 font-semibold text-right">Remaining</th>
                             <th className="py-3.5 px-4 font-semibold text-center">Status</th>
-                            <th className="py-3.5 px-4 font-semibold text-right">Action</th>
+                            <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-hairline-light dark:divide-hairline-dark text-sm">
@@ -178,7 +188,7 @@ export const LoanList = () => {
                             <tr
                                 key={loan._id}
                                 onClick={() => navigate(`/loans/${loan._id}`)}
-                                className="cursor-pointer hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors group"
+                                className="cursor-pointer hover:bg-gray-50/80 dark:hover:bg-gray-800/50 active:scale-[0.998] transition-all duration-150 group"
                             >
                                 <td className="py-3.5 px-4">
                                     <span className="font-semibold text-primary dark:text-primary-bright font-mono text-xs">

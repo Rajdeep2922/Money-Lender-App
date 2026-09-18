@@ -128,7 +128,7 @@ export const CustomerList = () => {
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         placeholder="Search by name, email, or phone number..."
-                        className="w-full rounded-xl h-11 text-sm border border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated shadow-2xs"
+                        className="w-full rounded-xl h-11 text-sm bg-white"
                     />
                 </div>
 
@@ -140,13 +140,23 @@ export const CustomerList = () => {
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setStatus(tab.id)}
-                                className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                                className={`relative px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                                     isActive
-                                        ? 'bg-primary text-white shadow-sm font-semibold'
+                                        ? 'text-white font-semibold'
                                         : 'bg-white dark:bg-surface-elevated text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-hairline-light dark:border-hairline-dark'
                                 }`}
                             >
-                                {tab.label}
+                                {isActive && (
+                                    <motion.span
+                                        layoutId="customerStatusTabPill"
+                                        className="absolute inset-0 rounded-full bg-primary shadow-xs z-0"
+                                        transition={{
+                                            duration: 0.25,
+                                            ease: [0.22, 1, 0.36, 1],
+                                        }}
+                                    />
+                                )}
+                                <span className="relative z-10">{tab.label}</span>
                             </button>
                         );
                     })}
@@ -174,7 +184,7 @@ export const CustomerList = () => {
                             <div
                                 key={customer._id}
                                 onClick={() => navigate(`/customers/${customer._id}`)}
-                                className="p-4 sm:p-5 flex items-center gap-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors cursor-pointer group"
+                                className="p-4 sm:p-5 flex items-center gap-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 active:scale-[0.998] transition-all duration-150 cursor-pointer group"
                             >
                                 {/* Avatar */}
                                 <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary dark:text-primary-bright flex items-center justify-center font-bold text-sm tracking-tight flex-shrink-0 border border-primary/20">
@@ -213,17 +223,17 @@ export const CustomerList = () => {
                                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                     <button
                                         onClick={() => setDeleteModal({ isOpen: true, customer })}
-                                        className="p-2 text-gray-400 hover:text-accent-danger hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                        className="p-2 text-gray-400 hover:text-accent-danger hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors cursor-pointer"
                                         title="Delete Customer"
                                     >
                                         <FiTrash2 className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => navigate(`/customers/${customer._id}`)}
-                                        className="p-2 text-gray-400 group-hover:text-primary transition-colors hidden sm:block"
+                                        className="p-2 text-gray-400 group-hover:text-primary transition-colors hidden sm:block cursor-pointer"
                                         title="View Details"
                                     >
-                                        <FiChevronRight className="w-5 h-5" />
+                                        <FiChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200 ease-out" />
                                     </button>
                                 </div>
                             </div>

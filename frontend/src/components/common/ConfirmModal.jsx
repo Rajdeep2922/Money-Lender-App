@@ -62,17 +62,32 @@ export const ConfirmModal = ({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
                         onClick={onClose}
                     />
 
-                    {/* Modal */}
+                    {/* Modal (Transitions.dev 06-modal.md: Open 250ms scale: 0.96; Close 150ms scale: 0.98) */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                        animate={{
+                            opacity: 1,
+                            scale: 1,
+                            y: 0,
+                            transition: {
+                                duration: 0.25,
+                                ease: [0.22, 1, 0.36, 1],
+                            },
+                        }}
+                        exit={{
+                            opacity: 0,
+                            scale: 0.98,
+                            y: 4,
+                            transition: {
+                                duration: 0.15,
+                                ease: [0.4, 0, 0.2, 1],
+                            },
+                        }}
                         className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md"
                     >
                         <div className="bg-white dark:bg-surface-elevated border border-hairline-light dark:border-hairline-dark rounded-2xl shadow-2xl overflow-hidden mx-4 relative">
@@ -89,9 +104,9 @@ export const ConfirmModal = ({
                             <div className="p-6 pt-8 text-center">
                                 {/* Icon */}
                                 <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ type: 'spring', delay: 0.1, damping: 15 }}
+                                    initial={{ scale: 0.8, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    transition={{ duration: 0.25, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
                                     className={`w-16 h-16 mx-auto mb-4 rounded-full ${iconConfig.bg} flex items-center justify-center`}
                                 >
                                     <IconComponent className={`w-8 h-8 ${iconConfig.color}`} />
@@ -110,20 +125,22 @@ export const ConfirmModal = ({
                                 {/* Buttons */}
                                 <div className="flex gap-3 justify-center">
                                     <motion.button
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
+                                        whileHover={{ scale: 1.015 }}
+                                        whileTap={{ scale: 0.975 }}
+                                        transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
                                         onClick={onClose}
                                         disabled={loading}
-                                        className="px-6 py-2.5 rounded-xl font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                        className="px-6 py-2.5 rounded-xl font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                                     >
                                         {cancelText}
                                     </motion.button>
                                     <motion.button
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
+                                        whileHover={{ scale: 1.015 }}
+                                        whileTap={{ scale: 0.975 }}
+                                        transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
                                         onClick={handleConfirm}
                                         disabled={loading}
-                                        className={`px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 ${buttonStyles[confirmStyle] || buttonStyles.primary} ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                        className={`px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 cursor-pointer ${buttonStyles[confirmStyle] || buttonStyles.primary} ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     >
                                         {loading && (
                                             <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">

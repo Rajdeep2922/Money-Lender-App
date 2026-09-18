@@ -2,16 +2,31 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Navbar from './Navbar';
 
-// Simple fade transition - no movement to prevent jitter
+// Transitions.dev — Page Side-by-Side / Route Transition (08-page-side-by-side.md)
+// 250ms smooth rise with subtle blur entrance; quiet 120ms exit to prevent layout drag
 const pageVariants = {
-    initial: { opacity: 0 },
+    initial: {
+        opacity: 0,
+        y: 6,
+        filter: 'blur(2px)',
+    },
     animate: {
         opacity: 1,
-        transition: { duration: 0.15, ease: 'easeOut' }
+        y: 0,
+        filter: 'blur(0px)',
+        transition: {
+            duration: 0.25,
+            ease: [0.22, 1, 0.36, 1],
+        },
     },
     exit: {
         opacity: 0,
-        transition: { duration: 0.1, ease: 'easeIn' }
+        y: -4,
+        filter: 'blur(1px)',
+        transition: {
+            duration: 0.12,
+            ease: [0.4, 0, 0.2, 1],
+        },
     },
 };
 

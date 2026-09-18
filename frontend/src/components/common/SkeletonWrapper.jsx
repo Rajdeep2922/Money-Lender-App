@@ -51,16 +51,20 @@ export const SkeletonWrapper = ({
                     key="skeleton"
                     initial={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 >
                     {skeleton}
                 </motion.div>
             ) : (
                 <motion.div
                     key="content"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: fadeDelay / 1000 }}
+                    initial={{ opacity: 0, filter: 'blur(2px)' }}
+                    animate={{ opacity: 1, filter: 'blur(0px)' }}
+                    transition={{
+                        duration: 0.35,
+                        delay: fadeDelay / 1000,
+                        ease: [0.22, 1, 0.36, 1],
+                    }}
                 >
                     {children}
                 </motion.div>

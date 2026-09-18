@@ -112,7 +112,35 @@ function App() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <SocketProvider>
-          <Toaster position="top-right" />
+          <Toaster
+            position="top-right"
+            gutter={8}
+            toastOptions={{
+              duration: 3500,
+              style: {
+                borderRadius: '16px',
+                background: 'var(--color-surface, #ffffff)',
+                color: 'var(--color-text, #191c1f)',
+                border: '1px solid var(--color-border, #e2e2e7)',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
+                padding: '12px 18px',
+                fontSize: '13.5px',
+                fontWeight: '500',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#00a87e',
+                  secondary: '#ffffff',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#e23b4a',
+                  secondary: '#ffffff',
+                },
+              },
+            }}
+          />
           <GlobalErrorBoundary>
             <BrowserRouter>
               <ScrollToTop />

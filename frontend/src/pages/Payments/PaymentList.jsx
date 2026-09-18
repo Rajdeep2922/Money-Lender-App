@@ -108,7 +108,7 @@ export const PaymentList = () => {
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         placeholder="Search by Ref ID, Loan #, or Customer..."
-                        className="w-full rounded-xl h-11 text-sm border border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated shadow-2xs"
+                        className="w-full rounded-xl h-11 text-sm bg-white"
                     />
                 </div>
                 <div>
@@ -153,7 +153,7 @@ export const PaymentList = () => {
                     </thead>
                     <tbody className="divide-y divide-hairline-light dark:divide-hairline-dark text-sm">
                         {payments.map((payment) => (
-                            <tr key={payment._id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-colors">
+                            <tr key={payment._id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/50 active:scale-[0.998] transition-all duration-150">
                                 <td className="py-3.5 px-4 text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                     {formatDate(payment.paymentDate)}
                                 </td>
