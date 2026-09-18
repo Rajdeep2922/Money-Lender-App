@@ -2,21 +2,13 @@
 <html lang="en">
 
 <head>
-  <!-- Critical: Prevent Dark Mode Flash -->
+  <!-- Ensure Light Mode Only -->
   <script>
-    // Execute IMMEDIATELY to prevent flash - before any CSS loads
     (function () {
       try {
-        const theme = localStorage.getItem('money-lender-theme');
-        // Default to dark mode unless explicitly set to 'light'
-        if (theme !== 'light') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      } catch (e) {
-        console.error('Dark mode init error:', e);
-      }
+        localStorage.removeItem('money-lender-theme');
+        document.documentElement.classList.remove('dark');
+      } catch (e) {}
     })();
   </script>
 
