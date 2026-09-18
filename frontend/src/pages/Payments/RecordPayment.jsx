@@ -217,7 +217,7 @@ export const RecordPayment = () => {
                                 value={loanSearch}
                                 onChange={(e) => setLoanSearch(e.target.value)}
                                 placeholder="Filter by loan #, customer name, or phone..."
-                                className="w-full rounded-xl h-10 text-xs border border-hairline-light dark:border-hairline-dark bg-gray-50 dark:bg-surface-deep/50 shadow-2xs"
+                                className="w-full rounded-xl h-10 text-xs bg-gray-50"
                             />
 
                             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">

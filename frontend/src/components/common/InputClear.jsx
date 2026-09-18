@@ -17,6 +17,13 @@ const __TRANSITION_STYLES = `
 .t-clear {
   position: relative;
   overflow: hidden;
+  border: 2px solid #0c0d12 !important;
+  box-shadow: 4px 4px 0px #0c0d12 !important;
+  transition: box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-clear:focus-within {
+  box-shadow: 5px 5px 0px #0c0d12 !important;
 }
 
 .t-clear-mirror,

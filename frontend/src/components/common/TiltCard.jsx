@@ -24,17 +24,45 @@ const __TRANSITION_STYLES = `
   overflow: hidden;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  border: 2px solid #0c0d12;
+  box-shadow: 4px 4px 0px #0c0d12;
   transform:
     perspective(var(--tilt-perspective))
     rotateX(var(--tilt-rx, 0deg))
     rotateY(var(--tilt-ry, 0deg));
   transform-style: preserve-3d;
-  transition: transform var(--tilt-return) var(--tilt-return-ease);
+  transition:
+    transform var(--tilt-return) var(--tilt-return-ease),
+    box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 250ms ease;
   will-change: transform;
 }
 
+.dark .t-tilt-card {
+  border: 2px solid #ffffff;
+  box-shadow: 4px 4px 0px #ffffff;
+}
+
+.t-tilt.is-hover .t-tilt-card,
+.t-tilt:hover .t-tilt-card {
+  box-shadow: 6px 6px 0px #0c0d12;
+}
+
+.dark .t-tilt.is-hover .t-tilt-card,
+.dark .t-tilt:hover .t-tilt-card {
+  box-shadow: 6px 6px 0px #ffffff;
+}
+
+.t-tilt:active .t-tilt-card {
+  box-shadow: 2px 2px 0px #0c0d12;
+}
+
+.dark .t-tilt:active .t-tilt-card {
+  box-shadow: 2px 2px 0px #ffffff;
+}
+
 .t-tilt-card.is-tilting {
-  transition: transform var(--tilt-follow) var(--tilt-follow-ease);
+  transition: transform var(--tilt-follow) var(--tilt-follow-ease), box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Glossy specular reflection sheen on all tilt cards */

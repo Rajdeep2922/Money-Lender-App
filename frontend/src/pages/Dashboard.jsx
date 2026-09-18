@@ -195,7 +195,7 @@ export const Dashboard = () => {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onSubmit={handleSearchSubmit}
                         placeholder="Search customers, loans, payments..."
-                        className="hidden md:flex items-center rounded-full bg-white dark:bg-[#141722] border border-black/[0.05] dark:border-white/[0.08] text-xs text-[#0c0d12] dark:text-white w-64 lg:w-72 shadow-2xs h-9"
+                        className="hidden md:flex items-center rounded-full bg-white text-xs text-[#0c0d12] w-64 lg:w-72 h-9"
                     />
 
                     {/* Notification Bell with Transitions.dev Badge Animation */}
@@ -213,15 +213,30 @@ export const Dashboard = () => {
                         {getInitials(ownerName)}
                     </div>
 
-                    {/* Refresh Live Data Button */}
+                    {/* Primary Action Button with Uiverse.io btn-12 Shutter Hover Animation (Pure Black Edges) */}
+                    <Link
+                        to="/loans/new"
+                        className="btn-12 btn-12-compact shrink-0"
+                        title="Create New Loan"
+                    >
+                        <Plus size={14} weight="bold" />
+                        <span>New Loan</span>
+                    </Link>
+
+                    {/* Expanding Refresh Live Data Button (Uiverse.io by andrew-demchenk0) */}
                     <button
                         onClick={handleRefresh}
                         disabled={isRefreshing}
-                        className="flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-[#141722] border border-black/[0.05] dark:border-white/[0.08] text-[#0c0d12] dark:text-gray-300 shadow-2xs hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                        className="btn-refresh-expand shrink-0"
                         aria-label="Refresh dashboard data"
                         title="Refresh live data"
                     >
-                        <ArrowClockwise size={16} weight="regular" className={`text-gray-600 dark:text-gray-300 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        <span className="button__text">
+                            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                        </span>
+                        <span className="button__icon">
+                            <ArrowClockwise size={18} weight="bold" className={`svg ${isRefreshing ? 'animate-spin' : ''}`} />
+                        </span>
                     </button>
                 </div>
             </motion.div>
@@ -245,7 +260,7 @@ export const Dashboard = () => {
                         {/* 1: Outstanding Amount (Dominant Card: 6 cols in sm, soft pastel blue surface) */}
                         <TiltCard
                             className="sm:col-span-6 h-full"
-                            cardClassName="h-full relative p-5 rounded-[24px] bg-gradient-to-br from-[#eaf2fc]/95 via-[#dce9fa]/90 to-[#d0e3f8]/95 dark:from-[#172136]/90 dark:via-[#141926]/85 dark:to-[#101522]/90 border border-white/60 dark:border-blue-900/40 shadow-[0_4px_20px_rgba(37,99,235,0.06)] flex flex-col justify-between min-h-[190px]"
+                            cardClassName="h-full relative p-5 rounded-[24px] bg-gradient-to-br from-[#eaf2fc]/95 via-[#dce9fa]/90 to-[#d0e3f8]/95 dark:from-[#172136]/90 dark:via-[#141926]/85 dark:to-[#101522]/90 flex flex-col justify-between min-h-[190px]"
                             max={10}
                         >
                             {/* Card Top Row */}
@@ -285,7 +300,7 @@ export const Dashboard = () => {
                                     className="flex flex-col items-center group cursor-pointer"
                                     title="View Loans"
                                 >
-                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] text-white flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
                                         <ArrowUpRight size={18} weight="regular" />
                                     </div>
                                     <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
@@ -299,7 +314,7 @@ export const Dashboard = () => {
                                     className="flex flex-col items-center group cursor-pointer"
                                     title="Record Payment"
                                 >
-                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] text-white flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
                                         <ArrowDown size={18} weight="regular" />
                                     </div>
                                     <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
@@ -313,7 +328,7 @@ export const Dashboard = () => {
                                     className="flex flex-col items-center group cursor-pointer"
                                     title="Generate Report"
                                 >
-                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] text-white flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
                                         <FileText size={18} weight="regular" />
                                     </div>
                                     <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
@@ -327,7 +342,7 @@ export const Dashboard = () => {
                                     className="flex flex-col items-center group cursor-pointer"
                                     title="New Loan"
                                 >
-                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] text-white flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
                                         <Plus size={18} weight="regular" />
                                     </div>
                                     <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
@@ -342,7 +357,7 @@ export const Dashboard = () => {
                             as={Link}
                             to="/payments"
                             className="sm:col-span-3 h-full"
-                            cardClassName="h-full relative p-5 rounded-[24px] bg-white/90 dark:bg-[#141722]/90 border border-white/80 dark:border-white/[0.1] shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] hover:border-black/10 dark:hover:border-white/15 transition-all flex flex-col justify-between min-h-[190px] group block"
+                            cardClassName="h-full relative p-5 rounded-[24px] bg-white/90 dark:bg-[#141722]/90 flex flex-col justify-between min-h-[190px] group block"
                             max={12}
                         >
                             <div className="flex items-center gap-2">
@@ -367,7 +382,7 @@ export const Dashboard = () => {
                         {/* 3: Projected Interest (3 cols in sm) */}
                         <TiltCard
                             className="sm:col-span-3 h-full"
-                            cardClassName="h-full relative p-5 rounded-[24px] bg-white/90 dark:bg-[#141722]/90 border border-white/80 dark:border-white/[0.1] shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[190px]"
+                            cardClassName="h-full relative p-5 rounded-[24px] bg-white/90 dark:bg-[#141722]/90 flex flex-col justify-between min-h-[190px]"
                             max={12}
                         >
                             <div className="flex items-center gap-2">
@@ -396,7 +411,7 @@ export const Dashboard = () => {
                         initial="hidden"
                         animate="visible"
                         custom={2}
-                        className="card-glossy bg-white/90 dark:bg-[#141722]/90 border border-white/80 dark:border-white/[0.1] rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between"
+                        className="card-glossy bg-white/90 dark:bg-[#141722]/90 rounded-[24px] p-5 flex flex-col justify-between"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between gap-3 mb-4">
@@ -518,7 +533,7 @@ export const Dashboard = () => {
                         initial="hidden"
                         animate="visible"
                         custom={3}
-                        className="card-glossy bg-white/90 dark:bg-[#141722]/90 border border-white/80 dark:border-white/[0.1] rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)]"
+                        className="card-glossy bg-white/90 dark:bg-[#141722]/90 rounded-[24px] p-5"
                     >
                         <div className="flex items-center justify-between pb-3.5 border-b border-black/[0.04] dark:border-white/[0.08]">
                             <div className="flex items-center gap-2">
@@ -533,21 +548,43 @@ export const Dashboard = () => {
                                 <div className="inline-flex items-center p-0.5 rounded-full bg-[#f1f5f9] dark:bg-black/40 border border-black/[0.04] dark:border-white/[0.06]">
                                     <button
                                         onClick={() => setActivityTab('loans')}
-                                        className={`px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${activityTab === 'loans'
-                                                ? 'bg-[#0c0d12] text-white shadow-xs'
+                                        className={`relative px-3.5 py-1 text-xs font-semibold rounded-full transition-colors cursor-pointer ${
+                                            activityTab === 'loans'
+                                                ? 'text-white'
                                                 : 'text-gray-600 dark:text-gray-400 hover:text-[#0c0d12] dark:hover:text-white'
-                                            }`}
+                                        }`}
                                     >
-                                        Loans
+                                        {activityTab === 'loans' && (
+                                            <motion.span
+                                                layoutId="dashboardActivityTabPill"
+                                                className="absolute inset-0 rounded-full bg-[#0c0d12] shadow-xs z-0"
+                                                transition={{
+                                                    duration: 0.25,
+                                                    ease: [0.22, 1, 0.36, 1],
+                                                }}
+                                            />
+                                        )}
+                                        <span className="relative z-10">Loans</span>
                                     </button>
                                     <button
                                         onClick={() => setActivityTab('collections')}
-                                        className={`px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${activityTab === 'collections'
-                                                ? 'bg-[#0c0d12] text-white shadow-xs'
+                                        className={`relative px-3.5 py-1 text-xs font-semibold rounded-full transition-colors cursor-pointer ${
+                                            activityTab === 'collections'
+                                                ? 'text-white'
                                                 : 'text-gray-600 dark:text-gray-400 hover:text-[#0c0d12] dark:hover:text-white'
-                                            }`}
+                                        }`}
                                     >
-                                        Collections
+                                        {activityTab === 'collections' && (
+                                            <motion.span
+                                                layoutId="dashboardActivityTabPill"
+                                                className="absolute inset-0 rounded-full bg-[#0c0d12] shadow-xs z-0"
+                                                transition={{
+                                                    duration: 0.25,
+                                                    ease: [0.22, 1, 0.36, 1],
+                                                }}
+                                            />
+                                        )}
+                                        <span className="relative z-10">Collections</span>
                                     </button>
                                 </div>
                                 <DotsThree size={20} weight="bold" className="text-gray-400 ml-0.5" />
@@ -675,7 +712,7 @@ export const Dashboard = () => {
                             as={Link}
                             to="/customers"
                             className="h-full"
-                            cardClassName="relative p-5 rounded-[24px] bg-white/90 dark:bg-[#141722]/90 border border-white/80 dark:border-white/[0.1] shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] hover:border-black/10 dark:hover:border-white/15 transition-all flex flex-col justify-between min-h-[190px] h-full group block"
+                            cardClassName="relative p-5 rounded-[24px] bg-white/90 dark:bg-[#141722]/90 flex flex-col justify-between min-h-[190px] h-full group block"
                             max={12}
                         >
                             <div className="flex items-center gap-2 text-xs font-semibold text-[#0c0d12] dark:text-white">
@@ -704,7 +741,7 @@ export const Dashboard = () => {
                         custom={2}
                     >
                         <TiltCard
-                            cardClassName="bg-white/90 dark:bg-[#141722]/90 border border-white/80 dark:border-white/[0.1] rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)]"
+                            cardClassName="bg-white/90 dark:bg-[#141722]/90 rounded-[24px] p-5"
                             max={8}
                         >
                             <div className="flex items-center justify-between mb-3.5">
@@ -763,7 +800,7 @@ export const Dashboard = () => {
                     >
                         {needsAttention ? (
                             <TiltCard
-                                cardClassName="rounded-[24px] p-5 bg-[#fef2f2] dark:bg-rose-950/20 border border-[#fee4e2] dark:border-rose-900/30 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between"
+                                cardClassName="rounded-[24px] p-5 bg-[#fef2f2] dark:bg-rose-950/20 flex flex-col justify-between"
                                 max={8}
                             >
                                 <div className="flex items-center justify-between pb-3 border-b border-rose-200/50 dark:border-rose-900/40">
@@ -816,7 +853,7 @@ export const Dashboard = () => {
                             </TiltCard>
                         ) : (
                             <TiltCard
-                                cardClassName="rounded-[24px] p-5 bg-[#f0fdf4] dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between"
+                                cardClassName="rounded-[24px] p-5 bg-[#f0fdf4] dark:bg-emerald-950/20 flex flex-col justify-between"
                                 max={8}
                             >
                                 <div className="flex items-center justify-between pb-3 border-b border-emerald-200/50 dark:border-emerald-900/40">
@@ -855,7 +892,7 @@ export const Dashboard = () => {
                         custom={4}
                     >
                         <TiltCard
-                            cardClassName="bg-white/90 dark:bg-[#141722]/90 border border-white/80 dark:border-white/[0.1] rounded-[24px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)]"
+                            cardClassName="bg-white/90 dark:bg-[#141722]/90 rounded-[24px] p-5"
                             max={6}
                         >
                             <div className="flex items-center justify-between pb-3 border-b border-black/[0.04] dark:border-white/[0.08]">

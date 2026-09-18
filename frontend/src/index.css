@@ -67,6 +67,42 @@
    CSS Variables for Theming (Synchronized from DESIGN.md Revolut Specification)
    ========================================================================== */
 :root {
+  /* ── Transitions.dev Motion Tokens (Shared Scale) ────────────────────────── */
+  /* Durations */
+  --duration-stagger: 40ms;       /* per-item stagger offset */
+  --duration-micro: 80ms;         /* tooltip/path delay, shake segment, micro stagger */
+  --duration-quick: 150ms;        /* modal/dropdown close, text swap, tooltip appear, tactile press */
+  --duration-fast: 250ms;         /* icon swap, dropdown/modal open, tabs sliding, page slide */
+  --duration-medium: 350ms;       /* panel close, toast close, error shake */
+  --duration-slow: 400ms;         /* panel open, skeleton content reveal, input clear */
+  --duration-very-slow: 500ms;    /* emphasis moments, badge appear, text reveal, success check */
+
+  /* Easings */
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);  /* modal/dropdown/panel open + close, page slide, resize */
+  --ease-in-out: ease-in-out;                         /* icon swap, text swap, text reveal, skeleton reveal */
+  --ease-out: ease-out;                               /* tooltip open / close */
+  --ease-linear: linear;                              /* shimmer, skeleton pulse, spinner */
+  --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);   /* badge pop open */
+  --ease-bounce-strong: cubic-bezier(0.34, 3.85, 0.64, 1); /* bouncy hover-out */
+
+  /* Distances */
+  --distance-micro: 4px;          /* text swap */
+  --distance-small: 6px;          /* error shake (small segment), page vertical rise */
+  --distance-base: 8px;           /* badge diagonal reveal, page slide */
+  --distance-medium: 12px;         /* text reveal */
+  --distance-large: 30px;         /* check badge appear */
+
+  /* Scales */
+  --scale-large: 0.96;           /* modal open / close */
+  --scale-medium: 0.97;          /* dropdown open, button press */
+  --scale-small: 0.98;           /* tooltip open, modal quiet close */
+  --scale-tiny: 0.99;            /* dropdown close, subtle card press */
+
+  /* Blur */
+  --blur-small: 2px;             /* panel reveal, icon swap, text swap, skeleton reveal */
+  --blur-medium: 3px;            /* page slide, text reveal */
+  --blur-large: 8px;             /* success check open */
+
   /* Brand Primary */
   --color-primary: #494fdf;
   --color-primary-bright: #4f55f1;
@@ -285,14 +321,19 @@ body {
     padding: 0.5rem 1rem;
     font-weight: 500;
     border-radius: 0.5rem;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      transform var(--duration-quick) var(--ease-smooth-out),
+      background-color var(--duration-fast) var(--ease-smooth-out),
+      border-color var(--duration-fast) var(--ease-smooth-out),
+      box-shadow var(--duration-fast) var(--ease-smooth-out),
+      color var(--duration-fast) var(--ease-smooth-out);
     cursor: pointer;
     position: relative;
     overflow: hidden;
   }
 
   .btn:active {
-    transform: scale(0.97);
+    transform: scale(var(--scale-medium));
   }
 
   .btn:focus {
@@ -303,6 +344,7 @@ body {
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none !important;
   }
 
   .btn-primary {
@@ -317,7 +359,7 @@ body {
   }
 
   .btn-primary:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(0) scale(var(--scale-medium));
   }
 
   .btn-secondary {
@@ -342,6 +384,7 @@ body {
     background: #222427;
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    transform: translateY(-1px);
   }
 
   .btn-danger {
@@ -353,6 +396,10 @@ body {
   .btn-danger:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 4px 16px rgba(226, 59, 74, 0.4);
+  }
+
+  .btn-danger:active:not(:disabled) {
+    transform: translateY(0) scale(var(--scale-medium));
   }
 
   .btn-sm {
@@ -368,31 +415,30 @@ body {
   /* ========== CARDS ========== */
   .card {
     background: var(--gradient-surface);
-    border-radius: 1rem;
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.05),
-      0 4px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--color-border);
+    border-radius: 1.25rem;
+    box-shadow: 4px 4px 0px #0c0d12;
+    border: 2px solid #0c0d12;
     overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      transform var(--duration-fast) var(--ease-smooth-out),
+      box-shadow var(--duration-fast) var(--ease-smooth-out),
+      border-color var(--duration-fast) var(--ease-smooth-out),
+      background-color var(--duration-fast) var(--ease-smooth-out);
   }
 
   .card:hover {
-    box-shadow:
-      0 4px 6px rgba(0, 0, 0, 0.05),
-      0 10px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 6px 6px 0px #0c0d12;
   }
 
   .dark .card {
     background: #16181a;
-    border-color: rgba(255, 255, 255, 0.1);
+    border: 2px solid #ffffff;
+    box-shadow: 4px 4px 0px #ffffff;
   }
 
   .dark .card:hover {
-    border-color: rgba(255, 255, 255, 0.18);
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.6),
-      0 12px 28px rgba(0, 0, 0, 0.7);
+    border: 2px solid #ffffff;
+    box-shadow: 6px 6px 0px #ffffff;
   }
 
   /* Glassmorphism card variant */
@@ -439,7 +485,10 @@ body {
     background-color: var(--color-surface);
     color: var(--color-text);
     outline: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      border-color var(--duration-fast) var(--ease-smooth-out),
+      box-shadow var(--duration-fast) var(--ease-smooth-out),
+      background-color var(--duration-fast) var(--ease-smooth-out);
   }
 
   .input:focus {
@@ -622,7 +671,7 @@ body {
     font-size: 0.875rem;
     color: #191c1f;
     border-bottom: 1px solid var(--color-border);
-    transition: all 0.15s;
+    transition: color var(--duration-quick) var(--ease-smooth-out);
   }
 
   .dark .table td {
@@ -631,7 +680,9 @@ body {
   }
 
   .table tbody tr {
-    transition: all 0.2s;
+    transition:
+      background-color var(--duration-quick) var(--ease-smooth-out),
+      box-shadow var(--duration-quick) var(--ease-smooth-out);
   }
 
   .table tbody tr:nth-child(even) {
@@ -797,21 +848,17 @@ body {
   }
 }
 
-/* Bounce animation */
-.animate-bounce-in {
-  animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+/* Smooth scale entrance (Transitions.dev aligned) */
+.animate-bounce-in,
+.animate-scale-in {
+  animation: scaleIn var(--duration-fast) var(--ease-smooth-out) both;
 }
 
-@keyframes bounceIn {
+@keyframes scaleIn {
   0% {
-    transform: scale(0.8);
+    transform: scale(var(--scale-large));
     opacity: 0;
   }
-
-  50% {
-    transform: scale(1.05);
-  }
-
   100% {
     transform: scale(1);
     opacity: 1;
@@ -1018,12 +1065,15 @@ body {
   width: 100%;
 }
 
-/* Gentle shake for errors */
-.shake {
-  animation: shake 0.5s ease-in-out;
+/* Transitions.dev — Error state shake (12-error-state-shake.md) */
+.shake,
+.t-shake,
+.is-shaking,
+.input-error.is-shaking {
+  animation: t-shake var(--duration-medium) cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-@keyframes shake {
+@keyframes t-shake {
   0%,
   100% {
     transform: translateX(0);
@@ -1031,12 +1081,12 @@ body {
 
   20%,
   60% {
-    transform: translateX(-5px);
+    transform: translateX(calc(-1 * var(--distance-small)));
   }
 
   40%,
   80% {
-    transform: translateX(5px);
+    transform: translateX(var(--distance-small));
   }
 }
 
@@ -1086,17 +1136,45 @@ body {
   overflow: hidden;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  border: 2px solid #0c0d12;
+  box-shadow: 4px 4px 0px #0c0d12;
   transform:
     perspective(var(--tilt-perspective))
     rotateX(var(--tilt-rx, 0deg))
     rotateY(var(--tilt-ry, 0deg));
   transform-style: preserve-3d;
-  transition: transform var(--tilt-return) var(--tilt-return-ease);
+  transition:
+    transform var(--tilt-return) var(--tilt-return-ease),
+    box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 250ms ease;
   will-change: transform;
 }
 
+.dark .t-tilt-card {
+  border: 2px solid #ffffff;
+  box-shadow: 4px 4px 0px #ffffff;
+}
+
+.t-tilt:hover .t-tilt-card,
+.t-tilt.is-hover .t-tilt-card {
+  box-shadow: 6px 6px 0px #0c0d12;
+}
+
+.dark .t-tilt:hover .t-tilt-card,
+.dark .t-tilt.is-hover .t-tilt-card {
+  box-shadow: 6px 6px 0px #ffffff;
+}
+
+.t-tilt:active .t-tilt-card {
+  box-shadow: 2px 2px 0px #0c0d12;
+}
+
+.dark .t-tilt:active .t-tilt-card {
+  box-shadow: 2px 2px 0px #ffffff;
+}
+
 .t-tilt-card.is-tilting {
-  transition: transform var(--tilt-follow) var(--tilt-follow-ease);
+  transition: transform var(--tilt-follow) var(--tilt-follow-ease), box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Glossy glass reflection sheen */
@@ -1138,6 +1216,55 @@ body {
   overflow: hidden;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  border: 2px solid #0c0d12;
+  box-shadow: 4px 4px 0px #0c0d12;
+  transition:
+    box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 250ms ease;
+}
+
+.dark .card-glossy {
+  border: 2px solid #ffffff;
+  box-shadow: 4px 4px 0px #ffffff;
+}
+
+.card-glossy:hover {
+  box-shadow: 6px 6px 0px #0c0d12;
+}
+
+.dark .card-glossy:hover {
+  box-shadow: 6px 6px 0px #ffffff;
+}
+
+.card-glossy:active {
+  box-shadow: 2px 2px 0px #0c0d12;
+}
+
+.dark .card-glossy:active {
+  box-shadow: 2px 2px 0px #ffffff;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Sidebar 3D Border & Shadow
+   ───────────────────────────────────────────────────────── */
+.sidebar-3d {
+  border: 2px solid #0c0d12 !important;
+  box-shadow: 4px 4px 0px #0c0d12 !important;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Search Bar 3D Border & Shadow
+   ───────────────────────────────────────────────────────── */
+.t-clear {
+  border: 2px solid #0c0d12 !important;
+  box-shadow: 4px 4px 0px #0c0d12 !important;
+  transition:
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease;
+}
+
+.t-clear:focus-within {
+  box-shadow: 5px 5px 0px #0c0d12 !important;
 }
 
 .t-tilt-glare {
@@ -1345,10 +1472,287 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .t-tilt-card {
+    transform: none !important;
+    transition: none !important;
+  }
+  .t-reel-strip {
+    transition: none !important;
+    filter: none !important;
+  }
   .t-badge, .t-badge-dot {
     animation: none !important;
     transition: none !important;
   }
+  .t-shake, .shake, .is-shaking {
+    animation: none !important;
+  }
+  .btn-12:after,
+  .btn-12:before {
+    animation: none !important;
+    transition: none !important;
+  }
+  .bloom-switch__track,
+  .bloom-switch__thumb,
+  .bloom-switch__sun,
+  .bloom-switch__moon,
+  .bloom-switch__star {
+    animation: none !important;
+    transition: none !important;
+  }
 }
+
+/* ─────────────────────────────────────────────────────────
+   From Uiverse.io by doniaskima — Button 12 (Vertical Shutter Interlock)
+   ───────────────────────────────────────────────────────── */
+.btn-12,
+.btn-12 *,
+.btn-12 :after,
+.btn-12 :before,
+.btn-12:after,
+.btn-12:before {
+  border: 0 solid;
+  box-sizing: border-box;
+}
+
+.btn-12 {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: button;
+  background-color: #000000;
+  background-image: none;
+  color: #fff;
+  cursor: pointer;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-size: 0.8125rem;
+  font-weight: 900;
+  line-height: 1.5;
+  margin: 0;
+  -webkit-mask-image: -webkit-radial-gradient(#000, #fff);
+  padding: 0.6rem 1.6rem;
+  text-transform: uppercase;
+  border-radius: 99rem;
+  border: 1px solid #000000;
+  outline: none;
+  overflow: hidden;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: transform var(--duration-quick, 150ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1)),
+              box-shadow var(--duration-fast, 250ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.dark .btn-12 {
+  background-color: #000000;
+  border-color: #000000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+.btn-12:active {
+  transform: scale(var(--scale-medium, 0.97));
+}
+
+.btn-12:disabled {
+  cursor: default;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.btn-12:-moz-focusring {
+  outline: auto;
+}
+
+.btn-12 svg {
+  display: block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.btn-12 [hidden] {
+  display: none;
+}
+
+.btn-12 span,
+.btn-12 svg,
+.btn-12 svg path,
+.btn-12 > * {
+  position: relative;
+  z-index: 2;
+  mix-blend-mode: difference;
+}
+
+.btn-12:before,
+.btn-12:after {
+  content: "";
+  inset: 0;
+  position: absolute;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+  z-index: 1;
+}
+
+.btn-12:before {
+  background: linear-gradient(
+    90deg,
+    #fff 25%,
+    transparent 0,
+    transparent 50%,
+    #fff 0,
+    #fff 75%,
+    transparent 0
+  );
+  transform: translateY(var(--progress, 100%));
+}
+
+.btn-12:after {
+  --progress: -100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 25%,
+    #fff 0,
+    #fff 50%,
+    transparent 0,
+    transparent 75%,
+    #fff 0
+  );
+  transform: translateY(var(--progress, -100%));
+}
+
+.btn-12:hover:after,
+.btn-12:hover:before,
+.btn-12:focus-visible:after,
+.btn-12:focus-visible:before,
+.group:hover .btn-12:after,
+.group:hover .btn-12:before,
+.group:focus-within .btn-12:after,
+.group:focus-within .btn-12:before {
+  --progress: 0%;
+}
+
+/* Dashboard Button 12 Variants */
+.btn-12-compact,
+.btn-12-sm {
+  padding: 0.45rem 1.15rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+/* ─────────────────────────────────────────────────────────
+   From Uiverse.io by andrew-demchenk0 — Expanding Refresh Button
+   ───────────────────────────────────────────────────────── */
+.btn-refresh-expand {
+  --main-focus: #2d8cf0;
+  --font-color: #0c0d12;
+  --bg-color-sub: #dedede;
+  --bg-color: #eee;
+  --main-color: #0c0d12;
+  position: relative;
+  width: 142px;
+  height: 38px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border: 2px solid var(--main-color);
+  box-shadow: 4px 4px var(--main-color);
+  background-color: var(--bg-color);
+  border-radius: 10px;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0;
+  user-select: none;
+  text-decoration: none;
+}
+
+.dark .btn-refresh-expand {
+  --font-color: #ffffff;
+  --bg-color-sub: #272d3d;
+  --bg-color: #141722;
+  --main-color: #ffffff;
+  box-shadow: 4px 4px #ffffff;
+}
+
+.btn-refresh-expand,
+.btn-refresh-expand .button__icon,
+.btn-refresh-expand .button__text {
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.btn-refresh-expand .button__text {
+  transform: translateX(24px);
+  color: var(--font-color);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.btn-refresh-expand .button__icon {
+  position: absolute;
+  transform: translateX(100px);
+  height: 100%;
+  width: 38px;
+  background-color: var(--bg-color-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-refresh-expand .svg,
+.btn-refresh-expand svg {
+  width: 18px;
+  height: 18px;
+  fill: var(--main-color);
+  color: var(--main-color);
+}
+
+.btn-refresh-expand:hover {
+  background: var(--bg-color);
+}
+
+.btn-refresh-expand:hover .button__text {
+  color: transparent;
+  opacity: 0;
+}
+
+.btn-refresh-expand:hover .button__icon {
+  width: 138px;
+  transform: translateX(0);
+}
+
+.btn-refresh-expand:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0px 0px var(--main-color);
+}
+
+.dark .btn-refresh-expand:active {
+  box-shadow: 0px 0px #ffffff;
+}
+
+.btn-refresh-expand:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+
+
+
+
 
 

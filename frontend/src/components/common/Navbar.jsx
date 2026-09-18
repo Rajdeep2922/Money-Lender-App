@@ -20,7 +20,6 @@ import { useLender } from '../../hooks/useLender';
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
 import NotificationBadge from '../notifications/NotificationBadge';
-import ThemeToggle from './ThemeToggle';
 
 const navLinks = [
     { to: '/', label: 'Dashboard', icon: House, matchExact: true },
@@ -82,7 +81,7 @@ const Navbar = () => {
             {/* ========================================================================= */}
             <aside
                 aria-label="Lending workspace navigation"
-                className="hidden md:flex fixed top-3 left-3 bottom-3 w-[230px] z-40 bg-[#d2e2fa] dark:bg-[#12151d] border border-[#bdd5f5] dark:border-white/[0.08] rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex-col justify-between py-5 px-3 select-none transition-colors"
+                className="hidden md:flex fixed top-3 left-3 bottom-3 w-[230px] z-40 bg-[#d2e2fa] sidebar-3d rounded-[24px] flex-col justify-between py-5 px-3 select-none transition-colors"
             >
                 {/* Top Section: Business Brand Mark with Title */}
                 <div className="w-full">
@@ -116,13 +115,23 @@ const Navbar = () => {
                                     key={link.to}
                                     to={link.to}
                                     aria-current={active ? 'page' : undefined}
-                                    className={`relative flex items-center justify-between px-4 py-2.5 rounded-full text-sm font-medium transition-all group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
+                                    className={`relative flex items-center justify-between px-4 py-2.5 rounded-full text-sm font-medium transition-colors group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
                                         active
-                                            ? 'bg-[#0c0d12] text-white font-semibold shadow-sm'
+                                            ? 'text-white font-semibold'
                                             : 'text-[#0c0d12] dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                                     }`}
                                 >
-                                    <div className="flex items-center gap-3 min-w-0">
+                                    {active && (
+                                        <motion.span
+                                            layoutId="desktopNavActivePill"
+                                            className="absolute inset-0 rounded-full bg-[#0c0d12] shadow-xs z-0"
+                                            transition={{
+                                                duration: 0.25,
+                                                ease: [0.22, 1, 0.36, 1],
+                                            }}
+                                        />
+                                    )}
+                                    <div className="relative z-10 flex items-center gap-3 min-w-0">
                                         <Icon
                                             size={18}
                                             weight="regular"
@@ -134,7 +143,7 @@ const Navbar = () => {
                                     </div>
 
                                     {badge > 0 && (
-                                        <span className="flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-bold text-white bg-[#ff4d4f] rounded-full shadow-xs">
+                                        <span className="relative z-10 flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-bold text-white bg-[#ff4d4f] rounded-full shadow-xs">
                                             {badge > 99 ? '99+' : badge}
                                         </span>
                                     )}
@@ -160,8 +169,6 @@ const Navbar = () => {
                         </Link>
                     )}
 
-                    {/* Theme Toggle with label */}
-                    <ThemeToggle sidebar />
 
                     {user && (
                         <>
@@ -213,7 +220,7 @@ const Navbar = () => {
             {/* MOBILE TOP NAVIGATION BAR (< md)                                          */}
             {/* ========================================================================= */}
             <header
-                className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-black/[0.06] dark:border-white/[0.08] px-4 flex items-center justify-between transition-colors"
+                className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 bg-white/95 backdrop-blur-md border-b-2 border-[#0c0d12] shadow-[0_2px_0px_#0c0d12] px-4 flex items-center justify-between transition-colors"
                 aria-label="Mobile workspace header"
             >
                 {/* Brand & Workspace Identity */}
@@ -238,9 +245,8 @@ const Navbar = () => {
                     </span>
                 </Link>
 
-                {/* Right controls: ThemeToggle + Hamburger */}
+                {/* Right controls: Hamburger */}
                 <div className="flex items-center gap-1.5">
-                    <ThemeToggle compact />
                     <button
                         type="button"
                         onClick={() => setMobileOpen((prev) => !prev)}
@@ -264,19 +270,22 @@ const Navbar = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
+                            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                             className="fixed inset-0 z-50 bg-black/50 dark:bg-black/80 md:hidden backdrop-blur-xs"
                             onClick={() => setMobileOpen(false)}
                             aria-hidden="true"
                         />
 
-                        {/* Slide-out Drawer Panel */}
+                        {/* Slide-out Drawer Panel (Transitions.dev 07-panel-reveal.md: Open 400ms, Close 350ms) */}
                         <motion.div
                             initial={{ x: '-100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '-100%' }}
-                            transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-                            className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white dark:bg-[#0a0b0d] border-r border-black/[0.08] dark:border-white/[0.1] shadow-2xl flex flex-col justify-between p-4 md:hidden"
+                            transition={{
+                                duration: 0.4,
+                                ease: [0.22, 1, 0.36, 1],
+                            }}
+                            className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white border-r-2 border-[#0c0d12] shadow-[4px_0px_0px_#0c0d12] flex flex-col justify-between p-4 md:hidden"
                             role="dialog"
                             aria-modal="true"
                             aria-label="Navigation drawer"

@@ -46,7 +46,7 @@ const LenderDiscovery = () => {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by lender, owner, or city…"
-                    className="w-full rounded-xl h-11 text-sm border border-hairline-light dark:border-hairline-dark bg-white dark:bg-surface-elevated shadow-xs"
+                    className="w-full rounded-xl h-11 text-sm bg-white"
                 />
             </div>
 
