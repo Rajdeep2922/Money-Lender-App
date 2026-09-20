@@ -88,6 +88,14 @@ export default {
                     red: '#8b0000',
                     brown: '#936d62',
                 },
+                fintech: {
+                    page: 'var(--bg-page, #E4EEFB)',
+                    card: 'var(--bg-card, #EEF2F7)',
+                    highlight: 'var(--bg-card-highlight, #C9DCFA)',
+                    health: 'var(--bg-card-health, #E5F7EB)',
+                    primary: 'var(--text-primary, #17191F)',
+                    secondary: 'var(--text-secondary, #657085)',
+                },
             },
             borderRadius: {
                 none: '0px',

@@ -2,13 +2,25 @@
 <html lang="en">
 
 <head>
-  <!-- Ensure Light Mode Only -->
+  <!-- Theme Init: Prevent Theme Flash -->
   <script>
     (function () {
       try {
-        localStorage.removeItem('money-lender-theme');
-        document.documentElement.classList.remove('dark');
-      } catch (e) {}
+        const theme = localStorage.getItem('money-lender-theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (theme === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      } catch (e) {
+        console.error('Theme init error:', e);
+      }
     })();
   </script>
 
@@ -33,30 +45,30 @@
   <style>
     html.dark,
     .dark body {
-      background-color: #000000 !important;
+      background-color: #0C0E14 !important;
       color: #ffffff;
     }
 
     /* Prevent flash of unstyled content */
     #root {
       min-height: 100vh;
-      background-color: #f8fafc;
+      background-color: #E4EEFB;
     }
 
     .dark #root {
-      background-color: #000000;
+      background-color: #0C0E14;
     }
 
     /* Loading state to prevent white flash */
     #root:empty {
-      background-color: #f8fafc;
+      background-color: #E4EEFB;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .dark #root:empty {
-      background-color: #000000;
+      background-color: #0C0E14;
     }
   </style>
 </head>

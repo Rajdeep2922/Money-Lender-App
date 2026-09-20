@@ -20,6 +20,7 @@ import { useLender } from '../../hooks/useLender';
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
 import NotificationBadge from '../notifications/NotificationBadge';
+import ThemeToggle from './ThemeToggle';
 
 const navLinks = [
     { to: '/', label: 'Dashboard', icon: House, matchExact: true },
@@ -81,7 +82,7 @@ const Navbar = () => {
             {/* ========================================================================= */}
             <aside
                 aria-label="Lending workspace navigation"
-                className="hidden md:flex fixed top-3 left-3 bottom-3 w-[230px] z-40 bg-[#d2e2fa] sidebar-3d rounded-[24px] flex-col justify-between py-5 px-3 select-none transition-colors"
+                className="hidden md:flex fixed top-3 left-3 bottom-3 w-[230px] z-40 bg-[#d2e2fa] dark:bg-[#141722] sidebar-3d rounded-[24px] flex-col justify-between py-5 px-3 select-none transition-colors"
             >
                 {/* Top Section: Business Brand Mark with Title */}
                 <div className="w-full">
@@ -90,7 +91,7 @@ const Navbar = () => {
                         className="flex items-center gap-3 px-2 py-1 mb-5 rounded-2xl group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none"
                         aria-label={businessName ? `${businessName} Dashboard` : 'Money Lender Dashboard'}
                     >
-                        <div className="w-10 h-10 rounded-2xl bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shrink-0 shadow-sm transition-colors">
+                        <div className="w-10 h-10 rounded-2xl bg-[#0c0d12] dark:bg-[#202738] dark:border dark:border-white/10 text-white flex items-center justify-center shrink-0 shadow-sm transition-colors">
                             <Coins size={20} weight="regular" />
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -118,13 +119,13 @@ const Navbar = () => {
                                     className={`relative flex items-center justify-between px-4 py-2.5 rounded-full text-sm font-medium transition-colors group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
                                         active
                                             ? 'text-white font-semibold'
-                                            : 'text-[#0c0d12] dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                                            : 'text-[#0c0d12] dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/[0.06] dark:hover:text-white'
                                     }`}
                                 >
                                     {active && (
                                         <motion.span
                                             layoutId="desktopNavActivePill"
-                                            className="absolute inset-0 rounded-full bg-[#0c0d12] shadow-xs z-0"
+                                            className="absolute inset-0 rounded-full bg-[#0c0d12] dark:bg-[#202738] dark:border dark:border-white/10 shadow-xs z-0"
                                             transition={{
                                                 duration: 0.25,
                                                 ease: [0.22, 1, 0.36, 1],
@@ -169,6 +170,8 @@ const Navbar = () => {
                         </Link>
                     )}
 
+                    {/* Theme Toggle */}
+                    <ThemeToggle sidebar />
 
                     {user && (
                         <>
@@ -178,7 +181,7 @@ const Navbar = () => {
                                 className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/60 dark:hover:bg-white/[0.06] transition-colors mt-1 group"
                                 aria-label={`Workspace Profile: ${user.username}`}
                             >
-                                <div className="w-9 h-9 rounded-full overflow-hidden bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs transition-colors">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-[#0c0d12] dark:bg-[#202738] dark:border dark:border-white/10 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs transition-colors">
                                     {lender?.companyStamp ? (
                                         <img
                                             src={lender.companyStamp}
@@ -220,7 +223,7 @@ const Navbar = () => {
             {/* MOBILE TOP NAVIGATION BAR (< md)                                          */}
             {/* ========================================================================= */}
             <header
-                className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 bg-white/95 backdrop-blur-md border-b-2 border-[#0c0d12] shadow-[0_2px_0px_#0c0d12] px-4 flex items-center justify-between transition-colors"
+                className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 bg-white/95 dark:bg-[#141722]/95 backdrop-blur-md border-b-2 border-[#0c0d12] dark:border-[#283044] shadow-[0_2px_0px_#0c0d12] dark:shadow-[0_2px_0px_#000000] px-4 flex items-center justify-between transition-colors"
                 aria-label="Mobile workspace header"
             >
                 {/* Brand & Workspace Identity */}
@@ -229,7 +232,7 @@ const Navbar = () => {
                     className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
                     aria-label="Dashboard"
                 >
-                    <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shrink-0 shadow-2xs overflow-hidden transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-[#202738] dark:border dark:border-white/10 text-white flex items-center justify-center shrink-0 shadow-2xs overflow-hidden transition-colors">
                         {lender?.companyStamp ? (
                             <img
                                 src={lender.companyStamp}
@@ -245,8 +248,9 @@ const Navbar = () => {
                     </span>
                 </Link>
 
-                {/* Right controls: Hamburger */}
-                <div className="flex items-center gap-1.5">
+                {/* Right controls: ThemeToggle + Hamburger */}
+                <div className="flex items-center gap-2">
+                    <ThemeToggle />
                     <button
                         type="button"
                         onClick={() => setMobileOpen((prev) => !prev)}
@@ -285,7 +289,7 @@ const Navbar = () => {
                                 duration: 0.4,
                                 ease: [0.22, 1, 0.36, 1],
                             }}
-                            className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white border-r-2 border-[#0c0d12] shadow-[4px_0px_0px_#0c0d12] flex flex-col justify-between p-4 md:hidden"
+                            className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white dark:bg-[#141722] border-r-2 border-[#0c0d12] dark:border-[#283044] shadow-[4px_0px_0px_#0c0d12] dark:shadow-[4px_0px_0px_#000000] flex flex-col justify-between p-4 md:hidden"
                             role="dialog"
                             aria-modal="true"
                             aria-label="Navigation drawer"
@@ -293,7 +297,7 @@ const Navbar = () => {
                             {/* Drawer Header */}
                             <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.08]">
                                 <div className="flex items-center gap-2.5 min-w-0">
-                                    <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shrink-0 overflow-hidden transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-[#202738] dark:border dark:border-white/10 text-white flex items-center justify-center shrink-0 overflow-hidden transition-colors">
                                         {lender?.companyStamp ? (
                                             <img
                                                 src={lender.companyStamp}
@@ -360,13 +364,15 @@ const Navbar = () => {
                             </div>
 
                             {/* Drawer Bottom Workspace & User Card */}
-                            {user && (
-                                <div className="pt-3 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2">
-                                    <Link
+                            <div className="pt-3 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2">
+                                <ThemeToggle sidebar />
+                                {user && (
+                                    <>
+                                        <Link
                                         to="/settings"
                                         className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
                                     >
-                                        <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center overflow-hidden shrink-0 transition-colors">
+                                        <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-[#202738] dark:border dark:border-white/10 text-white flex items-center justify-center overflow-hidden shrink-0 transition-colors">
                                             {lender?.companyStamp ? (
                                                 <img
                                                     src={lender.companyStamp}
@@ -401,8 +407,9 @@ const Navbar = () => {
                                         <SignOut size={18} weight="regular" />
                                         <span>Log out</span>
                                     </button>
-                                </div>
+                                </>
                             )}
+                        </div>
                         </motion.div>
                     </>
                 )}

@@ -3,6 +3,7 @@ import { FiHome, FiLogOut, FiCreditCard, FiSearch, FiFileText } from 'react-icon
 import useAuthStore from '../../store/authStore';
 import useNotificationStore from '../../store/notificationStore';
 import NotificationBadge from '../notifications/NotificationBadge';
+import ThemeToggle from '../common/ThemeToggle';
 
 /**
  * Customer Portal Layout - Mobile Optimized & Themed
@@ -46,9 +47,10 @@ const CustomerPortalLayout = () => {
                             </span>
                         </Link>
 
-                        {/* Desktop: User info + Logout */}
+                        {/* Desktop: Theme + User info + Logout */}
                         <div className="hidden sm:flex items-center gap-3">
-                            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                            <ThemeToggle />
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium ml-2">
                                 {customerName}
                             </span>
                             <button
@@ -59,8 +61,9 @@ const CustomerPortalLayout = () => {
                             </button>
                         </div>
 
-                        {/* Mobile: Name */}
+                        {/* Mobile: Theme + Name */}
                         <div className="sm:hidden flex items-center gap-2">
+                            <ThemeToggle />
                             <span className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate max-w-[100px]">
                                 {customerName}
                             </span>
