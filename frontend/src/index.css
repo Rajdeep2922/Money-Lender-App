@@ -61,47 +61,88 @@
 
   --color-hairline-light: #e2e2e7;
   --color-hairline-dark: rgba(255, 255, 255, 0.12);
+
+  /* Fintech Color Palette Tokens */
+  --color-fintech-page: var(--bg-page);
+  --color-fintech-card: var(--bg-card);
+  --color-fintech-highlight: var(--bg-card-highlight);
+  --color-fintech-health: var(--bg-card-health);
+  --color-fintech-primary: var(--text-primary);
+  --color-fintech-secondary: var(--text-secondary);
 }
 
 /* ==========================================================================
    CSS Variables for Theming (Synchronized from DESIGN.md Revolut Specification)
    ========================================================================== */
 :root {
+  /* ── Fintech Color Palette (Light Theme) ────────────────────────────────── */
+  --bg-page: #E4EEFB;
+  --bg-card: #EEF2F7;
+  --bg-card-highlight: #C9DCFA;
+  --bg-card-health: #E5F7EB;
+  --text-primary: #17191F;
+  --text-secondary: #657085;
+
   /* ── Transitions.dev Motion Tokens (Shared Scale) ────────────────────────── */
   /* Durations */
-  --duration-stagger: 40ms;       /* per-item stagger offset */
-  --duration-micro: 80ms;         /* tooltip/path delay, shake segment, micro stagger */
-  --duration-quick: 150ms;        /* modal/dropdown close, text swap, tooltip appear, tactile press */
-  --duration-fast: 250ms;         /* icon swap, dropdown/modal open, tabs sliding, page slide */
-  --duration-medium: 350ms;       /* panel close, toast close, error shake */
-  --duration-slow: 400ms;         /* panel open, skeleton content reveal, input clear */
-  --duration-very-slow: 500ms;    /* emphasis moments, badge appear, text reveal, success check */
+  --duration-stagger: 40ms;
+  /* per-item stagger offset */
+  --duration-micro: 80ms;
+  /* tooltip/path delay, shake segment, micro stagger */
+  --duration-quick: 150ms;
+  /* modal/dropdown close, text swap, tooltip appear, tactile press */
+  --duration-fast: 250ms;
+  /* icon swap, dropdown/modal open, tabs sliding, page slide */
+  --duration-medium: 350ms;
+  /* panel close, toast close, error shake */
+  --duration-slow: 400ms;
+  /* panel open, skeleton content reveal, input clear */
+  --duration-very-slow: 500ms;
+  /* emphasis moments, badge appear, text reveal, success check */
 
   /* Easings */
-  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);  /* modal/dropdown/panel open + close, page slide, resize */
-  --ease-in-out: ease-in-out;                         /* icon swap, text swap, text reveal, skeleton reveal */
-  --ease-out: ease-out;                               /* tooltip open / close */
-  --ease-linear: linear;                              /* shimmer, skeleton pulse, spinner */
-  --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);   /* badge pop open */
-  --ease-bounce-strong: cubic-bezier(0.34, 3.85, 0.64, 1); /* bouncy hover-out */
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* modal/dropdown/panel open + close, page slide, resize */
+  --ease-in-out: ease-in-out;
+  /* icon swap, text swap, text reveal, skeleton reveal */
+  --ease-out: ease-out;
+  /* tooltip open / close */
+  --ease-linear: linear;
+  /* shimmer, skeleton pulse, spinner */
+  --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);
+  /* badge pop open */
+  --ease-bounce-strong: cubic-bezier(0.34, 3.85, 0.64, 1);
+  /* bouncy hover-out */
 
   /* Distances */
-  --distance-micro: 4px;          /* text swap */
-  --distance-small: 6px;          /* error shake (small segment), page vertical rise */
-  --distance-base: 8px;           /* badge diagonal reveal, page slide */
-  --distance-medium: 12px;         /* text reveal */
-  --distance-large: 30px;         /* check badge appear */
+  --distance-micro: 4px;
+  /* text swap */
+  --distance-small: 6px;
+  /* error shake (small segment), page vertical rise */
+  --distance-base: 8px;
+  /* badge diagonal reveal, page slide */
+  --distance-medium: 12px;
+  /* text reveal */
+  --distance-large: 30px;
+  /* check badge appear */
 
   /* Scales */
-  --scale-large: 0.96;           /* modal open / close */
-  --scale-medium: 0.97;          /* dropdown open, button press */
-  --scale-small: 0.98;           /* tooltip open, modal quiet close */
-  --scale-tiny: 0.99;            /* dropdown close, subtle card press */
+  --scale-large: 0.96;
+  /* modal open / close */
+  --scale-medium: 0.97;
+  /* dropdown open, button press */
+  --scale-small: 0.98;
+  /* tooltip open, modal quiet close */
+  --scale-tiny: 0.99;
+  /* dropdown close, subtle card press */
 
   /* Blur */
-  --blur-small: 2px;             /* panel reveal, icon swap, text swap, skeleton reveal */
-  --blur-medium: 3px;            /* page slide, text reveal */
-  --blur-large: 8px;             /* success check open */
+  --blur-small: 2px;
+  /* panel reveal, icon swap, text swap, skeleton reveal */
+  --blur-medium: 3px;
+  /* page slide, text reveal */
+  --blur-large: 8px;
+  /* success check open */
 
   /* Brand Primary */
   --color-primary: #494fdf;
@@ -169,6 +210,14 @@
 }
 
 .dark {
+  /* ── Fintech Color Palette (Dark Theme) ─────────────────────────────────── */
+  --bg-page: #0C0E14;
+  --bg-card: #141722;
+  --bg-card-highlight: #172136;
+  --bg-card-health: rgba(6, 78, 59, 0.2);
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
+
   /* Canvas & Surfaces (Pure Pitch Black #000000 & Neutral Charcoal Elevated #16181a per DESIGN.md) */
   --color-background: #000000;
   --color-canvas-dark: #000000;
@@ -236,6 +285,7 @@ body {
 
 /* Mobile Optimizations - Performance */
 @media (max-width: 640px) {
+
   *,
   *::before,
   *::after {
@@ -749,6 +799,7 @@ body {
 }
 
 @keyframes pulse-glow {
+
   0%,
   100% {
     box-shadow: 0 0 8px var(--color-warning-glow);
@@ -838,6 +889,7 @@ body {
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);
@@ -859,6 +911,7 @@ body {
     transform: scale(var(--scale-large));
     opacity: 0;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -1018,6 +1071,7 @@ body {
 }
 
 @keyframes pulseAttention {
+
   0%,
   100% {
     transform: scale(1);
@@ -1074,6 +1128,7 @@ body {
 }
 
 @keyframes t-shake {
+
   0%,
   100% {
     transform: translateX(0);
@@ -1139,9 +1194,7 @@ body {
   border: 2px solid #0c0d12;
   box-shadow: 4px 4px 0px #0c0d12;
   transform:
-    perspective(var(--tilt-perspective))
-    rotateX(var(--tilt-rx, 0deg))
-    rotateY(var(--tilt-ry, 0deg));
+    perspective(var(--tilt-perspective)) rotateX(var(--tilt-rx, 0deg)) rotateY(var(--tilt-ry, 0deg));
   transform-style: preserve-3d;
   transition:
     transform var(--tilt-return) var(--tilt-return-ease),
@@ -1151,8 +1204,8 @@ body {
 }
 
 .dark .t-tilt-card {
-  border: 2px solid #ffffff;
-  box-shadow: 4px 4px 0px #ffffff;
+  border: 2px solid #283044;
+  box-shadow: 4px 4px 0px #000000;
 }
 
 .t-tilt:hover .t-tilt-card,
@@ -1162,7 +1215,8 @@ body {
 
 .dark .t-tilt:hover .t-tilt-card,
 .dark .t-tilt.is-hover .t-tilt-card {
-  box-shadow: 6px 6px 0px #ffffff;
+  box-shadow: 6px 6px 0px #000000;
+  border-color: #3d4a66;
 }
 
 .t-tilt:active .t-tilt-card {
@@ -1170,7 +1224,7 @@ body {
 }
 
 .dark .t-tilt:active .t-tilt-card {
-  box-shadow: 2px 2px 0px #ffffff;
+  box-shadow: 2px 2px 0px #000000;
 }
 
 .t-tilt-card.is-tilting {
@@ -1185,12 +1239,10 @@ body {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.12) 28%,
-    rgba(255, 255, 255, 0) 58%
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.12) 28%,
+      rgba(255, 255, 255, 0) 58%);
   box-shadow:
     inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.75),
     inset 0 -1px 1px 0 rgba(0, 0, 0, 0.02);
@@ -1199,17 +1251,16 @@ body {
 
 .dark .t-tilt-card::before,
 .dark .card-glossy::before {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.15) 0%,
-    rgba(255, 255, 255, 0.03) 30%,
-    rgba(255, 255, 255, 0) 60%
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.03) 30%,
+      rgba(255, 255, 255, 0) 60%);
   box-shadow:
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.22),
     inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
+.card-3d,
 .card-glossy {
   position: relative;
   border-radius: 24px;
@@ -1223,25 +1274,31 @@ body {
     border-color 250ms ease;
 }
 
+.dark .card-3d,
 .dark .card-glossy {
-  border: 2px solid #ffffff;
-  box-shadow: 4px 4px 0px #ffffff;
+  border: 2px solid #283044;
+  box-shadow: 4px 4px 0px #000000;
 }
 
+.card-3d:hover,
 .card-glossy:hover {
   box-shadow: 6px 6px 0px #0c0d12;
 }
 
+.dark .card-3d:hover,
 .dark .card-glossy:hover {
-  box-shadow: 6px 6px 0px #ffffff;
+  box-shadow: 6px 6px 0px #000000;
+  border-color: #3d4a66;
 }
 
+.card-3d:active,
 .card-glossy:active {
   box-shadow: 2px 2px 0px #0c0d12;
 }
 
+.dark .card-3d:active,
 .dark .card-glossy:active {
-  box-shadow: 2px 2px 0px #ffffff;
+  box-shadow: 2px 2px 0px #000000;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -1250,6 +1307,11 @@ body {
 .sidebar-3d {
   border: 2px solid #0c0d12 !important;
   box-shadow: 4px 4px 0px #0c0d12 !important;
+}
+
+.dark .sidebar-3d {
+  border: 2px solid #283044 !important;
+  box-shadow: 4px 4px 0px #000000 !important;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -1263,30 +1325,73 @@ body {
     border-color 200ms ease;
 }
 
+.dark .t-clear {
+  border: 2px solid #283044 !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+}
+
 .t-clear:focus-within {
   box-shadow: 5px 5px 0px #0c0d12 !important;
 }
 
-.t-tilt-glare {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  mix-blend-mode: screen;
-  background:
-    radial-gradient(circle 110px at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
-      rgba(255,255,255,0.62), rgba(255,255,255,0.12) 50%, rgba(255,255,255,0) 82%),
-    radial-gradient(circle 220px at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
-      rgba(255,255,255,0.26), rgba(255,255,255,0.04) 58%, rgba(255,255,255,0) 78%),
-    radial-gradient(circle 380px at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
-      rgba(255,255,255,0.12), rgba(255,255,255,0) 88%);
-  transition: opacity var(--tilt-glare-fade) var(--tilt-glare-ease);
-  z-index: 3;
+.dark .t-clear:focus-within {
+  box-shadow: 5px 5px 0px #000000 !important;
+  border-color: #3b82f6 !important;
 }
 
-.t-tilt.is-hover .t-tilt-glare {
-  opacity: var(--tilt-glare-opacity);
+/* ─────────────────────────────────────────────────────────
+   Rotating Geometric Star Loader (From Uiverse.io by Shoh2008)
+   ───────────────────────────────────────────────────────── */
+.loader {
+  width: 48px;
+  height: 48px;
+  background: #353535;
+  display: block;
+  margin: 20px auto;
+  position: relative;
+  box-sizing: border-box;
+  animation: rotationBack 1s ease-in-out infinite reverse;
+}
+
+.loader::before {
+  content: '';
+  box-sizing: border-box;
+  left: 0;
+  top: 0;
+  transform: rotate(45deg);
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  background: #2e2e2e;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+}
+
+.loader::after {
+  content: '';
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: rgb(0, 0, 0);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes rotationBack {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+.t-tilt-glare {
+  display: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1341,8 +1446,8 @@ body {
   opacity: 1;
 }
 
-.t-clear.has-value > input,
-.t-clear.is-clearing > input,
+.t-clear.has-value>input,
+.t-clear.is-clearing>input,
 .t-clear.has-value input,
 .t-clear.is-clearing input {
   -webkit-text-fill-color: transparent;
@@ -1429,8 +1534,13 @@ body {
 }
 
 @keyframes t-badge-slide-in {
-  from { transform: translate(var(--badge-offset-x), var(--badge-offset-y)); }
-  to   { transform: translate(0, 0); }
+  from {
+    transform: translate(var(--badge-offset-x), var(--badge-offset-y));
+  }
+
+  to {
+    transform: translate(0, 0);
+  }
 }
 
 .t-badge {
@@ -1455,9 +1565,9 @@ body {
   opacity: 1;
   filter: blur(0);
   transition:
-    transform var(--badge-pop-dur)  var(--badge-pop-ease),
-    opacity   var(--badge-fade-dur) var(--badge-pop-ease),
-    filter    var(--badge-pop-dur)  var(--badge-pop-ease);
+    transform var(--badge-pop-dur) var(--badge-pop-ease),
+    opacity var(--badge-fade-dur) var(--badge-pop-ease),
+    filter var(--badge-pop-dur) var(--badge-pop-ease);
   will-change: transform, opacity, filter;
 }
 
@@ -1466,12 +1576,13 @@ body {
   opacity: 0;
   filter: blur(var(--badge-blur));
   transition:
-    transform var(--badge-pop-close-dur)  var(--badge-close-ease),
-    opacity   var(--badge-fade-close-dur) var(--badge-close-ease),
-    filter    var(--badge-pop-close-dur)  var(--badge-close-ease);
+    transform var(--badge-pop-close-dur) var(--badge-close-ease),
+    opacity var(--badge-fade-close-dur) var(--badge-close-ease),
+    filter var(--badge-pop-close-dur) var(--badge-close-ease);
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -1480,26 +1591,35 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
   .t-tilt-card {
     transform: none !important;
     transition: none !important;
   }
+
   .t-reel-strip {
     transition: none !important;
     filter: none !important;
   }
-  .t-badge, .t-badge-dot {
+
+  .t-badge,
+  .t-badge-dot {
     animation: none !important;
     transition: none !important;
   }
-  .t-shake, .shake, .is-shaking {
+
+  .t-shake,
+  .shake,
+  .is-shaking {
     animation: none !important;
   }
+
   .btn-12:after,
   .btn-12:before {
     animation: none !important;
     transition: none !important;
   }
+
   .bloom-switch__track,
   .bloom-switch__thumb,
   .bloom-switch__sun,
@@ -1553,7 +1673,7 @@ body {
   user-select: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   transition: transform var(--duration-quick, 150ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1)),
-              box-shadow var(--duration-fast, 250ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1));
+    box-shadow var(--duration-fast, 250ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .dark .btn-12 {
@@ -1589,7 +1709,7 @@ body {
 .btn-12 span,
 .btn-12 svg,
 .btn-12 svg path,
-.btn-12 > * {
+.btn-12>* {
   position: relative;
   z-index: 2;
   mix-blend-mode: difference;
@@ -1606,30 +1726,26 @@ body {
 }
 
 .btn-12:before {
-  background: linear-gradient(
-    90deg,
-    #fff 25%,
-    transparent 0,
-    transparent 50%,
-    #fff 0,
-    #fff 75%,
-    transparent 0
-  );
+  background: linear-gradient(90deg,
+      #fff 25%,
+      transparent 0,
+      transparent 50%,
+      #fff 0,
+      #fff 75%,
+      transparent 0);
   transform: translateY(var(--progress, 100%));
 }
 
 .btn-12:after {
   --progress: -100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0,
-    transparent 25%,
-    #fff 0,
-    #fff 50%,
-    transparent 0,
-    transparent 75%,
-    #fff 0
-  );
+  background: linear-gradient(90deg,
+      transparent 0,
+      transparent 25%,
+      #fff 0,
+      #fff 50%,
+      transparent 0,
+      transparent 75%,
+      #fff 0);
   transform: translateY(var(--progress, -100%));
 }
 
@@ -1681,10 +1797,11 @@ body {
 
 .dark .btn-refresh-expand {
   --font-color: #ffffff;
-  --bg-color-sub: #272d3d;
+  --bg-color-sub: #1e2436;
   --bg-color: #141722;
   --main-color: #ffffff;
-  box-shadow: 4px 4px #ffffff;
+  border-color: #283044;
+  box-shadow: 4px 4px #000000;
 }
 
 .btn-refresh-expand,
@@ -1742,7 +1859,7 @@ body {
 }
 
 .dark .btn-refresh-expand:active {
-  box-shadow: 0px 0px #ffffff;
+  box-shadow: 0px 0px #000000;
 }
 
 .btn-refresh-expand:disabled {
@@ -1750,9 +1867,257 @@ body {
   opacity: 0.75;
 }
 
+/* ─────────────────────────────────────────────────────────
+   Quick Action Button Hover-Fill Animation (Uiverse-inspired)
+   ───────────────────────────────────────────────────────── */
+.quick-action-button {
+  position: relative;
+  text-decoration: none;
+}
 
+.quick-action-icon {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid rgba(23, 25, 31, 0.18);
+  color: #17191F;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms ease;
+  z-index: 1;
+}
 
+.dark .quick-action-icon {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
 
+.quick-action-icon::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #17191F;
+  top: 100%;
+  left: 100%;
+  transition:
+    top 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    left 450ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 200ms ease;
+  pointer-events: none;
+}
 
+.dark .quick-action-icon::before {
+  background: #ffffff;
+}
 
-
+.quick-action-icon svg {
+  position: relative;
+  z-index: 2;
+  transition:
+    color 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Hover state: fill smoothly expands from bottom-right toward top-left */
+.quick-action-button:hover .quick-action-icon::before,
+.quick-action-button:focus-visible .quick-action-icon::before {
+  top: -20px;
+  left: -20px;
+}
+
+.quick-action-button:hover .quick-action-icon {
+  border-color: #17191F;
+  box-shadow: 0 2px 6px rgba(23, 25, 31, 0.20);
+  transform: scale(1.05);
+}
+
+.dark .quick-action-button:hover .quick-action-icon {
+  border-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
+}
+
+.quick-action-button:hover .quick-action-icon svg,
+.quick-action-button:focus-visible .quick-action-icon svg {
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+.dark .quick-action-button:hover .quick-action-icon svg,
+.dark .quick-action-button:focus-visible .quick-action-icon svg {
+  color: #0c0d12;
+}
+
+/* Label text transition */
+.quick-action-label {
+  color: #4b5563;
+  transition:
+    color 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark .quick-action-label {
+  color: #94a3b8;
+}
+
+.quick-action-button:hover .quick-action-label,
+.quick-action-button:focus-visible .quick-action-label {
+  color: #17191F;
+}
+
+.dark .quick-action-button:hover .quick-action-label,
+.dark .quick-action-button:focus-visible .quick-action-label {
+  color: #ffffff;
+}
+
+/* Active / Pressed state */
+.quick-action-button:active .quick-action-icon {
+  transform: scale(0.94);
+  transition: transform 100ms ease;
+}
+
+.quick-action-button:active .quick-action-icon::before {
+  background: #000000;
+  transition: background-color 0s;
+}
+
+.dark .quick-action-button:active .quick-action-icon::before {
+  background: #e2e8f0;
+  transition: background-color 0s;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .quick-action-icon::before {
+    transition: none !important;
+  }
+
+  .quick-action-icon,
+  .quick-action-icon svg,
+  .quick-action-label {
+    transition: none !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   TiltCard Animated Border Glow (Uiverse-inspired)
+   ───────────────────────────────────────────────────────── */
+@keyframes t-glow-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.t-tilt-glow {
+  position: relative;
+}
+
+.t-tilt-glow-canvas {
+  position: absolute;
+  inset: -3px;
+  border-radius: 27px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  filter: blur(8px);
+  transition: opacity 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-tilt-glow-canvas::before {
+  content: '';
+  position: absolute;
+  inset: -60%;
+  animation: t-glow-rotate 5s linear infinite;
+  animation-play-state: paused;
+}
+
+/* Hover & Focus-within states: activate rotation and smooth opacity */
+.t-tilt.is-hover .t-tilt-glow-canvas,
+.t-tilt:hover .t-tilt-glow-canvas,
+.t-tilt:focus-within .t-tilt-glow-canvas {
+  opacity: 0.75;
+}
+
+.t-tilt.is-hover .t-tilt-glow-canvas::before,
+.t-tilt:hover .t-tilt-glow-canvas::before,
+.t-tilt:focus-within .t-tilt-glow-canvas::before {
+  animation-play-state: running;
+}
+
+/* 1. Blue (Primary Glow: signature vibrant blue) */
+.t-tilt-glow-blue .t-tilt-glow-canvas::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(56, 189, 248, 0.75) 50deg,
+    rgba(37, 99, 235, 0.90) 100deg,
+    transparent 160deg,
+    rgba(56, 189, 248, 0.75) 230deg,
+    rgba(37, 99, 235, 0.90) 280deg,
+    transparent 360deg
+  );
+}
+.t-tilt-glow-blue.is-hover .t-tilt-glow-canvas,
+.t-tilt-glow-blue:hover .t-tilt-glow-canvas,
+.t-tilt-glow-blue:focus-within .t-tilt-glow-canvas {
+  opacity: 0.75;
+}
+.dark .t-tilt-glow-blue.is-hover .t-tilt-glow-canvas,
+.dark .t-tilt-glow-blue:hover .t-tilt-glow-canvas,
+.dark .t-tilt-glow-blue:focus-within .t-tilt-glow-canvas {
+  opacity: 0.65;
+}
+
+/* 2. Green */
+.t-tilt-glow-green .t-tilt-glow-canvas::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(52, 211, 153, 0.70) 60deg,
+    rgba(16, 185, 129, 0.85) 120deg,
+    transparent 180deg,
+    rgba(52, 211, 153, 0.70) 240deg,
+    rgba(16, 185, 129, 0.85) 300deg,
+    transparent 360deg
+  );
+}
+.t-tilt-glow-green.is-hover .t-tilt-glow-canvas,
+.t-tilt-glow-green:hover .t-tilt-glow-canvas,
+.t-tilt-glow-green:focus-within .t-tilt-glow-canvas {
+  opacity: 0.70;
+}
+.dark .t-tilt-glow-green.is-hover .t-tilt-glow-canvas,
+.dark .t-tilt-glow-green:hover .t-tilt-glow-canvas,
+.dark .t-tilt-glow-green:focus-within .t-tilt-glow-canvas {
+  opacity: 0.60;
+}
+
+/* Stacking: .t-tilt-card stays above the glow layer */
+.t-tilt-card {
+  position: relative;
+  z-index: 1;
+}
+
+/* Disables interior video/motion for specific cards while keeping outer border glow */
+.no-card-video {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .t-tilt-glow-canvas::before {
+    animation: none !important;
+  }
+}

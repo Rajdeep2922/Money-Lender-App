@@ -40,6 +40,8 @@ import {
     ChartPie,
     Prohibit,
     XCircle,
+    Receipt,
+    ChartLineUp,
 } from '@phosphor-icons/react';
 import { useLoans } from '../hooks/useLoans';
 import { usePayments } from '../hooks/usePayments';
@@ -259,6 +261,7 @@ export const Dashboard = () => {
                     >
                         {/* 1: Outstanding Amount (Dominant Card: 6 cols in sm, soft pastel blue surface) */}
                         <TiltCard
+                            glow="blue"
                             className="sm:col-span-6 h-full"
                             cardClassName="h-full relative p-5 rounded-[24px] bg-gradient-to-br from-[#eaf2fc]/95 via-[#dce9fa]/90 to-[#d0e3f8]/95 dark:from-[#172136]/90 dark:via-[#141926]/85 dark:to-[#101522]/90 flex flex-col justify-between min-h-[190px]"
                             max={10}
@@ -293,60 +296,60 @@ export const Dashboard = () => {
                             </div>
 
                             {/* 4 Compact Circular Action Buttons */}
-                            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.06]">
+                            <div className="grid grid-cols-4 gap-1.5 pt-2.5 border-t border-black/[0.04] dark:border-white/[0.06]">
                                 {/* View Loans */}
                                 <Link
                                     to="/loans"
-                                    className="flex flex-col items-center group cursor-pointer"
+                                    className="quick-action-button flex flex-col items-center group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl px-0.5"
                                     title="View Loans"
                                 >
-                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
-                                        <ArrowUpRight size={18} weight="regular" />
+                                    <div className="quick-action-icon w-9 h-9 rounded-full flex items-center justify-center shadow-xs">
+                                        <Receipt size={18} weight="regular" />
                                     </div>
-                                    <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
-                                        View Loans
+                                    <span className="quick-action-label text-[10.5px] font-medium mt-1.5 text-center leading-tight">
+                                        View<br />Loans
                                     </span>
                                 </Link>
 
                                 {/* Record Payment */}
                                 <Link
                                     to="/payments/new"
-                                    className="flex flex-col items-center group cursor-pointer"
+                                    className="quick-action-button flex flex-col items-center group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl px-0.5"
                                     title="Record Payment"
                                 >
-                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
-                                        <ArrowDown size={18} weight="regular" />
+                                    <div className="quick-action-icon w-9 h-9 rounded-full flex items-center justify-center shadow-xs">
+                                        <CreditCard size={18} weight="regular" />
                                     </div>
-                                    <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
-                                        Record Payment
+                                    <span className="quick-action-label text-[10.5px] font-medium mt-1.5 text-center leading-tight">
+                                        Record<br />Payment
                                     </span>
                                 </Link>
 
                                 {/* Generate Report */}
                                 <Link
                                     to="/invoices"
-                                    className="flex flex-col items-center group cursor-pointer"
+                                    className="quick-action-button flex flex-col items-center group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl px-0.5"
                                     title="Generate Report"
                                 >
-                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
-                                        <FileText size={18} weight="regular" />
+                                    <div className="quick-action-icon w-9 h-9 rounded-full flex items-center justify-center shadow-xs">
+                                        <ChartLineUp size={18} weight="regular" />
                                     </div>
-                                    <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
-                                        Generate Report
+                                    <span className="quick-action-label text-[10.5px] font-medium mt-1.5 text-center leading-tight">
+                                        Generate<br />Report
                                     </span>
                                 </Link>
 
                                 {/* New Loan */}
                                 <Link
                                     to="/loans/new"
-                                    className="flex flex-col items-center group cursor-pointer"
+                                    className="quick-action-button flex flex-col items-center group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl px-0.5"
                                     title="New Loan"
                                 >
-                                    <div className="w-9 h-9 rounded-full bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
-                                        <Plus size={18} weight="regular" />
+                                    <div className="quick-action-icon w-9 h-9 rounded-full flex items-center justify-center shadow-xs">
+                                        <FilePlus size={18} weight="regular" />
                                     </div>
-                                    <span className="text-[10.5px] font-medium text-[#4b5563] dark:text-gray-300 mt-1.5 text-center leading-tight whitespace-nowrap">
-                                        New Loan
+                                    <span className="quick-action-label text-[10.5px] font-medium mt-1.5 text-center leading-tight">
+                                        New<br />Loan
                                     </span>
                                 </Link>
                             </div>
@@ -354,6 +357,7 @@ export const Dashboard = () => {
 
                         {/* 2: Total Collected (3 cols in sm) */}
                         <TiltCard
+                            glow="blue"
                             as={Link}
                             to="/payments"
                             className="sm:col-span-3 h-full"
@@ -381,6 +385,7 @@ export const Dashboard = () => {
 
                         {/* 3: Projected Interest (3 cols in sm) */}
                         <TiltCard
+                            glow="blue"
                             className="sm:col-span-3 h-full"
                             cardClassName="h-full relative p-5 rounded-[24px] bg-white/90 dark:bg-[#141722]/90 flex flex-col justify-between min-h-[190px]"
                             max={12}
@@ -411,8 +416,12 @@ export const Dashboard = () => {
                         initial="hidden"
                         animate="visible"
                         custom={2}
-                        className="card-glossy bg-white/90 dark:bg-[#141722]/90 rounded-[24px] p-5 flex flex-col justify-between"
                     >
+                        <TiltCard
+                            glow="blue"
+                            cardClassName="bg-white dark:bg-[#141722] no-card-video rounded-[24px] p-5 flex flex-col justify-between"
+                            max={4}
+                        >
                         {/* Header */}
                         <div className="flex items-center justify-between gap-3 mb-4">
                             <div className="flex items-center gap-2.5">
@@ -436,8 +445,8 @@ export const Dashboard = () => {
                                         key={p}
                                         onClick={() => setPeriod(p)}
                                         className={`px-3 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer ${period === p
-                                                ? 'bg-[#0c0d12] text-white shadow-xs'
-                                                : 'text-gray-600 dark:text-gray-400 hover:text-[#0c0d12] dark:hover:text-white'
+                                            ? 'bg-[#0c0d12] text-white shadow-xs'
+                                            : 'text-gray-600 dark:text-gray-400 hover:text-[#0c0d12] dark:hover:text-white'
                                             }`}
                                     >
                                         {p}
@@ -525,6 +534,7 @@ export const Dashboard = () => {
                                 <span>Collected</span>
                             </div>
                         </div>
+                        </TiltCard>
                     </motion.div>
 
                     {/* ROW 3: RECENT ACTIVITY */}
@@ -533,8 +543,12 @@ export const Dashboard = () => {
                         initial="hidden"
                         animate="visible"
                         custom={3}
-                        className="card-glossy bg-white/90 dark:bg-[#141722]/90 rounded-[24px] p-5"
                     >
+                        <TiltCard
+                            glow="blue"
+                            cardClassName="bg-white dark:bg-[#141722] no-card-video rounded-[24px] p-5"
+                            max={4}
+                        >
                         <div className="flex items-center justify-between pb-3.5 border-b border-black/[0.04] dark:border-white/[0.08]">
                             <div className="flex items-center gap-2">
                                 <Clock size={18} weight="regular" className="text-[#0c0d12] dark:text-white" />
@@ -548,11 +562,10 @@ export const Dashboard = () => {
                                 <div className="inline-flex items-center p-0.5 rounded-full bg-[#f1f5f9] dark:bg-black/40 border border-black/[0.04] dark:border-white/[0.06]">
                                     <button
                                         onClick={() => setActivityTab('loans')}
-                                        className={`relative px-3.5 py-1 text-xs font-semibold rounded-full transition-colors cursor-pointer ${
-                                            activityTab === 'loans'
+                                        className={`relative px-3.5 py-1 text-xs font-semibold rounded-full transition-colors cursor-pointer ${activityTab === 'loans'
                                                 ? 'text-white'
                                                 : 'text-gray-600 dark:text-gray-400 hover:text-[#0c0d12] dark:hover:text-white'
-                                        }`}
+                                            }`}
                                     >
                                         {activityTab === 'loans' && (
                                             <motion.span
@@ -568,11 +581,10 @@ export const Dashboard = () => {
                                     </button>
                                     <button
                                         onClick={() => setActivityTab('collections')}
-                                        className={`relative px-3.5 py-1 text-xs font-semibold rounded-full transition-colors cursor-pointer ${
-                                            activityTab === 'collections'
+                                        className={`relative px-3.5 py-1 text-xs font-semibold rounded-full transition-colors cursor-pointer ${activityTab === 'collections'
                                                 ? 'text-white'
                                                 : 'text-gray-600 dark:text-gray-400 hover:text-[#0c0d12] dark:hover:text-white'
-                                        }`}
+                                            }`}
                                     >
                                         {activityTab === 'collections' && (
                                             <motion.span
@@ -624,12 +636,12 @@ export const Dashboard = () => {
                                                     </span>
                                                     <span
                                                         className={`text-[11px] font-semibold px-3 py-0.5 rounded-full capitalize ${loan.status === 'active'
-                                                                ? 'bg-[#e6f4ea] text-[#137333] dark:bg-emerald-950/40 dark:text-emerald-400'
-                                                                : loan.status === 'completed'
-                                                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
-                                                                    : loan.status === 'defaulted'
-                                                                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
-                                                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                                                            ? 'bg-[#e6f4ea] text-[#137333] dark:bg-emerald-950/40 dark:text-emerald-400'
+                                                            : loan.status === 'completed'
+                                                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
+                                                                : loan.status === 'defaulted'
+                                                                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                                                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
                                                             }`}
                                                     >
                                                         {loan.status}
@@ -693,6 +705,7 @@ export const Dashboard = () => {
                                 </>
                             )}
                         </div>
+                        </TiltCard>
                     </motion.div>
                 </div>
 
@@ -709,6 +722,7 @@ export const Dashboard = () => {
                         className="h-full"
                     >
                         <TiltCard
+                            glow="blue"
                             as={Link}
                             to="/customers"
                             className="h-full"
@@ -741,6 +755,7 @@ export const Dashboard = () => {
                         custom={2}
                     >
                         <TiltCard
+                            glow="blue"
                             cardClassName="bg-white/90 dark:bg-[#141722]/90 rounded-[24px] p-5"
                             max={8}
                         >
@@ -800,7 +815,8 @@ export const Dashboard = () => {
                     >
                         {needsAttention ? (
                             <TiltCard
-                                cardClassName="rounded-[24px] p-5 bg-[#fef2f2] dark:bg-rose-950/20 flex flex-col justify-between"
+                                glow="blue"
+                                cardClassName="rounded-[24px] p-5 bg-[#fef2f2] dark:bg-[#1c1214] no-card-video flex flex-col justify-between"
                                 max={8}
                             >
                                 <div className="flex items-center justify-between pb-3 border-b border-rose-200/50 dark:border-rose-900/40">
@@ -853,7 +869,8 @@ export const Dashboard = () => {
                             </TiltCard>
                         ) : (
                             <TiltCard
-                                cardClassName="rounded-[24px] p-5 bg-[#f0fdf4] dark:bg-emerald-950/20 flex flex-col justify-between"
+                                glow="blue"
+                                cardClassName="rounded-[24px] p-5 bg-[#f0fdf4] dark:bg-[#0f1f16] no-card-video flex flex-col justify-between"
                                 max={8}
                             >
                                 <div className="flex items-center justify-between pb-3 border-b border-emerald-200/50 dark:border-emerald-900/40">
@@ -892,6 +909,7 @@ export const Dashboard = () => {
                         custom={4}
                     >
                         <TiltCard
+                            glow="blue"
                             cardClassName="bg-white/90 dark:bg-[#141722]/90 rounded-[24px] p-5"
                             max={6}
                         >

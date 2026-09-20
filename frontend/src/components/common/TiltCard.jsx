@@ -39,8 +39,8 @@ const __TRANSITION_STYLES = `
 }
 
 .dark .t-tilt-card {
-  border: 2px solid #ffffff;
-  box-shadow: 4px 4px 0px #ffffff;
+  border: 2px solid #283044;
+  box-shadow: 4px 4px 0px #000000;
 }
 
 .t-tilt.is-hover .t-tilt-card,
@@ -50,7 +50,8 @@ const __TRANSITION_STYLES = `
 
 .dark .t-tilt.is-hover .t-tilt-card,
 .dark .t-tilt:hover .t-tilt-card {
-  box-shadow: 6px 6px 0px #ffffff;
+  box-shadow: 6px 6px 0px #000000;
+  border-color: #3d4a66;
 }
 
 .t-tilt:active .t-tilt-card {
@@ -58,7 +59,7 @@ const __TRANSITION_STYLES = `
 }
 
 .dark .t-tilt:active .t-tilt-card {
-  box-shadow: 2px 2px 0px #ffffff;
+  box-shadow: 2px 2px 0px #000000;
 }
 
 .t-tilt-card.is-tilting {
@@ -97,25 +98,7 @@ const __TRANSITION_STYLES = `
 }
 
 .t-tilt-glare {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  mix-blend-mode: screen;
-  background:
-    radial-gradient(circle 110px at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
-      rgba(255,255,255,0.62), rgba(255,255,255,0.12) 50%, rgba(255,255,255,0) 82%),
-    radial-gradient(circle 220px at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
-      rgba(255,255,255,0.26), rgba(255,255,255,0.04) 58%, rgba(255,255,255,0) 78%),
-    radial-gradient(circle 380px at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
-      rgba(255,255,255,0.12), rgba(255,255,255,0) 88%);
-  transition: opacity var(--tilt-glare-fade) var(--tilt-glare-ease);
-  z-index: 3;
-}
-
-.t-tilt.is-hover .t-tilt-glare {
-  opacity: var(--tilt-glare-opacity);
+  display: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -143,7 +126,7 @@ if (typeof document !== 'undefined' && !document.getElementById('transitions-p19
  * @param {string} [props.className] Class names for outer hit area wrapper
  * @param {string} [props.cardClassName] Class names for the inner tilting card
  * @param {number} [props.max=12] Maximum rotation angle in degrees
- * @param {boolean} [props.glare=true] Whether to enable cursor-tracked glare
+ * @param {boolean} [props.glare=false] Whether to enable cursor-tracked glare
  * @param {React.ElementType} [props.as='div'] Container element (e.g. 'div', Link)
  */
 export function TiltCard({
@@ -151,7 +134,8 @@ export function TiltCard({
   className = '',
   cardClassName = '',
   max = 12,
-  glare = true,
+  glare = false,
+  glow = 'blue',
   as: Component = 'div',
   ...rest
 }) {
@@ -188,10 +172,11 @@ export function TiltCard({
   return (
     <div
       ref={wrapRef}
-      className={`t-tilt rounded-[24px] ${className}`}
+      className={`t-tilt rounded-[24px] ${glow ? `t-tilt-glow t-tilt-glow-${glow}` : ''} ${className}`}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
     >
+      {glow && <div className="t-tilt-glow-canvas" aria-hidden="true" />}
       <Component
         ref={cardRef}
         className={`t-tilt-card rounded-[24px] ${cardClassName}`}
