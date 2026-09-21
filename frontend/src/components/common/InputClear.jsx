@@ -231,7 +231,8 @@ export function InputClear({
       if (onChange) onChange({ target: { value: '' } });
       if (onClear) onClear();
       inputEl.value = '';
-      inputEl.focus();
+      inputEl.scrollLeft = 0;
+      inputEl.focus({ preventScroll: true });
       return;
     }
 
@@ -269,29 +270,48 @@ export function InputClear({
       if (elapsed < totalDuration) {
         animRef.current = requestAnimationFrame(frame);
       } else {
-        // Complete clear
-        wrapEl.classList.remove('is-clearing');
-        setIsClearing(false);
+        // Freeze end-state visuals smoothly so there is zero jump/jitter while React updates
+        mirrorEl.style.transform = `translateY(-${tokens.clearOutFly}px)`;
+        mirrorEl.style.opacity = '0';
+        mirrorEl.style.filter = `blur(${tokens.clearBlur}px)`;
 
-        // Reset inline animation styles
-        mirrorEl.style.transform = '';
-        mirrorEl.style.opacity = '';
-        mirrorEl.style.filter = '';
+        placeholderEl.style.transform = 'translateY(0px)';
+        placeholderEl.style.opacity = '1';
 
-        placeholderEl.style.transform = '';
-        placeholderEl.style.opacity = '';
-
-        if (!isControlled) {
-          setInternalValue('');
-        }
+        // Reset real input value and scroll
         if (inputEl) {
           inputEl.value = '';
-          inputEl.focus();
+          inputEl.scrollLeft = 0;
+          inputEl.focus({ preventScroll: true });
+        }
+        if (mirrorEl) {
+          mirrorEl.scrollLeft = 0;
+        }
+
+        // Notify state update
+        if (!isControlled) {
+          setInternalValue('');
         }
         if (onChange) {
           onChange({ target: { value: '' } });
         }
         if (onClear) onClear();
+
+        // Allow React to commit the empty state (hasValue -> false)
+        // before clearing inline styles and the is-clearing class
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            wrapEl.classList.remove('is-clearing');
+            setIsClearing(false);
+
+            mirrorEl.style.transform = '';
+            mirrorEl.style.opacity = '';
+            mirrorEl.style.filter = '';
+
+            placeholderEl.style.transform = '';
+            placeholderEl.style.opacity = '';
+          });
+        });
       }
     };
 
@@ -300,7 +320,7 @@ export function InputClear({
 
   const handleWrapClick = (e) => {
     if (e.target.closest('button')) return;
-    inputRef.current?.focus();
+    inputRef.current?.focus({ preventScroll: true });
   };
 
   // Split value into words

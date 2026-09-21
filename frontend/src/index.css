@@ -1450,6 +1450,10 @@ body {
   white-space: nowrap;
   overflow: hidden;
   z-index: 2;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
 }
 
 .t-clear-mirror {
