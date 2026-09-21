@@ -195,6 +195,7 @@ export const Dashboard = () => {
                     <InputClear
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        onClear={() => setSearchQuery('')}
                         onSubmit={handleSearchSubmit}
                         placeholder="Search customers, loans, payments..."
                         className="hidden md:flex items-center rounded-full bg-white dark:bg-[#141722] text-xs text-[#0c0d12] dark:text-white w-64 lg:w-72 h-9"

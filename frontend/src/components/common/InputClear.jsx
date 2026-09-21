@@ -97,11 +97,14 @@ const __TRANSITION_STYLES = `
 }
 `;
 
-if (typeof document !== 'undefined' && !document.getElementById('transitions-p20-clear')) {
-  const __style = document.createElement('style');
-  __style.id = 'transitions-p20-clear';
+if (typeof document !== 'undefined') {
+  let __style = document.getElementById('transitions-p20-clear');
+  if (!__style) {
+    __style = document.createElement('style');
+    __style.id = 'transitions-p20-clear';
+    document.head.appendChild(__style);
+  }
   __style.textContent = __TRANSITION_STYLES;
-  document.head.appendChild(__style);
 }
 
 // Cubic bezier evaluator for (0.22, 1, 0.36, 1)

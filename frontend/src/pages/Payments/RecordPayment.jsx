@@ -216,6 +216,7 @@ export const RecordPayment = () => {
                             <InputClear
                                 value={loanSearch}
                                 onChange={(e) => setLoanSearch(e.target.value)}
+                                onClear={() => setLoanSearch('')}
                                 placeholder="Filter by loan #, customer name, or phone..."
                                 className="w-full rounded-xl h-10 text-xs bg-gray-50 dark:bg-[#141722] text-[#0c0d12] dark:text-white"
                             />
