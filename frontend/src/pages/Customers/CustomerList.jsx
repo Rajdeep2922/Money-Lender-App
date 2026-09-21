@@ -128,7 +128,7 @@ export const CustomerList = () => {
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         placeholder="Search by name, email, or phone number..."
-                        className="w-full rounded-xl h-11 text-sm bg-white"
+                        className="w-full rounded-xl h-11 text-sm bg-white dark:bg-[#141722] text-[#0c0d12] dark:text-white"
                     />
                 </div>
 

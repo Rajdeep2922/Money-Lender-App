@@ -197,7 +197,7 @@ export const Dashboard = () => {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onSubmit={handleSearchSubmit}
                         placeholder="Search customers, loans, payments..."
-                        className="hidden md:flex items-center rounded-full bg-white text-xs text-[#0c0d12] w-64 lg:w-72 h-9"
+                        className="hidden md:flex items-center rounded-full bg-white dark:bg-[#141722] text-xs text-[#0c0d12] dark:text-white w-64 lg:w-72 h-9"
                     />
 
                     {/* Notification Bell with Transitions.dev Badge Animation */}

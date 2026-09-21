@@ -131,7 +131,7 @@ export const LoanList = () => {
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
                             placeholder="Search by loan #, customer name, or email..."
-                            className="w-full rounded-xl h-11 text-sm bg-white"
+                            className="w-full rounded-xl h-11 text-sm bg-white dark:bg-[#141722] text-[#0c0d12] dark:text-white"
                         />
                     </div>
                 </div>

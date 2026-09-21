@@ -17,13 +17,40 @@ const __TRANSITION_STYLES = `
 .t-clear {
   position: relative;
   overflow: hidden;
-  border: 2px solid #0c0d12 !important;
-  box-shadow: 4px 4px 0px #0c0d12 !important;
-  transition: box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  border: 1.5px solid #0c0d12;
+  box-shadow: 3px 3px 0px #0c0d12;
+  background-color: #ffffff;
+  color: #0c0d12;
+  transition:
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease,
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.dark .t-clear {
+  background-color: #141722 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+  color: #f1f5f9 !important;
+}
+
+.t-clear:hover {
+  border-color: #0c0d12;
+}
+
+.dark .t-clear:hover {
+  border-color: rgba(255, 255, 255, 0.22) !important;
 }
 
 .t-clear:focus-within {
-  box-shadow: 5px 5px 0px #0c0d12 !important;
+  box-shadow: 4px 4px 0px #0c0d12;
+  border-color: #2563eb;
+}
+
+.dark .t-clear:focus-within {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), 0 2px 10px rgba(0, 0, 0, 0.45) !important;
 }
 
 .t-clear-mirror,
@@ -123,7 +150,7 @@ export function InputClear({
   onSubmit,
   placeholder = 'Search customers, loans, payments...',
   className = '',
-  icon = <MagnifyingGlass size={16} weight="regular" className="text-[#94a3b8] shrink-0" />,
+  icon = <MagnifyingGlass size={16} weight="regular" className="text-[#94a3b8] dark:text-gray-400 shrink-0" />,
   ...rest
 }) {
   const [internalValue, setInternalValue] = useState(valueProp !== undefined ? valueProp : '');
@@ -321,7 +348,7 @@ export function InputClear({
       {/* Placeholder (fly-in empty state) */}
       <div
         ref={placeholderRef}
-        className="t-clear-placeholder pl-9 pr-8 text-[#94a3b8] select-none"
+        className="t-clear-placeholder pl-9 pr-8 text-[#94a3b8] dark:text-gray-400 select-none"
         aria-hidden="true"
       >
         <span className="truncate">{placeholder}</span>
