@@ -36,23 +36,21 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ── Main navbar bar ── */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: scrolled ? 'rgba(2,6,23,0.92)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(20px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
-        borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : 'none',
-        transition: 'background 0.3s ease, border-color 0.3s ease',
-      }}>
+      {/* ── Main navbar bar with continuous Credix-style frosted glass blur ── */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur-lg [-webkit-backdrop-filter:blur(16px)] ${scrolled
+          ? 'bg-[#edf2f8]/85 dark:bg-[#0c0e14]/85 border-b border-black/[0.06] dark:border-white/[0.08] shadow-xs'
+          : 'bg-white/[0.08] dark:bg-black/[0.2] border-b border-white/[0.14]'
+          }`}
+      >
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {/* Logo */}
           <Link to="/landing" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none' }}>
-            <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.625rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(6,182,212,0.4)' }}>
+            <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.625rem', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(37,99,235,0.35)' }}>
               <Zap size={18} color="#fff" fill="#fff" />
             </div>
-            <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#f1f5f9', letterSpacing: '-0.01em' }}>
-              Money Lenders
+            <span className={`font-extrabold text-base tracking-tight transition-colors duration-300 ${scrolled ? 'text-[#0c0d12] dark:text-white' : 'text-white'}`}>
+              Money Lender
             </span>
           </Link>
 
@@ -60,78 +58,70 @@ export default function Navbar() {
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
             {links.map(l => (
               <button key={l} onClick={() => handleNavLink(l)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 500, cursor: 'pointer', transition: 'color 0.2s', padding: 0 }}
-                onMouseEnter={e => e.target.style.color = '#22d3ee'}
-                onMouseLeave={e => e.target.style.color = '#94a3b8'}
+                className={`text-sm font-semibold transition-colors duration-300 cursor-pointer bg-transparent border-none p-0 ${scrolled
+                  ? 'text-[#526077] dark:text-gray-400 hover:text-[#2563eb] dark:hover:text-blue-400'
+                  : 'text-white/85 hover:text-white'
+                  }`}
               >{l}</button>
             ))}
             <Link to="/about"
-              style={{ color: location.pathname === '/about' ? '#22d3ee' : '#94a3b8', fontSize: '0.9rem', fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#22d3ee'}
-              onMouseLeave={e => e.currentTarget.style.color = location.pathname === '/about' ? '#22d3ee' : '#94a3b8'}
+              className={`text-sm font-semibold transition-colors duration-300 no-underline ${location.pathname === '/about'
+                ? 'text-[#2563eb] dark:text-blue-400'
+                : scrolled
+                  ? 'text-[#526077] dark:text-gray-400 hover:text-[#2563eb] dark:hover:text-blue-400'
+                  : 'text-white/85 hover:text-white'
+                }`}
             >About Us</Link>
           </div>
 
           {/* Desktop CTA */}
           <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Link to="/login" className="btn-ghost" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>Login</Link>
-            <Link to="/register" className="btn-glow" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>Get Started</Link>
+            <Link to="/login"
+              className={`transition-all duration-300 text-sm font-semibold no-underline ${scrolled
+                ? 'text-[#526077] dark:text-gray-300 hover:text-[#0c0d12] dark:hover:text-white px-3 py-1.5'
+                : 'text-white/90 hover:text-white px-3 py-1.5'
+                }`}
+              style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
+            >
+              Login
+            </Link>
+            <Link to="/register"
+              className={`transition-all duration-300 text-sm font-bold no-underline ${scrolled
+                ? 'bg-[#0c0d12] dark:bg-white text-white dark:text-[#0c0d12] hover:bg-black/90 shadow-sm'
+                : 'bg-white text-[#0c0d12] hover:bg-white/95 shadow-sm'
+                }`}
+              style={{ padding: '0.5rem 1.35rem', fontSize: '0.875rem', borderRadius: '9999px' }}
+            >
+              Get Started
+            </Link>
           </div>
 
           {/* Hamburger */}
           <button
             className="show-mobile"
             onClick={() => setMenuOpen(o => !o)}
-            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center' }}
+            style={{ background: 'none', border: 'none', color: scrolled ? '#526077' : '#ffffff', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center' }}
           >
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </nav>
 
-      {/* ── Mobile dropdown — own fixed panel, immune to nav layout ── */}
+      {/* ── Mobile dropdown ── */}
       {menuOpen && (
-        <div style={{
-          position: 'fixed',
-          top: '60px',
-          left: 0,
-          right: 0,
-          zIndex: 99,
-          background: 'rgba(4,11,31,0.99)',
-          borderTop: '1px solid rgba(34,211,238,0.12)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          padding: '0.75rem 0 1.25rem',
-        }}>
+        <div className="fixed top-[60px] left-0 right-0 z-40 bg-[#f8fbfe]/98 dark:bg-[#0c0e14]/98 border-t border-black/[0.08] dark:border-white/[0.08] border-b border-black/[0.08] dark:border-white/[0.08] py-3 shadow-lg">
           {/* Nav links */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {links.map(l => (
               <button key={l} onClick={() => handleNavLink(l)}
-                style={{
-                  background: 'none', border: 'none',
-                  color: '#94a3b8', fontSize: '0.975rem', fontWeight: 500,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  padding: '0.75rem 1.5rem',
-                  display: 'block',
-                  width: '100%',
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
-                  transition: 'color 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.color = '#22d3ee'}
-                onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                className="text-left text-sm font-semibold text-[#0c0d12] dark:text-white hover:text-[#2563eb] dark:hover:text-blue-400 py-3 px-6 border-b border-black/[0.04] dark:border-white/[0.04] bg-transparent border-none cursor-pointer"
               >
                 {l}
               </button>
             ))}
             <Link to="/about" onClick={() => setMenuOpen(false)}
-              style={{
-                color: location.pathname === '/about' ? '#22d3ee' : '#94a3b8',
-                fontSize: '0.975rem', fontWeight: 500,
-                textDecoration: 'none',
-                padding: '0.75rem 1.5rem',
-                display: 'block',
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
-              }}>
+              className="text-sm font-semibold text-[#0c0d12] dark:text-white hover:text-[#2563eb] dark:hover:text-blue-400 py-3 px-6 border-b border-black/[0.04] dark:border-white/[0.04] no-underline block"
+            >
               About Us
             </Link>
           </div>
@@ -139,25 +129,15 @@ export default function Navbar() {
           {/* CTA buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', padding: '1rem 1.5rem 0' }}>
             <Link to="/login" onClick={() => setMenuOpen(false)}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '0.75rem 1rem', borderRadius: '0.75rem',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                color: '#e2e8f0', fontWeight: 600, fontSize: '0.9rem',
-                textDecoration: 'none',
-              }}>
+              className="btn-ghost"
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
               Login
             </Link>
             <Link to="/register" onClick={() => setMenuOpen(false)}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '0.75rem 1rem', borderRadius: '0.75rem',
-                background: 'linear-gradient(135deg,#06b6d4,#10b981)',
-                color: '#fff', fontWeight: 600, fontSize: '0.9rem',
-                textDecoration: 'none',
-                boxShadow: '0 0 20px rgba(6,182,212,0.3)',
-              }}>
+              className="btn-glow"
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
               Get Started
             </Link>
           </div>
