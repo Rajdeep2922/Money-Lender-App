@@ -1,124 +1,116 @@
-import { useEffect, useRef } from 'react';
-import { UserPlus, FilePlus2, TrendingUp, Rocket } from 'lucide-react';
+import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import EditorialStoryBlock from '../components/EditorialStoryBlock';
 
-/* ── Inline IntersectionObserver hook ── */
-function useInView(options = {}) {
-  const ref = useRef(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.top < window.innerHeight && rect.bottom > 0) {
-      el.classList.add('in-view');
-      return;
-    }
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { el.classList.add('in-view'); observer.disconnect(); } },
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px', ...options }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-  return ref;
-}
-
-const steps = [
-  { icon: UserPlus,   num: 1, title: 'Create Account',     desc: 'Sign up in minutes and set up your lending account with full verification.' },
-  { icon: FilePlus2,  num: 2, title: 'Add Loan Requests',  desc: 'Add new loan requests and manage borrower details with ease.' },
-  { icon: TrendingUp, num: 3, title: 'Track & Manage',     desc: 'Monitor repayments, collections, and loan performance in real time.' },
-  { icon: Rocket,     num: 4, title: 'Grow Your Business', desc: 'Make data-driven decisions and scale your lending confidently.' },
+/**
+ * Editorial Story Block Data
+ * Product storytelling inspired by Credix Webflow composition:
+ * - Real photographic assets (/editorial-lender.jpg, /editorial-ledger.jpg, /editorial-payment.jpg)
+ * - Concise, authoritative, product-specific copy
+ * - Alternating desktop layout with generous vertical spacing
+ */
+const STORY_BLOCKS = [
+  {
+    id: 'real-time-communication',
+    image: '/editorial-realtime.jpg',
+    alt: 'Lender and borrower actively communicating and reviewing loan terms in real time',
+    eyebrow: 'REAL-TIME COMMUNICATION',
+    title: 'Negotiate Without Leaving the Platform.',
+    description:
+      'Discuss loan terms, exchange documents, and keep every conversation connected to the lending relationship. Real-time delivery and read states, typing indicators, presence, and notifications keep lenders and borrowers in sync.',
+    imagePosition: 'left',
+    objectPosition: 'center center',
+  },
+  {
+    id: 'loans-and-customers',
+    image: '/editorial-lender.jpg',
+    alt: 'Lender and customer reviewing loan details and agreement on a tablet in store',
+    eyebrow: 'LOANS & CUSTOMERS',
+    title: 'Every Loan, Connected to the Customer.',
+    description:
+      'Create and manage loans while keeping borrower details, loan history, repayment information, and customer activity organized in one place.',
+    imagePosition: 'right',
+    objectPosition: 'center 35%',
+  },
+  {
+    id: 'payments-and-collections',
+    image: '/editorial-payment.jpg',
+    alt: 'Borrower and lender confirming instant digital payment receipt and repayment synchronization',
+    eyebrow: 'PAYMENTS & COLLECTIONS',
+    title: 'Every Payment, Kept in Sync.',
+    description:
+      'Record repayments, keep outstanding amounts updated, and maintain a clear history of payments for every borrower.',
+    imagePosition: 'left',
+    objectPosition: 'center 35%',
+  },
 ];
 
+/**
+ * Third Landing Section — Product Story / Why Us
+ *
+ * Spacing Target:
+ * Features content -> ~100–140px -> WHY US eyebrow -> 24–32px -> Heading -> 20–28px -> Supporting text -> Editorial Block 1
+ */
 export default function HowItWorks() {
-  const headingRef = useInView();
-  const desktopRef = useInView();
-  const mobileRef  = useInView();
+  const shouldReduceMotion = useReducedMotion();
+
+  const introVariants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 16 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.65,
+        ease: [0.16, 1, 0.3, 1],
+      },
+    },
+  };
 
   return (
-    <section id="how-it-works" className="section" style={{ background: '#020617' }}>
-      <div className="container">
-
-        {/* Heading */}
-        <div ref={headingRef} className="anim-ready" style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <h2 style={{ fontSize: 'clamp(1.75rem,4vw,2.5rem)', fontWeight: 800, color: '#f1f5f9', marginBottom: '0.875rem', letterSpacing: '-0.02em' }}>
-            How It <span className="grad-text">Works</span>
-          </h2>
-          <p style={{ color: '#64748b', fontSize: '1rem' }}>Simple steps to get started with Money Lenders</p>
-          <div className="section-divider" />
-        </div>
-
-        {/* ── Desktop horizontal timeline ── */}
-        <div ref={desktopRef} className="anim-stagger hide-mobile" style={{ position: 'relative' }}>
-          <div style={{ position: 'absolute', top: '2.75rem', left: '12%', right: '12%', height: 2, background: 'linear-gradient(90deg,#22d3ee,#34d399)', opacity: 0.25, zIndex: 0 }} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1.5rem', position: 'relative', zIndex: 1 }}>
-            {steps.map(s => {
-              const Icon = s.icon;
-              return (
-                <div key={s.num} className="anim-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                  <div style={{
-                    width: '5.5rem', height: '5.5rem', borderRadius: '50%',
-                    background: 'linear-gradient(135deg,rgba(6,182,212,0.18),rgba(16,185,129,0.12))',
-                    border: '1.5px solid rgba(34,211,238,0.3)',
-                    backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#22d3ee', marginBottom: '1.25rem', position: 'relative',
-                    boxShadow: '0 0 28px rgba(6,182,212,0.18), inset 0 1px 0 rgba(255,255,255,0.06)',
-                  }}>
-                    <Icon size={32} strokeWidth={1.6} />
-                    <div style={{ position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700, color: '#fff', boxShadow: '0 0 10px rgba(6,182,212,0.4)' }}>
-                      {s.num}
-                    </div>
-                  </div>
-                  <h3 style={{ fontSize: '0.975rem', fontWeight: 700, color: '#f1f5f9', marginBottom: '0.5rem' }}>{s.title}</h3>
-                  <p style={{ fontSize: '0.825rem', color: '#64748b', lineHeight: 1.6 }}>{s.desc}</p>
-                </div>
-              );
-            })}
+    <section
+      id="how-it-works"
+      className="relative w-full bg-[#f8faff] dark:bg-[#0c0e14] border-t border-black/[0.04] dark:border-white/[0.04] transition-colors duration-300 pt-10 sm:pt-12 md:pt-12 lg:pt-8 pb-24 sm:pb-32 md:pb-36 lg:pb-44"
+    >
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* ── Section Introduction (Editorial Statement / WHY US) ── */}
+        <motion.div
+          variants={introVariants}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.3 }}
+          className="text-center mb-16 sm:mb-20 md:mb-24 lg:mb-28 select-none"
+        >
+          {/* Small understated eyebrow pill (28px margin-bottom to heading) */}
+          <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#e8eef9] dark:bg-[#151c28] border border-[#d2def2] dark:border-[#222e44] text-[#335384] dark:text-[#93b4e6] text-[11px] sm:text-xs font-bold tracking-[0.08em] uppercase mb-7 shadow-2xs">
+            WHY US
           </div>
+
+          {/* Large editorial headline (24px margin-bottom to paragraph) */}
+          <h2 className="font-display font-['Space_Grotesk'] text-3xl sm:text-4xl md:text-5xl lg:text-[52px] xl:text-[56px] font-bold text-[#0c0d12] dark:text-white tracking-[-0.035em] leading-[1.08] mb-6 max-w-[820px] mx-auto">
+            Lending Made Simple, Organized, and Connected.
+          </h2>
+
+          {/* Short supporting paragraph */}
+          <p className="text-base sm:text-lg md:text-xl text-[#526077] dark:text-[#94a3b8] max-w-[640px] mx-auto leading-relaxed font-normal">
+            Manage loans, payments, customers, and real-time borrower communication from one connected workspace.
+          </p>
+        </motion.div>
+
+        {/* ── Three Editorial Story Blocks ── */}
+        <div className="space-y-28 sm:space-y-36 md:space-y-44 lg:space-y-52">
+          {STORY_BLOCKS.map((block) => (
+            <EditorialStoryBlock
+              key={block.id}
+              image={block.image}
+              alt={block.alt}
+              eyebrow={block.eyebrow}
+              title={block.title}
+              description={block.description}
+              imagePosition={block.imagePosition}
+              objectPosition={block.objectPosition}
+            />
+          ))}
         </div>
-
-        {/* ── Mobile vertical timeline ── */}
-        <div ref={mobileRef} className="show-mobile" style={{ display: 'flex', flexDirection: 'column', gap: 0, position: 'relative' }}>
-          {/* Connector line */}
-          <div style={{ position: 'absolute', left: '1.625rem', top: '2rem', bottom: '2rem', width: 2, background: 'linear-gradient(180deg,#22d3ee,#34d399)', opacity: 0.25, zIndex: 0 }} />
-
-          {steps.map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <div key={s.num}
-                style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', paddingBottom: i < steps.length - 1 ? '1.75rem' : 0, position: 'relative', zIndex: 1 }}
-              >
-                {/* Icon circle */}
-                <div style={{
-                  width: '3.25rem', height: '3.25rem', borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg,rgba(6,182,212,0.35),rgba(16,185,129,0.28))',
-                  border: '1.5px solid rgba(34,211,238,0.45)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#22d3ee', position: 'relative',
-                }}>
-                  <Icon size={20} strokeWidth={1.6} />
-                  {/* Step badge */}
-                  <div style={{
-                    position: 'absolute', top: -6, right: -6,
-                    width: 18, height: 18, borderRadius: '50%',
-                    background: 'linear-gradient(135deg,#06b6d4,#10b981)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.55rem', fontWeight: 800, color: '#fff',
-                  }}>
-                    {s.num}
-                  </div>
-                </div>
-
-                <div style={{ paddingTop: '0.5rem', flex: 1 }}>
-                  <div style={{ fontSize: '0.6rem', color: '#22d3ee', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.2rem' }}>Step {s.num}</div>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f1f5f9', marginBottom: '0.3rem' }}>{s.title}</h3>
-                  <p style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
       </div>
     </section>
   );
