@@ -1,5 +1,6 @@
 import Navbar from './sections/Navbar';
 import Hero from './sections/Hero';
+import InformationStrip from './components/InformationStrip';
 import Features from './sections/Features';
 import HowItWorks from './sections/HowItWorks';
 import Security from './sections/Security';
@@ -13,6 +14,7 @@ export default function LandingPage() {
     <div className="landing-root">
       <Navbar />
       <Hero />
+      <InformationStrip />
       <Features />
       <HowItWorks />
       <Security />
