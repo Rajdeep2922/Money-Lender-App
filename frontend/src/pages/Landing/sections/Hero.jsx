@@ -1,271 +1,201 @@
-import { motion } from 'framer-motion';
-import { ArrowUpRight, Search, CheckCircle2, Activity, Zap } from 'lucide-react';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform, useSpring, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import HeroProductVisual from '../components/HeroProductVisual';
 
-const fadeUp = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0 } };
-
-/* ── Mobile dashboard preview ─────────────────────── */
-function MobileDashboard() {
-  return (
-    <div style={{
-      background: '#0f172a',
-      border: '1px solid rgba(34,211,238,0.18)',
-      borderRadius: '1.25rem',
-      overflow: 'hidden',
-      boxShadow: '0 0 48px rgba(6,182,212,0.14), 0 24px 64px rgba(0,0,0,0.6)',
-    }}>
-      {/* App topbar */}
-      <div style={{ background: '#0a1628', padding: '0.875rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#fff' }}>ML</div>
-          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#e2e8f0' }}>Money Lenders</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', background: 'rgba(34,211,238,0.07)', border: '1px solid rgba(34,211,238,0.18)', borderRadius: 999, padding: '0.2rem 0.6rem' }}>
-          <Activity size={10} color="#22d3ee" strokeWidth={2} />
-          <span style={{ fontSize: '0.6rem', color: '#22d3ee', fontWeight: 600, letterSpacing: '0.04em' }}>Live</span>
-        </div>
-      </div>
-
-      <div style={{ padding: '1rem' }}>
-        {/* Greeting */}
-        <div style={{ marginBottom: '0.875rem' }}>
-          <div style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>PORTFOLIO OVERVIEW</div>
-          <div style={{ fontSize: '1rem', fontWeight: 700, color: '#f1f5f9' }}>Welcome back, Rajdeep</div>
-          <div style={{ fontSize: '0.6rem', color: '#64748b', marginTop: '0.15rem' }}>Managing ₹24,900 across 3 active loans</div>
-        </div>
-
-        {/* 4 stat tiles */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.875rem' }}>
-          {[
-            { label: 'PORTFOLIO', val: '₹24,900', sub: '3 active loans', color: '#22d3ee' },
-            { label: 'INTEREST', val: '₹2,100', sub: 'projected', color: '#f59e0b' },
-            { label: 'COLLECTED', val: '₹18,400', sub: '73% of total', color: '#34d399' },
-            { label: 'CUSTOMERS', val: '5', sub: 'all on track', color: '#a78bfa' },
-          ].map(s => (
-            <div key={s.label} style={{ background: '#162032', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0.75rem', padding: '0.625rem 0.75rem' }}>
-              <div style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.06em', marginBottom: '0.25rem' }}>{s.label}</div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: s.color }}>{s.val}</div>
-              <div style={{ fontSize: '0.55rem', color: '#475569', marginTop: '0.15rem' }}>{s.sub}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Cash flow chart */}
-        <div style={{ background: '#162032', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0.75rem', padding: '0.75rem', marginBottom: '0.75rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <div>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e2e8f0' }}>Cash Flow</div>
-              <div style={{ fontSize: '0.55rem', color: '#475569' }}>Last 6 months</div>
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <div style={{ width: 8, height: 2, background: '#22d3ee', borderRadius: 1 }} />
-                <span style={{ fontSize: '0.5rem', color: '#64748b' }}>Lent</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <svg width="10" height="2" viewBox="0 0 10 2"><line x1="0" y1="1" x2="10" y2="1" stroke="#34d399" strokeWidth="1.5" strokeDasharray="3 2" strokeLinecap="round" /></svg>
-                <span style={{ fontSize: '0.5rem', color: '#64748b' }}>Collected</span>
-              </div>
-            </div>
-          </div>
-          <svg width="100%" height="52" viewBox="0 0 260 52" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.15" />
-                <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path d="M0,42 L52,34 L104,28 L156,36 L208,18 L260,22 L260,52 L0,52 Z" fill="url(#chartGrad)" />
-            <polyline points="0,42 52,34 104,28 156,36 208,18 260,22" fill="none" stroke="#22d3ee" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <polyline points="0,46 52,42 104,40 156,44 208,36 260,38" fill="none" stroke="#34d399" strokeWidth="1.5" strokeDasharray="4 3" strokeLinecap="round" />
-            {[0, 52, 104, 156, 208, 260].map((x, i) => (
-              <circle key={i} cx={x} cy={[42, 34, 28, 36, 18, 22][i]} r="2.5" fill="#22d3ee" />
-            ))}
-          </svg>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map(m => (
-              <span key={m} style={{ fontSize: '0.5rem', color: '#475569' }}>{m}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent loans */}
-        <div style={{ background: '#162032', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0.75rem', padding: '0.75rem' }}>
-          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#e2e8f0', marginBottom: '0.625rem' }}>Recent Loans</div>
-          {[
-            { name: 'Rakesh Sharma', amt: '₹8,000', status: 'Active', pct: 75 },
-            { name: 'Priya Patel', amt: '₹5,500', status: 'Active', pct: 50 },
-            { name: 'Amit Kumar', amt: '₹11,400', status: 'Active', pct: 88 },
-          ].map(l => (
-            <div key={l.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.5rem', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                {l.name[0]}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.62rem', fontWeight: 600, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.name}</div>
-                <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginTop: 2 }}>
-                  <div style={{ height: '100%', width: `${l.pct}%`, background: 'linear-gradient(90deg,#06b6d4,#10b981)', borderRadius: 2 }} />
-                </div>
-              </div>
-              <div style={{ fontSize: '0.6rem', fontWeight: 700, color: '#22d3ee', flexShrink: 0 }}>{l.amt}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Desktop dashboard preview (unchanged) ────────── */
-function DashboardPreview() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
-      style={{ position: 'relative', width: '100%' }}
-    >
-      <div className="glass-card" style={{ padding: '1.25rem', boxShadow: '0 0 60px rgba(6,182,212,0.12), 0 30px 80px rgba(0,0,0,0.5)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>ML</div>
-            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e2e8f0' }}>Money Lenders</span>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: '#64748b' }}>
-            {['Dashboard', 'Customers', 'Loans', 'Payments'].map(t => (
-              <span key={t} style={{ padding: '0.2rem 0.5rem', borderRadius: 6, background: t === 'Dashboard' ? 'rgba(6,182,212,0.15)' : 'transparent', color: t === 'Dashboard' ? '#22d3ee' : '#64748b' }}>{t}</span>
-            ))}
-          </div>
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>PORTFOLIO OVERVIEW</div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f1f5f9' }}>Welcome back, Rajdeep</div>
-          <div style={{ fontSize: '0.62rem', color: '#64748b', marginTop: '0.2rem' }}>Portfolio Overview · All systems normal</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
-          {[
-            { label: 'PORTFOLIO', val: '₹0', sub: '0 active loans', color: '#818cf8' },
-            { label: 'INTEREST', val: '₹0', sub: 'projected earnings', color: '#f59e0b' },
-            { label: 'COLLECTED', val: '₹0', sub: '0% of total lent', color: '#22d3ee' },
-            { label: 'CUSTOMERS', val: '0', sub: 'all on track', color: '#34d399' },
-          ].map(s => (
-            <div key={s.label} style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0.625rem', padding: '0.6rem 0.75rem' }}>
-              <div style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 600, letterSpacing: '0.05em', marginBottom: '0.3rem' }}>{s.label}</div>
-              <div style={{ fontSize: '1rem', fontWeight: 700, color: s.color, marginBottom: '0.15rem' }}>{s.val}</div>
-              <div style={{ fontSize: '0.6rem', color: '#475569' }}>{s.sub}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '0.75rem' }}>
-          <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0.625rem', padding: '0.75rem' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.25rem' }}>Cash Flow</div>
-            <div style={{ fontSize: '0.6rem', color: '#475569', marginBottom: '0.75rem' }}>Last 6 months</div>
-            <svg width="100%" height="60" viewBox="0 0 200 60">
-              <polyline points="0,50 40,40 80,35 120,42 160,28 200,32" fill="none" stroke="#22d3ee" strokeWidth="1.5" strokeLinecap="round" />
-              <polyline points="0,55 40,50 80,48 120,52 160,44 200,48" fill="none" stroke="#34d399" strokeWidth="1.5" strokeDasharray="4 2" strokeLinecap="round" />
-            </svg>
-          </div>
-          <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0.625rem', padding: '0.75rem' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.25rem' }}>Recent Loans</div>
-            <div style={{ marginTop: '1rem', textAlign: 'center', color: '#475569', fontSize: '0.65rem' }}>No loans yet</div>
-            <div style={{ textAlign: 'center', marginTop: '0.25rem' }}>
-              <span style={{ fontSize: '0.6rem', color: '#22d3ee' }}>Create your first loan →</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <motion.div animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-        className="glass-card"
-        style={{ position: 'absolute', bottom: '-1.5rem', left: '-1.5rem', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 0 24px rgba(52,211,153,0.2)' }}>
-        <CheckCircle2 size={16} color="#34d399" />
-        <div>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#f1f5f9' }}>Loan Approved</div>
-          <div style={{ fontSize: '0.6rem', color: '#64748b' }}>₹50,000 · Just now</div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
+/**
+ * Hero Component — Ultra-Smooth Credix-Style Scroll Experience
+ *
+ * Polished with:
+ * - High-precision critically-damped spring smoothing (eliminates stepped mouse-wheel notches).
+ * - 9-knot harmonic physical trajectory with smooth curvature continuity.
+ * - Perfectly synchronized physical glide (X, Y, rotate, scale evolve in lockstep).
+ * - Multi-knot invisible video fade.
+ * - Restrained horizontal left text reveal.
+ */
 export default function Hero() {
+  const containerRef = useRef(null);
+  const shouldReduceMotion = useReducedMotion();
+
+  // 1. Raw scroll progress from the container
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end end'],
+  });
+
+  // 2. High-precision critically-damped spring smoothing
+  // Calibrated with gentle mass and softer stiffness for buttery, liquid scroll inertia
+  // that seamlessly merges discrete mouse-wheel ticks without lag, bounce, or overshoot.
+  const springProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 24,
+    mass: 0.15,
+    restDelta: 0.0001,
+  });
+
+  const activeProgress = shouldReduceMotion ? scrollYProgress : springProgress;
+
+  // 3. Continuous Multi-Knot Video Fade (0.00 -> 0.90)
+  const videoOpacity = useTransform(
+    activeProgress,
+    [0.00, 0.15, 0.35, 0.55, 0.75, 0.90],
+    [1.00, 0.96, 0.80, 0.50, 0.18, 0.00]
+  );
+
+  // 4. Initial Hero Content Exit (Smoother start from 0.00 -> 0.22)
+  const heroTextOpacity = useTransform(activeProgress, [0.00, 0.22], [1, 0]);
+  const heroTextY = useTransform(
+    activeProgress,
+    [0.00, 0.22],
+    shouldReduceMotion ? [0, 0] : [0, -36]
+  );
+  const heroTextPointerEvents = useTransform(
+    activeProgress,
+    (v) => (v > 0.18 ? 'none' : 'auto')
+  );
+
+  // 5. 11-Knot Smootherstep Polynomial Harmonic Trajectory
+  // Eliminates all jerk and dead-zones; X, Y, Rotate, Scale move in flawless mathematical lockstep
+  const motionKnots = [0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00];
+
+  // Dashboard Y (Vertical Translation): 48vh -> 0vh (Smootherstep 6t^5 - 15t^4 + 10t^3)
+  const dashboardY = useTransform(
+    activeProgress,
+    motionKnots,
+    shouldReduceMotion
+      ? ['0vh', '0vh', '0vh', '0vh', '0vh', '0vh', '0vh', '0vh', '0vh', '0vh', '0vh']
+      : ['48.0vh', '47.6vh', '45.2vh', '40.2vh', '32.8vh', '24.0vh', '15.2vh', '7.8vh', '2.8vh', '0.4vh', '0.0vh']
+  );
+
+  // Dashboard X (Horizontal Translation): 0vw -> 24vw (Smootherstep curvature)
+  const dashboardX = useTransform(
+    activeProgress,
+    motionKnots,
+    shouldReduceMotion
+      ? ['0vw', '0vw', '0vw', '0vw', '0vw', '0vw', '0vw', '0vw', '0vw', '0vw', '0vw']
+      : ['0.0vw', '0.2vw', '1.4vw', '3.9vw', '7.6vw', '12.0vw', '16.4vw', '20.1vw', '22.6vw', '23.8vw', '24.0vw']
+  );
+
+  // Dashboard Rotation (Clockwise Tilt): 0deg -> 3.2deg (Harmonic with X and Y)
+  const dashboardRotate = useTransform(
+    activeProgress,
+    motionKnots,
+    shouldReduceMotion
+      ? ['0deg', '0deg', '0deg', '0deg', '0deg', '0deg', '0deg', '0deg', '0deg', '0deg', '0deg']
+      : ['0.00deg', '0.03deg', '0.19deg', '0.52deg', '1.02deg', '1.60deg', '2.18deg', '2.68deg', '3.01deg', '3.17deg', '3.20deg']
+  );
+
+  // Dashboard Scale: 1.00 -> 1.04
+  const dashboardScale = useTransform(
+    activeProgress,
+    motionKnots,
+    shouldReduceMotion
+      ? [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      : [1.000, 1.000, 1.002, 1.007, 1.013, 1.020, 1.027, 1.034, 1.038, 1.040, 1.040]
+  );
+
+  // 6. Left Editorial Text (Subtle horizontal reveal from the left: 0.58 -> 0.84)
+  const leftTextOpacity = useTransform(activeProgress, [0.58, 0.84], [0, 1]);
+  const leftTextX = useTransform(
+    activeProgress,
+    [0.58, 0.84],
+    shouldReduceMotion ? [0, 0] : [-16, 0]
+  );
+  const leftTextPointerEvents = useTransform(
+    activeProgress,
+    (v) => (v < 0.56 ? 'none' : 'auto')
+  );
+
   return (
-    <section id="features" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', paddingTop: '5rem', position: 'relative', overflow: 'hidden' }}>
-      <div className="blob blob-cyan" style={{ width: 600, height: 600, top: -100, left: -200, opacity: 0.6 }} />
-      <div className="blob blob-emerald" style={{ width: 400, height: 400, bottom: 0, right: -100, opacity: 0.5 }} />
+    <section
+      ref={containerRef}
+      id="hero"
+      className="relative z-10 w-full h-[320vh] bg-[#edf2f8] dark:bg-[#0c0e14]"
+    >
+      {/* ── Sticky Viewport Frame (Pinned 100vh during the scroll transformation) ── */}
+      <div
+        className="sticky top-0 left-0 w-full h-screen overflow-x-clip flex items-center justify-center"
+        style={{ overflowY: 'visible' }}
+      >
+        {/* ── Layer 1: Background Sky Video (Opacity 1.00 -> 0.00 across 0.00–0.90) ── */}
+        <motion.div
+          style={{ opacity: videoOpacity }}
+          className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden"
+        >
+          <video
+            src="/hero-sky.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
 
-      {/* ── DESKTOP LAYOUT (unchanged) ── */}
-      <div className="container hide-mobile" style={{ position: 'relative', zIndex: 1, width: '100%' }}>
-        <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '4rem', alignItems: 'center' }}>
-          <motion.div className="hero-text" variants={fadeUp} initial="hidden" animate="show" transition={{ duration: 0.6 }}>
-            <div className="badge-pill" style={{ marginBottom: '1.5rem' }}>
-              <Zap size={12} strokeWidth={2} /> Smart Lending, Simplified
-            </div>
-            <h1 style={{ fontSize: 'clamp(2rem,5vw,3.4rem)', fontWeight: 800, lineHeight: 1.1, color: '#f1f5f9', marginBottom: '1.25rem', letterSpacing: '-0.02em' }}>
-              Smart Lending for{' '}
-              <span className="grad-text">Growing Businesses</span>
-            </h1>
-            <p style={{ fontSize: '1.05rem', color: '#94a3b8', lineHeight: 1.7, marginBottom: '2rem', maxWidth: 480 }}>
-              An all-in-one platform to manage loan requests, track customers, handle collections, repayments, invoices, and analytics — all from one place.
-            </p>
-            <div className="hero-cta" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.875rem', marginBottom: '2rem' }}>
-              <Link to="/login" className="btn-glow">Request a Loan <ArrowUpRight size={16} /></Link>
-              <Link to="/login" className="btn-ghost">Check My Request <Search size={16} /></Link>
-            </div>
-            <div className="hero-trust" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem' }}>
-              {['Quick Approvals', 'Transparent Process', 'Secure & Reliable'].map(t => (
-                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: '#64748b' }}>
-                  <CheckCircle2 size={14} color="#34d399" /><span>{t}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-          <div className="hero-dashboard"><DashboardPreview /></div>
-        </div>
-      </div>
-
-      {/* ── MOBILE LAYOUT (product-first) ── */}
-      <div className="show-mobile" style={{ position: 'relative', zIndex: 1, width: '100%', padding: '0 1rem 2rem' }}>
-        <motion.div variants={fadeUp} initial="hidden" animate="show" transition={{ duration: 0.55 }}>
-          {/* Badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.22)', color: '#22d3ee', borderRadius: 9999, padding: '0.3rem 0.875rem', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: '1.25rem' }}>
-            <Zap size={11} strokeWidth={2} /> Smart Lending, Simplified
-          </div>
-
-          {/* Headline */}
-          <h1 style={{ fontSize: 'clamp(1.9rem,8vw,2.6rem)', fontWeight: 800, lineHeight: 1.1, color: '#f1f5f9', marginBottom: '0.875rem', letterSpacing: '-0.025em' }}>
-            Manage Loans{' '}
-            <span className="grad-text">Like a Pro</span>
+        {/* ── Layer 2: Initial Hero Centered Content & Get Started CTA (Elevated z-30 in front of dashboard) ── */}
+        <motion.div
+          style={{
+            opacity: heroTextOpacity,
+            y: heroTextY,
+            pointerEvents: heroTextPointerEvents,
+          }}
+          className="absolute top-[10vh] sm:top-[11vh] md:top-[12vh] left-0 right-0 z-30 flex flex-col items-center text-center px-4 max-w-[820px] mx-auto select-none"
+        >
+          <h1 className="font-display font-['Space_Grotesk'] text-4xl sm:text-5xl md:text-[62px] font-bold text-white tracking-[-0.035em] leading-[1.04] mb-3.5 drop-shadow-sm">
+            Manage Every Loan.<br />
+            From One Place.
           </h1>
 
-          {/* Subtext */}
-          <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.7, marginBottom: '1.5rem' }}>
-            Track loans, customers, collections, repayments, invoices and business growth from one powerful platform.
+          <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-[520px] leading-relaxed mb-5 sm:mb-6 font-normal drop-shadow-xs">
+            Track customers, loans, repayments and your lending portfolio from one clear workspace.
           </p>
 
-          {/* Dashboard card */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <MobileDashboard />
-          </div>
-
-          {/* Trust pills */}
-          <div style={{ display: 'flex', gap: '0.625rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-            {['Quick Approvals', 'Secure & Reliable', 'Real-Time Tracking'].map(t => (
-              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: 9999, padding: '0.3rem 0.7rem', fontSize: '0.7rem', color: '#64748b' }}>
-                <CheckCircle2 size={11} color="#34d399" /><span>{t}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* CTAs */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', color: '#fff', fontWeight: 700, fontSize: '0.95rem', borderRadius: '0.875rem', padding: '0.875rem', textDecoration: 'none', boxShadow: '0 0 28px rgba(6,182,212,0.4), 0 4px 16px rgba(0,0,0,0.3)', border: 'none' }}>
-              Get Started <ArrowUpRight size={16} />
-            </Link>
-            <Link to="/login" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', fontWeight: 600, fontSize: '0.95rem', borderRadius: '0.875rem', padding: '0.875rem', textDecoration: 'none' }}>
-              <Search size={15} /> Check My Request
-            </Link>
-          </div>
+          <Link
+            to="/register"
+            className="inline-flex items-center justify-center px-7 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white text-[#0c0d12] font-bold text-sm sm:text-base tracking-tight shadow-lg hover:bg-white/95 active:scale-[0.98] cursor-pointer relative z-10"
+          >
+            Get Started
+          </Link>
         </motion.div>
+
+        {/* ── Layer 3: Left Editorial Text (Sits behind the floating product dashboard) ── */}
+        <motion.div
+          style={{
+            opacity: leftTextOpacity,
+            x: leftTextX,
+            pointerEvents: leftTextPointerEvents,
+          }}
+          className="absolute left-6 sm:left-12 lg:left-20 xl:left-28 top-1/2 -translate-y-1/2 z-10 max-w-[420px] text-left select-none"
+        >
+          <h2 className="font-display font-['Space_Grotesk'] text-3xl sm:text-5xl lg:text-[50px] font-black text-[#0c0d12] dark:text-white tracking-[-0.035em] leading-[1.05] mb-4">
+            Manage your<br />
+            lending, clearly.
+          </h2>
+
+          <div className="w-10 h-[2px] bg-[#2563eb] my-5 opacity-70" />
+
+          <p className="text-base sm:text-lg text-[#526077] dark:text-[#94a3b8] leading-relaxed font-normal">
+            Keep customer records, loan terms and repayments together in one place.
+          </p>
+        </motion.div>
+
+        {/* ── Layer 4: Centered Single-Object Motion Container (Elevated Foreground Product Plane) ── */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+          <motion.div
+            style={{
+              x: dashboardX,
+              y: dashboardY,
+              rotate: dashboardRotate,
+              scale: dashboardScale,
+              transformOrigin: 'center center',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+            }}
+            className="pointer-events-auto will-change-transform"
+          >
+            <HeroProductVisual />
+          </motion.div>
+        </div>
       </div>
     </section>
   );
