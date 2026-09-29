@@ -45,9 +45,10 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             localStorage.removeItem('auth-storage');
             // Public pages that should NOT be redirected
-            const publicPaths = ['/', '/landing', '/login', '/register', '/calculator', '/customer-login'];
+            const publicPaths = ['/', '/landing', '/login', '/register', '/calculator', '/customer-login', '/preview-dashboard'];
             const isPublicPage = publicPaths.some(p => window.location.pathname === p)
                 || window.location.pathname.startsWith('/landing')
+                || window.location.pathname.startsWith('/preview-dashboard')
                 || window.location.pathname.startsWith('/legal')
                 || window.location.pathname.startsWith('/privacy-policy')
                 || window.location.pathname.startsWith('/about');

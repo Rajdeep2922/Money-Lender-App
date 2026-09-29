@@ -116,11 +116,10 @@ const Navbar = () => {
                                     key={link.to}
                                     to={link.to}
                                     aria-current={active ? 'page' : undefined}
-                                    className={`relative flex items-center justify-between px-4 py-2.5 rounded-full text-sm font-medium transition-colors group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
-                                        active
+                                    className={`relative flex items-center justify-between px-4 py-2.5 rounded-full text-sm font-medium transition-colors group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${active
                                             ? 'text-white font-semibold'
                                             : 'text-[#0c0d12] dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/[0.06] dark:hover:text-white'
-                                    }`}
+                                        }`}
                                 >
                                     {active && (
                                         <motion.span
@@ -136,9 +135,8 @@ const Navbar = () => {
                                         <Icon
                                             size={18}
                                             weight="regular"
-                                            className={`shrink-0 transition-colors ${
-                                                active ? 'text-white' : 'text-[#0c0d12] dark:text-gray-300'
-                                            }`}
+                                            className={`shrink-0 transition-colors ${active ? 'text-white' : 'text-[#0c0d12] dark:text-gray-300'
+                                                }`}
                                         />
                                         <span className="truncate">{link.label}</span>
                                     </div>
@@ -159,11 +157,10 @@ const Navbar = () => {
                     {user && (
                         <Link
                             to="/settings"
-                            className={`flex items-center gap-3 px-4 py-2 rounded-full text-sm font-medium transition-all group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${
-                                location.pathname.startsWith('/settings')
+                            className={`flex items-center gap-3 px-4 py-2 rounded-full text-sm font-medium transition-all group focus-visible:ring-2 focus-visible:ring-primary focus:outline-none ${location.pathname.startsWith('/settings')
                                     ? 'bg-white/80 dark:bg-white/10 text-[#0c0d12] dark:text-white font-semibold'
                                     : 'text-[#0c0d12] dark:text-gray-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-                            }`}
+                                }`}
                         >
                             <Gear size={18} weight="regular" className="text-[#0c0d12] dark:text-gray-300" />
                             <span>Settings</span>
@@ -339,20 +336,18 @@ const Navbar = () => {
                                             key={link.to}
                                             to={link.to}
                                             aria-current={active ? 'page' : undefined}
-                                            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
-                                                active
+                                            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${active
                                                     ? 'bg-primary/10 text-primary dark:text-primary-bright font-semibold'
                                                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04]'
-                                            }`}
+                                                }`}
                                         >
                                             <Icon
                                                 size={18}
                                                 weight="regular"
-                                                className={`shrink-0 ${
-                                                    active
+                                                className={`shrink-0 ${active
                                                         ? 'text-primary dark:text-primary-bright'
                                                         : 'text-gray-400 dark:text-gray-500'
-                                                }`}
+                                                    }`}
                                             />
                                             <span className="truncate">{link.label}</span>
                                             {badge > 0 && (
@@ -369,47 +364,47 @@ const Navbar = () => {
                                 {user && (
                                     <>
                                         <Link
-                                        to="/settings"
-                                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
-                                    >
-                                        <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-[#202738] dark:border dark:border-white/10 text-white flex items-center justify-center overflow-hidden shrink-0 transition-colors">
-                                            {lender?.companyStamp ? (
-                                                <img
-                                                    src={lender.companyStamp}
-                                                    alt="Company Stamp"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                <span className="text-[12px] font-bold leading-none">
-                                                    {user.username?.charAt(0).toUpperCase() || 'U'}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                                {user.username}
-                                            </p>
-                                            <p className="text-[11px] text-gray-400 dark:text-gray-500">
-                                                Workspace Settings
-                                            </p>
-                                        </div>
-                                        <Gear size={18} weight="regular" className="text-gray-400 dark:text-gray-500 shrink-0" />
-                                    </Link>
+                                            to="/settings"
+                                            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-[#0c0d12] dark:bg-[#202738] dark:border dark:border-white/10 text-white flex items-center justify-center overflow-hidden shrink-0 transition-colors">
+                                                {lender?.companyStamp ? (
+                                                    <img
+                                                        src={lender.companyStamp}
+                                                        alt="Company Stamp"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <span className="text-[12px] font-bold leading-none">
+                                                        {user.username?.charAt(0).toUpperCase() || 'U'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                                    {user.username}
+                                                </p>
+                                                <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                                                    Workspace Settings
+                                                </p>
+                                            </div>
+                                            <Gear size={18} weight="regular" className="text-gray-400 dark:text-gray-500 shrink-0" />
+                                        </Link>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setMobileOpen(false);
-                                            window.location.href = '/signout';
-                                        }}
-                                        className="flex items-center gap-2.5 w-full text-left px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-red-600 dark:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/20 transition-colors"
-                                    >
-                                        <SignOut size={18} weight="regular" />
-                                        <span>Log out</span>
-                                    </button>
-                                </>
-                            )}
-                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setMobileOpen(false);
+                                                window.location.href = '/signout';
+                                            }}
+                                            className="flex items-center gap-2.5 w-full text-left px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-red-600 dark:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-950/20 transition-colors"
+                                        >
+                                            <SignOut size={18} weight="regular" />
+                                            <span>Log out</span>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         </motion.div>
                     </>
                 )}
