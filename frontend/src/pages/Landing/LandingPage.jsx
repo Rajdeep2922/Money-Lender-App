@@ -4,7 +4,7 @@ import InformationStrip from './components/InformationStrip';
 import Features from './sections/Features';
 import HowItWorks from './sections/HowItWorks';
 import Explore from './sections/Explore';
-import Testimonials from './sections/Testimonials';
+import Section5ProductJourney from './sections/Section5ProductJourney';
 import FinalCTA from './sections/FinalCTA';
 import Footer from './sections/Footer';
 import './landing.css';
@@ -18,7 +18,7 @@ export default function LandingPage() {
       <Features />
       <HowItWorks />
       <Explore />
-      <Testimonials />
+      <Section5ProductJourney />
       <FinalCTA />
       <Footer />
     </div>
