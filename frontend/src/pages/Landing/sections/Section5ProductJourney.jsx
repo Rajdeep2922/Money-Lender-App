@@ -13,6 +13,7 @@ import {
   Clock,
   TrendUp,
   Funnel,
+  ArrowRight,
 } from '@phosphor-icons/react';
 
 /**
@@ -344,14 +345,15 @@ function MobilePaymentsScreen({
                 Keep repayments organized, balances current, and your lending business under control.
               </p>
 
-              {/* Restrained Text-Style CTA */}
-              <Link
-                to="/register"
-                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#2563eb] hover:text-[#1d4ed8] transition-colors no-underline group"
-              >
-                <span>Explore Money Lender</span>
-                <span className="transition-transform group-hover:translate-x-0.5">→</span>
-              </Link>
+              {/* Authentic In-App Action Button */}
+              <div className="pt-0.5">
+                <Link
+                  to="/register"
+                  className="w-full py-1.5 sm:py-2 px-3 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] active:scale-[0.98] text-white text-[10.5px] sm:text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-2xs no-underline"
+                >
+                  <span>Open Workspace</span>
+                </Link>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -885,7 +887,7 @@ export default function Section5ProductJourney() {
 
         {/* ── Layer 4: Final Restrained Editorial Statement & Simple CTA (~85–100%) (z-40) ── */}
         <div
-          className="absolute left-0 right-0 z-40 flex flex-col items-center justify-center text-center max-w-[640px] mx-auto px-4 select-none top-[calc(50%+min(235px,31vh))] sm:top-[calc(50%+min(245px,32vh))] pointer-events-none"
+          className="absolute left-0 right-0 z-40 flex flex-col items-center justify-center text-center max-w-[640px] mx-auto px-4 select-none top-[calc(50%+min(275px,36.5vh))] sm:top-[calc(50%+min(285px,37.5vh))] pointer-events-none"
         >
           {/* Editorial Statement: Appears after TRACK / EVERY PAYMENT fade */}
           <motion.p
@@ -893,12 +895,12 @@ export default function Section5ProductJourney() {
               opacity: finalStatementOpacity,
               y: finalStatementY,
             }}
-            className="font-['Space_Grotesk'] text-base sm:text-lg md:text-xl font-semibold text-white/95 tracking-[-0.02em] leading-snug mb-2 will-change-transform"
+            className="font-['Space_Grotesk'] text-base sm:text-lg md:text-xl font-semibold text-white/95 tracking-[-0.02em] leading-snug mb-3 will-change-transform"
           >
             One workspace for every part of your lending business.
           </motion.p>
 
-          {/* Simple Restrained Text CTA: Appears last */}
+          {/* Refined Minimalist Editorial Pill: Appears last */}
           <motion.div
             style={{
               opacity: finalCtaOpacity,
@@ -909,10 +911,14 @@ export default function Section5ProductJourney() {
           >
             <Link
               to="/register"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#93c5fd] hover:text-white transition-colors duration-200 group no-underline"
+              className="inline-flex items-center gap-2 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full bg-white text-[#0c0f1d] hover:bg-[#f8fafc] text-xs sm:text-sm font-bold tracking-tight shadow-sm hover:shadow-md transition-all duration-200 active:scale-95 no-underline group"
             >
-              <span>Explore Money Lender</span>
-              <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
+              <span>Explore Platform</span>
+              <ArrowRight
+                size={13}
+                weight="bold"
+                className="text-[#0c0f1d]/70 transition-transform duration-200 group-hover:translate-x-0.5"
+              />
             </Link>
           </motion.div>
         </div>

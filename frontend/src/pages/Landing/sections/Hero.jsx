@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { createTimeline } from 'animejs';
 import HeroProductVisual from '../components/HeroProductVisual';
 
 /**
@@ -15,7 +16,118 @@ import HeroProductVisual from '../components/HeroProductVisual';
  */
 export default function Hero() {
   const containerRef = useRef(null);
+  const headlineRef = useRef(null);
+  const subtextRef = useRef(null);
+  const ctaRef = useRef(null);
+  const dashboardIntroRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
+
+  // Anime.js Page-Load Cinematic Intro Timeline
+  // Scoped STRICTLY to Hero refs; NEVER touches or selects the Navbar.
+  useEffect(() => {
+    if (shouldReduceMotion) return;
+
+    const headline = headlineRef.current;
+    const subtext = subtextRef.current;
+    const cta = ctaRef.current;
+    const dashboard = dashboardIntroRef.current;
+
+    if (!headline || !subtext || !cta || !dashboard) return;
+
+    // Helper to safely reset inline styles back to clean stylesheet rules
+    const resetInlineStyles = () => {
+      [headline, subtext, cta, dashboard].forEach((el) => {
+        if (el) {
+          el.style.opacity = '';
+          el.style.transform = '';
+        }
+      });
+    };
+
+    // Synchronous initial hidden states for Hero content only
+    headline.style.opacity = '0';
+    headline.style.transform = 'translateY(12px)';
+
+    subtext.style.opacity = '0';
+    subtext.style.transform = 'translateY(8px)';
+
+    cta.style.opacity = '0';
+    cta.style.transform = 'translateY(8px)';
+
+    dashboard.style.opacity = '0';
+    dashboard.style.transform = 'translateY(40px) scale(0.965)';
+
+    let tl;
+    try {
+      tl = createTimeline({
+        onComplete: resetInlineStyles,
+      });
+
+      // ~200ms: Headline begins subtle entrance
+      tl.add(
+        headline,
+        {
+          opacity: [0, 1],
+          translateY: [12, 0],
+          duration: 520,
+          ease: 'outCubic',
+        },
+        200
+      );
+
+      // ~380ms: Supporting text enters with subtle overlap
+      tl.add(
+        subtext,
+        {
+          opacity: [0, 1],
+          translateY: [8, 0],
+          duration: 460,
+          ease: 'outCubic',
+        },
+        380
+      );
+
+      // ~520ms: CTA enters without bounce
+      tl.add(
+        cta,
+        {
+          opacity: [0, 1],
+          translateY: [8, 0],
+          duration: 420,
+          ease: 'outCubic',
+        },
+        520
+      );
+
+      // ~680ms: Dashboard enters subtly
+      tl.add(
+        dashboard,
+        {
+          opacity: [0, 1],
+          translateY: [40, 0],
+          scale: [0.965, 1],
+          duration: 580,
+          ease: 'outCubic',
+        },
+        680
+      );
+    } catch (err) {
+      console.error('Anime.js timeline initialization error:', err);
+      resetInlineStyles();
+      return;
+    }
+
+    // Safety fallback: ensure inline styles are unconditionally cleared after 1.6s
+    const safetyTimer = setTimeout(resetInlineStyles, 1600);
+
+    return () => {
+      clearTimeout(safetyTimer);
+      if (tl && typeof tl.pause === 'function') {
+        tl.pause();
+      }
+      resetInlineStyles();
+    };
+  }, [shouldReduceMotion]);
 
   // 1. Raw scroll progress from the container
   const { scrollYProgress } = useScroll({
@@ -141,21 +253,35 @@ export default function Hero() {
           }}
           className="absolute top-[10vh] sm:top-[11vh] md:top-[12vh] left-0 right-0 z-30 flex flex-col items-center text-center px-4 max-w-[820px] mx-auto select-none"
         >
-          <h1 className="font-display font-['Space_Grotesk'] text-4xl sm:text-5xl md:text-[62px] font-bold text-white tracking-[-0.035em] leading-[1.04] mb-3.5 drop-shadow-sm">
+          <h1
+            ref={headlineRef}
+            data-hero-intro="headline"
+            className="font-display font-['Space_Grotesk'] text-4xl sm:text-5xl md:text-[62px] font-bold text-white tracking-[-0.035em] leading-[1.04] mb-3.5 drop-shadow-sm will-change-transform"
+          >
             Manage Every Loan.<br />
             From One Place.
           </h1>
 
-          <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-[520px] leading-relaxed mb-5 sm:mb-6 font-normal drop-shadow-xs">
+          <p
+            ref={subtextRef}
+            data-hero-intro="supporting"
+            className="text-sm sm:text-base md:text-lg text-white/90 max-w-[520px] leading-relaxed mb-5 sm:mb-6 font-normal drop-shadow-xs will-change-transform"
+          >
             Track customers, loans, repayments and your lending portfolio from one clear workspace.
           </p>
 
-          <Link
-            to="/register"
-            className="inline-flex items-center justify-center px-7 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white text-[#0c0d12] font-bold text-sm sm:text-base tracking-tight shadow-lg hover:bg-white/95 active:scale-[0.98] cursor-pointer relative z-10"
+          <div
+            ref={ctaRef}
+            data-hero-intro="cta"
+            className="will-change-transform"
           >
-            Get Started
-          </Link>
+            <Link
+              to="/register"
+              className="inline-flex items-center justify-center px-7 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white text-[#0c0d12] font-bold text-sm sm:text-base tracking-tight shadow-lg hover:bg-white/95 active:scale-[0.98] cursor-pointer relative z-10"
+            >
+              Get Started
+            </Link>
+          </div>
         </motion.div>
 
         {/* ── Layer 3: Left Editorial Text (Sits behind the floating product dashboard) ── */}
@@ -193,7 +319,14 @@ export default function Hero() {
             }}
             className="pointer-events-auto will-change-transform"
           >
-            <HeroProductVisual />
+            {/* Inner Intro Wrapper for Anime.js entrance; zero collision with Framer Motion transforms */}
+            <div
+              ref={dashboardIntroRef}
+              data-hero-intro="dashboard"
+              className="will-change-transform"
+            >
+              <HeroProductVisual />
+            </div>
           </motion.div>
         </div>
       </div>

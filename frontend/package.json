@@ -14,6 +14,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@phosphor-icons/react": "^2.1.10",
     "@tanstack/react-query": "^5.90.12",
+    "animejs": "^4.5.0",
     "axios": "^1.13.2",
     "framer-motion": "^12.23.26",
     "jspdf": "^4.0.0",

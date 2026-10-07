@@ -1,16 +1,69 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, X, Zap } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { animate } from 'animejs';
 
 const links = ['Features', 'How It Works', 'Benefits', 'Pricing', 'Contact'];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navbarRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
+
+  // Subtle initial entrance animation on landing page load (Anime.js isolated to this navbar ref)
+  useEffect(() => {
+    const prefersReducedMotion = typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!isLandingPage || prefersReducedMotion) return;
+
+    const navbar = navbarRef.current;
+    if (!navbar) return;
+
+    const resetStyles = () => {
+      if (navbar) {
+        navbar.style.opacity = '';
+        navbar.style.transform = '';
+        navbar.style.transition = '';
+      }
+    };
+
+    // Synchronous initial hidden position
+    navbar.style.transition = 'none';
+    navbar.style.opacity = '0';
+    navbar.style.transform = 'translateY(-14px)';
+
+    let anim;
+    try {
+      anim = animate(navbar, {
+        opacity: [0, 1],
+        translateY: [-14, 0],
+        duration: 580,
+        delay: 180,
+        ease: 'outCubic',
+        onComplete: resetStyles,
+      });
+    } catch (err) {
+      console.error('Navbar entrance animation error:', err);
+      resetStyles();
+      return;
+    }
+
+    // Safety fallback: ensure navbar is unconditionally cleared and visible after 1.2s
+    const safetyTimer = setTimeout(resetStyles, 1200);
+
+    return () => {
+      clearTimeout(safetyTimer);
+      if (anim && typeof anim.pause === 'function') {
+        anim.pause();
+      }
+      resetStyles();
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -38,6 +91,7 @@ export default function Navbar() {
     <>
       {/* ── Main navbar bar with continuous Credix-style frosted glass blur ── */}
       <nav
+        ref={navbarRef}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur-lg [-webkit-backdrop-filter:blur(16px)] ${scrolled
           ? 'bg-[#edf2f8]/85 dark:bg-[#0c0e14]/85 border-b border-black/[0.06] dark:border-white/[0.08] shadow-xs'
           : 'bg-white/[0.08] dark:bg-black/[0.2] border-b border-white/[0.14]'
