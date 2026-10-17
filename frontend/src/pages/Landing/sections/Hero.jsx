@@ -1,8 +1,10 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useLayoutEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createTimeline } from 'animejs';
 import HeroProductVisual from '../components/HeroProductVisual';
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 /**
  * Hero Component — Ultra-Smooth Credix-Style Scroll Experience
@@ -24,8 +26,13 @@ export default function Hero() {
 
   // Anime.js Page-Load Cinematic Intro Timeline
   // Scoped STRICTLY to Hero refs; NEVER touches or selects the Navbar.
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (shouldReduceMotion) return;
+
+    // If page is already scrolled down on refresh, skip intro to prevent any scroll collision
+    if (typeof window !== 'undefined' && window.scrollY > 4) {
+      return;
+    }
 
     const headline = headlineRef.current;
     const subtext = subtextRef.current;
@@ -34,8 +41,12 @@ export default function Hero() {
 
     if (!headline || !subtext || !cta || !dashboard) return;
 
+    let isCleanedUp = false;
+
     // Helper to safely reset inline styles back to clean stylesheet rules
     const resetInlineStyles = () => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
       [headline, subtext, cta, dashboard].forEach((el) => {
         if (el) {
           el.style.opacity = '';
@@ -44,7 +55,7 @@ export default function Hero() {
       });
     };
 
-    // Synchronous initial hidden states for Hero content only
+    // Synchronous initial hidden states before paint (zero FOUC / flash)
     headline.style.opacity = '0';
     headline.style.transform = 'translateY(12px)';
 
@@ -117,10 +128,28 @@ export default function Hero() {
       return;
     }
 
+    // Crucial: If the user starts scrolling after refresh, immediately settle intro
+    // so Anime.js never fights with Framer Motion scroll transformations
+    const handleEarlyScroll = () => {
+      if (window.scrollY > 4) {
+        if (tl && typeof tl.pause === 'function') {
+          tl.pause();
+        }
+        clearTimeout(safetyTimer);
+        resetInlineStyles();
+        window.removeEventListener('scroll', handleEarlyScroll);
+      }
+    };
+    window.addEventListener('scroll', handleEarlyScroll, { passive: true });
+
     // Safety fallback: ensure inline styles are unconditionally cleared after 1.6s
-    const safetyTimer = setTimeout(resetInlineStyles, 1600);
+    const safetyTimer = setTimeout(() => {
+      resetInlineStyles();
+      window.removeEventListener('scroll', handleEarlyScroll);
+    }, 1600);
 
     return () => {
+      window.removeEventListener('scroll', handleEarlyScroll);
       clearTimeout(safetyTimer);
       if (tl && typeof tl.pause === 'function') {
         tl.pause();

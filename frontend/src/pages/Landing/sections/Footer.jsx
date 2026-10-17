@@ -1,159 +1,176 @@
-import { useState } from 'react';
-import { Zap, Github, Linkedin } from 'lucide-react';
+import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { Zap, Github, Linkedin } from 'lucide-react';
 
-const cols = [
+const navColumns = [
   {
     title: 'Product',
     links: [
-      { label: 'Features', href: '#features-section', internal: false },
-      { label: 'Pricing', href: '#pricing', internal: false },
+      { label: 'Features', href: '#features', internal: false },
       { label: 'How It Works', href: '#how-it-works', internal: false },
+      { label: 'Explore Platform', href: '/login', internal: true },
     ],
   },
   {
     title: 'Company',
     links: [
       { label: 'About Us', href: '/about', internal: true },
-      { label: 'Contact', href: '#contact', internal: false },
+      { label: 'Contact', href: '/about', internal: true },
     ],
   },
   {
-    title: 'Support',
+    title: 'Resources',
     links: [
-      { label: 'Help Center', href: '#', internal: false },
+      { label: 'Help Center', href: '/legal', internal: true },
       { label: 'Privacy Policy', href: '/privacy-policy', internal: true },
       { label: 'Legal Center', href: '/legal', internal: true },
     ],
   },
 ];
 
+/**
+ * Footer Component — Quiet, Compact Editorial Footer
+ *
+ * Characteristics:
+ * - Subtle quiet neutral tone (#ECF1F7) seamless with the closing CTA
+ * - Controlled compact vertical padding (pt-10 pb-6)
+ * - 1px hairline border (#DCE5EF)
+ * - Deep navy (#0F172A) headers and subtle #475569 links
+ */
 export default function Footer() {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
-  const scrollTo = (href) => {
+  const handleScrollTo = (e, href) => {
     if (href.startsWith('#')) {
-      document.getElementById(href.slice(1))?.scrollIntoView({ behavior: 'smooth' });
+      e.preventDefault();
+      const targetId = href.slice(1);
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (email.trim()) {
-      setSubscribed(true);
-      setEmail('');
-    }
-  };
+  const footerMotion = shouldReduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 8 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, margin: '-20px' },
+        transition: { duration: 0.35, ease: 'easeOut' },
+      };
 
   return (
-    <footer style={{ background: '#020617', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '3.5rem 0 1.5rem' }}>
-      <div className="container">
-        <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '2.5rem', marginBottom: '3rem' }}>
-          {/* Brand */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.875rem' }}>
-              <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 12px rgba(6,182,212,0.35)' }}>
-                <Zap size={14} color="#fff" fill="#fff" />
+    <footer
+      id="contact"
+      className="relative w-full bg-[#ECF1F7] border-t border-[#DCE5EF] text-[#0F172A] select-none pt-10 sm:pt-12 pb-6 sm:pb-8 overflow-hidden"
+      style={{ backgroundColor: '#ECF1F7' }}
+    >
+      <motion.div
+        {...footerMotion}
+        className="max-w-[1120px] mx-auto px-6 sm:px-8 lg:px-12"
+      >
+        {/* ── Main Horizontal Grid Layout ── */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-10 items-start">
+          {/* ── Brand Area (Left ~35%) ── */}
+          <div className="md:col-span-5 lg:col-span-4 flex flex-col">
+            <Link
+              to="/landing"
+              className="inline-flex items-center gap-2.5 no-underline text-[#0F172A]"
+            >
+              <div className="w-5.5 h-5.5 rounded-md bg-[#2563EB] flex items-center justify-center shadow-2xs">
+                <Zap size={12} color="#fff" fill="#fff" />
               </div>
-              <span style={{ fontWeight: 700, fontSize: '0.975rem', color: '#f1f5f9' }}>Money Lenders</span>
-            </div>
-            <p style={{ fontSize: '0.825rem', color: '#475569', lineHeight: 1.65, marginBottom: '1.25rem' }}>
-              Smart lending for growing businesses. Manage your portfolio with confidence.
+              <span className="font-bold text-[14px] tracking-tight text-[#0F172A]">
+                Money Lender
+              </span>
+            </Link>
+
+            <p className="text-xs text-[#64748B] mt-2 leading-relaxed max-w-[260px] font-normal">
+              Smart lending management for growing businesses.
             </p>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+
+            {/* Subtle Monochrome Social Links */}
+            <div className="flex items-center gap-3 mt-3.5">
               <a
                 href="https://github.com/Rajdeep2922"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ width: 34, height: 34, borderRadius: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: 'all 0.2s', textDecoration: 'none' }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#22d3ee'; e.currentTarget.style.borderColor = 'rgba(34,211,238,0.3)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+                aria-label="GitHub Repository"
+                className="text-[#64748B] hover:text-[#2563EB] transition-colors duration-150"
               >
-                <Github size={15} />
+                <Github size={14} />
               </a>
               <a
                 href="https://www.linkedin.com/in/rajdeep-singh-3900b12b9/"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ width: 34, height: 34, borderRadius: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: 'all 0.2s', textDecoration: 'none' }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#22d3ee'; e.currentTarget.style.borderColor = 'rgba(34,211,238,0.3)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+                aria-label="LinkedIn Profile"
+                className="text-[#64748B] hover:text-[#2563EB] transition-colors duration-150"
               >
-                <Linkedin size={15} />
+                <Linkedin size={14} />
               </a>
             </div>
           </div>
 
-          {/* Link columns */}
-          {cols.map(col => (
-            <div key={col.title}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f1f5f9', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1rem' }}>{col.title}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                {col.links.map(({ label, href, internal }) =>
-                  internal ? (
-                    <Link key={label} to={href}
-                      style={{ fontSize: '0.85rem', color: '#64748b', textDecoration: 'none', transition: 'color 0.2s' }}
-                      onMouseEnter={e => e.target.style.color = '#22d3ee'}
-                      onMouseLeave={e => e.target.style.color = '#64748b'}>
-                      {label}
-                    </Link>
-                  ) : (
-                    <a key={label} href={href} onClick={e => { if (href.startsWith('#')) { e.preventDefault(); scrollTo(href); } }}
-                      style={{ fontSize: '0.85rem', color: '#64748b', textDecoration: 'none', transition: 'color 0.2s' }}
-                      onMouseEnter={e => e.target.style.color = '#22d3ee'}
-                      onMouseLeave={e => e.target.style.color = '#64748b'}>
-                      {label}
-                    </a>
-                  )
-                )}
+          {/* ── Navigation Columns (Right ~65%) ── */}
+          <div className="md:col-span-7 lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-8">
+            {navColumns.map((col) => (
+              <div key={col.title}>
+                <h4 className="text-[11px] font-semibold tracking-wider text-[#0F172A] uppercase mb-2.5">
+                  {col.title}
+                </h4>
+                <ul className="space-y-1.5 p-0 m-0 list-none">
+                  {col.links.map((link) => (
+                    <li key={link.label}>
+                      {link.internal ? (
+                        <Link
+                          to={link.href}
+                          className="text-xs font-normal text-[#475569] hover:text-[#2563EB] transition-colors duration-150 no-underline"
+                        >
+                          {link.label}
+                        </Link>
+                      ) : (
+                        <a
+                          href={link.href}
+                          onClick={(e) => handleScrollTo(e, link.href)}
+                          className="text-xs font-normal text-[#475569] hover:text-[#2563EB] transition-colors duration-150 no-underline cursor-pointer"
+                        >
+                          {link.label}
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          ))}
-
-          {/* Newsletter */}
-          <div>
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f1f5f9', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '1rem' }}>Stay Updated</div>
-            <p style={{ fontSize: '0.825rem', color: '#475569', marginBottom: '0.875rem', lineHeight: 1.6 }}>
-              Subscribe to get the latest updates and product news.
-            </p>
-            {subscribed ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#34d399', fontSize: '0.85rem', fontWeight: 600 }}>
-                <span>✓</span> Thanks for subscribing!
-              </div>
-            ) : (
-              <form className="footer-newsletter-form" onSubmit={handleSubscribe} style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  style={{ flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '0.625rem', padding: '0.6rem 0.875rem', fontSize: '0.82rem', color: '#f1f5f9', outline: 'none' }}
-                />
-                <button type="submit" className="btn-glow" style={{ padding: '0.6rem 0.875rem', fontSize: '0.82rem', borderRadius: '0.625rem', flexShrink: 0, width: 'auto' }}>→</button>
-              </form>
-            )}
+            ))}
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="footer-bottom" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p style={{ fontSize: '0.8rem', color: '#334155' }}>© 2026 Money Lenders. All rights reserved.</p>
-          <div style={{ display: 'flex', gap: '1.25rem' }}>
-            <Link to="/privacy-policy" style={{ fontSize: '0.8rem', color: '#334155', textDecoration: 'none', transition: 'color 0.2s' }}
-              onMouseEnter={e => e.target.style.color = '#22d3ee'}
-              onMouseLeave={e => e.target.style.color = '#334155'}>Privacy Policy</Link>
-            <span style={{ fontSize: '0.8rem', color: '#1e293b' }}>·</span>
-            <Link to="/legal" style={{ fontSize: '0.8rem', color: '#334155', textDecoration: 'none', transition: 'color 0.2s' }}
-              onMouseEnter={e => e.target.style.color = '#22d3ee'}
-              onMouseLeave={e => e.target.style.color = '#334155'}>Legal Center</Link>
-            <a href="#" style={{ fontSize: '0.8rem', color: '#334155', textDecoration: 'none', transition: 'color 0.2s' }}
-              onMouseEnter={e => e.target.style.color = '#22d3ee'}
-              onMouseLeave={e => e.target.style.color = '#334155'}>Cookies</a>
+        {/* ── Hairline Divider & Bottom Row ── */}
+        <div className="border-t border-[#DCE5EF] mt-8 sm:mt-10 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#64748B]">
+          {/* Left: Copyright */}
+          <span>© 2026 Money Lender. All rights reserved.</span>
+
+          {/* Right: Legal Links */}
+          <div className="flex items-center gap-3">
+            <Link
+              to="/privacy-policy"
+              className="text-[#64748B] hover:text-[#2563EB] transition-colors duration-150 no-underline"
+            >
+              Privacy Policy
+            </Link>
+            <span className="text-[#CBD5E1]">·</span>
+            <Link
+              to="/legal"
+              className="text-[#64748B] hover:text-[#2563EB] transition-colors duration-150 no-underline"
+            >
+              Terms
+            </Link>
           </div>
         </div>
-      </div>
+      </motion.div>
     </footer>
   );
 }

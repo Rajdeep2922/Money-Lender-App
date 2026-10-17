@@ -1,92 +1,117 @@
-import { motion } from 'framer-motion';
+import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Zap, ArrowUpRight, MessageSquare } from 'lucide-react';
+import { ArrowRight, Calculator, FileCheck2, MessageSquare } from 'lucide-react';
 
+const TRUST_POINTS = [
+  {
+    icon: Calculator,
+    title: 'Precision Calculations',
+    description: 'Automated EMI schedules, custom interest models, and penalty tracking with zero spreadsheet errors.',
+  },
+  {
+    icon: FileCheck2,
+    title: 'Audit-Ready Ledgers',
+    description: 'Every borrower profile, loan contract, and repayment timestamp stored in one clean, permanent ledger.',
+  },
+  {
+    icon: MessageSquare,
+    title: 'Real-Time Communication',
+    description: 'Negotiate terms, exchange documents, and track delivery receipts directly with borrowers in real time.',
+  },
+];
+
+/**
+ * FinalCTA Component — Compact, Refined Fintech Closing Section
+ *
+ * Visual Hierarchy & Layout:
+ * 1. CTA Headline: Primary focal point (~52–56px desktop)
+ * 2. CTA Supporting Copy: 18–19px comfortable text
+ * 3. Action CTAs: Standard fintech size (Get Started in #2563EB, Sign In outlined)
+ * 4. Compact Feature Strip: Horizontal white surface (~160px height), restrained 32px icons, 3 equal columns
+ */
 export default function FinalCTA() {
+  const shouldReduceMotion = useReducedMotion();
+
+  const motionProps = shouldReduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 12 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, margin: '-30px' },
+        transition: { duration: 0.45, ease: 'easeOut' },
+      };
+
   return (
-    <section id="contact" className="section" style={{ background: 'linear-gradient(180deg,#020617 0%,#071129 100%)', position: 'relative', overflow: 'hidden' }}>
-      <div className="blob blob-cyan" style={{ width: 500, height: 500, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', opacity: 0.4 }} />
-
-      <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-
-        {/* ── DESKTOP: unchanged centered layout ── */}
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
-          className="hide-mobile"
-          style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
-          <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '1rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', boxShadow: '0 0 30px rgba(6,182,212,0.4)' }}>
-            <Zap size={22} color="#fff" fill="#fff" />
-          </div>
-          <h2 style={{ fontSize: 'clamp(1.75rem,5vw,3rem)', fontWeight: 800, color: '#f1f5f9', marginBottom: '1rem', letterSpacing: '-0.02em' }}>
-            Ready to Grow Your <span className="grad-text">Lending Business?</span>
-          </h2>
-          <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: 1.7, marginBottom: '2.5rem' }}>
-            Join thousands of lenders who trust Money Lenders to manage their portfolio efficiently and professionally.
-          </p>
-          <div className="cta-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
-            <Link to="/register" className="btn-glow" style={{ padding: '0.9rem 2.25rem', fontSize: '1rem' }}>Get Started →</Link>
-            <Link to="/login" className="btn-ghost" style={{ padding: '0.9rem 2.25rem', fontSize: '1rem' }}>Contact Sales</Link>
-          </div>
-        </motion.div>
-
-        {/* ── MOBILE: premium closing card ── */}
+    <section
+      id="product-outro"
+      className="relative w-full bg-[#EBF2FA] border-t border-[#DCE5EF] select-none pt-24 sm:pt-28 pb-16 sm:pb-20 px-6 sm:px-8 lg:px-12"
+      style={{ backgroundColor: '#EBF2FA' }}
+    >
+      <div className="max-w-[1120px] mx-auto">
+        {/* ── Top Area: Centered CTA Statement & Buttons (Focal Point) ── */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.55 }}
-          className="show-mobile"
-          style={{
-            background: 'linear-gradient(135deg,rgba(6,182,212,0.09),rgba(16,185,129,0.05))',
-            border: '1px solid rgba(34,211,238,0.2)',
-            borderRadius: '1.5rem',
-            padding: '2rem 1.25rem',
-            textAlign: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
+          {...motionProps}
+          className="flex flex-col items-center text-center max-w-[760px] mx-auto mb-10 sm:mb-12"
         >
-          {/* Glow top */}
-          <div style={{ position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)', width: 280, height: 160, borderRadius: '50%', background: 'rgba(6,182,212,0.08)', pointerEvents: 'none' }} />
+          {/* Eyebrow */}
+          <span className="text-[11px] sm:text-xs font-semibold tracking-wider text-[#2563EB] uppercase mb-3 block">
+            The Money Lender Platform
+          </span>
 
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Icon */}
-            <div style={{ width: '3.75rem', height: '3.75rem', borderRadius: '1.125rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', boxShadow: '0 0 32px rgba(6,182,212,0.45), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
-              <Zap size={26} color="#fff" fill="#fff" />
-            </div>
+          {/* Headline (Controlled, Strongest Hierarchy ~52-56px desktop) */}
+          <h2 className="font-['Space_Grotesk'] text-3xl sm:text-4xl md:text-[48px] lg:text-[54px] font-bold text-[#0F172A] leading-[1.1] tracking-[-0.03em] mb-4">
+            Manage your lending business with complete confidence.
+          </h2>
 
-            <h2 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#f1f5f9', marginBottom: '0.75rem', letterSpacing: '-0.025em', lineHeight: 1.2 }}>
-              Ready to Grow Your{' '}
-              <span className="grad-text">Lending Business?</span>
-            </h2>
+          {/* Supporting Text (18–19px desktop) */}
+          <p className="text-base sm:text-lg lg:text-[18px] text-[#475569] leading-relaxed max-w-[580px] mb-7 sm:mb-8 font-normal">
+            Everything you need to originate loans, automate repayments, and maintain clear, verifiable financial records from day one.
+          </p>
 
-            <p style={{ fontSize: '0.875rem', color: '#64748b', lineHeight: 1.75, marginBottom: '1.75rem' }}>
-              Join lenders who use Money Lenders to manage customers, loans and collections professionally.
-            </p>
-
-            {/* Social proof strip */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginBottom: '1.75rem' }}>
-              {[
-                { val: '100%', label: 'Uptime' },
-                { val: '∞', label: 'Records' },
-                { val: '24/7', label: 'Access' },
-              ].map(s => (
-                <div key={s.label} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#22d3ee' }}>{s.val}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#475569', marginTop: '0.1rem' }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* CTAs */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-              <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', color: '#fff', fontWeight: 700, fontSize: '0.95rem', borderRadius: '0.875rem', padding: '0.875rem', textDecoration: 'none', boxShadow: '0 0 28px rgba(6,182,212,0.4)' }}>
-                Get Started <ArrowUpRight size={16} />
-              </Link>
-              <Link to="/login" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', fontWeight: 600, fontSize: '0.95rem', borderRadius: '0.875rem', padding: '0.875rem', textDecoration: 'none' }}>
-                <MessageSquare size={15} /> Contact Us
-              </Link>
-            </div>
+          {/* Action CTAs: Normal premium fintech sizing */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <Link
+              to="/register"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 sm:py-3 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-[0.99] text-white font-semibold text-sm transition-colors duration-150 shadow-xs cursor-pointer no-underline group"
+            >
+              <span>Get Started</span>
+              <ArrowRight
+                size={14}
+                className="transition-transform duration-150 group-hover:translate-x-0.5"
+              />
+            </Link>
+            <Link
+              to="/login"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 sm:py-3 rounded-lg border border-[#DCE5EF] hover:border-[#CBD5E1] bg-white hover:bg-[#F8FAFC] text-[#0F172A] font-medium text-sm transition-colors duration-150 cursor-pointer no-underline"
+            >
+              <span>Sign In to Account</span>
+            </Link>
           </div>
         </motion.div>
 
+        {/* ── Feature Strip: Compact Horizontal Supporting Surface (~160px desktop) ── */}
+        <div className="rounded-xl bg-white border border-[#DCE5EF] shadow-[0_1px_3px_rgba(15,23,42,0.03)] overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#DCE5EF]">
+            {TRUST_POINTS.map((point, i) => {
+              const { icon: Icon, title, description } = point;
+              return (
+                <div key={i} className="p-6 sm:p-7 lg:py-7 lg:px-8 flex flex-col items-start text-left">
+                  {/* Restrained 32px icon container */}
+                  <div className="w-8 h-8 rounded-md bg-[#EEF5FF] border border-[#DCE5EF] flex items-center justify-center text-[#2563EB] mb-3 shrink-0">
+                    <Icon size={16} strokeWidth={2.2} />
+                  </div>
+                  <h3 className="font-['Space_Grotesk'] text-[15px] sm:text-base font-bold text-[#0F172A] tracking-tight mb-1.5">
+                    {title}
+                  </h3>
+                  <p className="text-[13px] sm:text-[13.5px] text-[#475569] leading-relaxed font-normal">
+                    {description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
   );
