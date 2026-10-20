@@ -8,10 +8,7 @@ import {
   Smartphone,
   Github,
   Linkedin,
-  Zap,
   Sparkles,
-  Code2,
-  Check,
   Calendar,
 } from 'lucide-react';
 import Navbar from './sections/Navbar';
@@ -30,40 +27,48 @@ const heroTags = [
   { icon: Smartphone, label: 'Work from Anywhere' },
 ];
 
-/* ── Product Feature Checkmarks ──────────────────── */
-const productFeatures = [
-  'Automated EMI & interest breakdown in real-time',
-  'Instant customer credit profile & loan history lookup',
-  'Direct lender-borrower communication channel',
-  'One-click PDF invoices and repayment receipts',
-  'Continuous ledger math with zero manual formula errors',
+/* ── Product Capabilities ──────────────────────────── */
+const productCapabilities = [
+  {
+    title: 'Customer records',
+    description: 'Borrower details and loan history.',
+  },
+  {
+    title: 'Loan tracking',
+    description: 'Keep details and repayments organized.',
+  },
+  {
+    title: 'Payment records',
+    description: 'Record and review collections.',
+  },
+  {
+    title: 'Borrower communication',
+    description: 'Keep conversations together.',
+  },
 ];
+
 
 /* ── Journey Milestones (Founder Narrative) ──────── */
 const journeyMilestones = [
   {
     number: '01',
-    tag: 'Foundations & Craft',
     title: 'Learning Web Development',
-    desc: 'Mastered modern JavaScript, React, Node.js, and databases through curiosity, disciplined practice, and a drive to build scalable software.',
+    desc: 'Started by learning modern JavaScript, React, and Node.js through coursework and building small tools from scratch.',
   },
   {
     number: '02',
-    tag: 'The Real-World Need',
     title: 'Identifying the Problem',
-    desc: 'Observed the daily struggles of local lenders and small financiers relying on fragile paper registers, mental math, and spreadsheet confusion.',
+    desc: 'Observed local lenders and small financiers relying on fragile paper diaries, mental math, and spreadsheet confusion.',
   },
   {
     number: '03',
-    tag: 'Architecture & Build',
     title: 'Building Money Lender',
-    desc: 'Architected the full-stack system from scratch with real-time sync, automated ledger math, audit-ready exports, and secure authentication.',
+    desc: 'Built the platform step by step — borrower records, automated interest math, repayment tracking, and secure access.',
   },
   {
     number: '04',
-    tag: 'Ongoing Evolution',
     title: 'Continuous Improvement',
-    desc: 'Constantly refining UX polish, listening to lender feedback, hardening security, and shipping features that solve practical everyday needs.',
+    desc: 'Refining usability, hardening calculation edge cases, improving mobile access, and keeping the workflow straightforward.',
   },
 ];
 
@@ -510,222 +515,151 @@ export default function AboutUs() {
       </section>
 
       {/* ════════════════════════════════════════════════════════════
-          3. THE PRODUCT — AUTHENTIC ACTUAL DASHBOARD SHOWCASE
+          3. THE PRODUCT — FUNCTIONAL & COMPACT OVERVIEW
       ════════════════════════════════════════════════════════════ */}
-      <section className="pt-8 sm:pt-12 pb-20 sm:pb-28 px-4 sm:px-6 lg:px-8 max-w-[1240px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
-          {/* Left Column: Product Narrative & Feature Highlights */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.5 }}
-            className="lg:col-span-5"
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E2EAF4] border border-[#D0DEEC] text-[#2563EB] text-xs font-bold uppercase tracking-wider mb-4">
-              THE PRODUCT
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-bold tracking-tight text-[#0F172A] leading-[1.12] mb-5">
-              A complete platform for how you actually work.
+      <section className="pt-2 sm:pt-4 pb-8 sm:pb-10 px-4 sm:px-6 lg:px-8 max-w-[1240px] mx-auto scroll-mt-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 xl:gap-14 items-start">
+          {/* Left Column: Heading, Single Sentence Narrative & Simple Link */}
+          <div className="lg:col-span-5 flex flex-col justify-start">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A] leading-snug">
+              Built for everyday lending.
             </h2>
-
-            <p className="text-base text-[#475569] leading-relaxed mb-6 font-normal">
-              Built from the ground up to offer enterprise-grade clarity with consumer simplicity. Real-time dashboards, instant payment logging, transparent repayment schedules, and audit-ready records.
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed font-normal max-w-sm">
+              Customer records, loans, repayments and conversations, together in one place.
             </p>
 
-            {/* Checklist Highlights */}
-            <div className="space-y-3 mb-8">
-              {productFeatures.map((feat) => (
-                <div key={feat} className="flex items-center gap-3 text-xs sm:text-sm font-medium text-[#334155]">
-                  <div className="w-5 h-5 rounded-full bg-[#DBEAFE] text-[#2563EB] flex items-center justify-center flex-shrink-0">
-                    <Check size={12} strokeWidth={2.5} />
-                  </div>
-                  <span>{feat}</span>
+            <div className="mt-3.5">
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-[#2563EB] hover:text-[#1D4ED8] transition-colors no-underline group"
+              >
+                <span>Explore the platform</span>
+                <span className="transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true">&rarr;</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column: 4 Concise Capabilities in a Compact 2 × 2 Typographic Arrangement */}
+          <div className="lg:col-span-7 pt-4 sm:pt-0 border-t border-slate-300/60 lg:border-t-0 flex flex-col justify-start">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 sm:gap-x-10 gap-y-4 sm:gap-y-5">
+              {productCapabilities.map((cap) => (
+                <div key={cap.title} className="flex flex-col">
+                  <h3 className="text-sm font-semibold text-[#0F172A] tracking-tight">
+                    {cap.title}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-0.5 leading-normal font-normal">
+                    {cap.description}
+                  </p>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
 
-            <Link
-              to="/register"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#0F172A] text-white font-semibold text-sm hover:bg-[#1E293B] transition-colors shadow-xs no-underline"
-            >
-              Explore Platform <ArrowRight size={15} />
-            </Link>
-          </motion.div>
-
-          {/* Right Column: Understated Browser Frame with Verified Real Application Dashboard */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="lg:col-span-7 flex justify-center"
-          >
-            <div className="w-full bg-white rounded-xl sm:rounded-2xl border border-[#DCE5EF] shadow-[0_16px_40px_-12px_rgba(15,23,42,0.10)] overflow-hidden">
-              {/* Thin, Understated Browser Header Bar */}
-              <div
-                className="h-7 sm:h-8 px-3.5 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center gap-1.5"
-                aria-hidden="true"
-              >
-                <div className="w-2 h-2 rounded-full bg-[#EF4444]/80" />
-                <div className="w-2 h-2 rounded-full bg-[#F59E0B]/80" />
-                <div className="w-2 h-2 rounded-full bg-[#10B981]/80" />
-              </div>
-
-              {/* Verified Real Application Dashboard Visual */}
-              <div className="w-full bg-[#F0F4F9] overflow-hidden">
-                <img
-                  src="/real-dashboard.png"
-                  alt="Money Lender Actual Dashboard Platform Visual"
-                  className="w-full h-auto block select-none pointer-events-none"
-                  loading="eager"
-                />
+      {/* ════════════════════════════════════════════════════════════
+          4. THE JOURNEY — EDITORIAL FOUNDER TIMELINE (Warm Off-White)
+      ════════════════════════════════════════════════════════════ */}
+      <section className="w-full bg-[#F7F7F4] border-y border-[#EAEAE4] py-12 sm:py-16 lg:py-20">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-start">
+            {/* Left Column: Narrative Headline & Context */}
+            <div className="lg:col-span-5 flex flex-col justify-start lg:sticky lg:top-28">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A] leading-snug">
+                From Learning to Building
+              </h2>
+              <p className="text-sm sm:text-base text-slate-600 mt-2.5 sm:mt-3 leading-relaxed font-normal">
+                How a BCA student turned real-world observation and self-taught engineering into a practical lending platform.
+              </p>
+              <div className="hidden lg:block mt-6 pt-5 border-t border-[#E5E5DE] text-xs text-slate-500 leading-relaxed font-normal">
+                A solo developer project focused on practical utility over corporate complexity.
               </div>
             </div>
-          </motion.div>
-        </div>
-      </section>
 
-      {/* ════════════════════════════════════════════════════════════
-          4. THE JOURNEY — 4 CONNECTED MILESTONES (Founder Path)
-      ════════════════════════════════════════════════════════════ */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-[1240px] mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.5 }}
-          className="text-center max-w-2xl mx-auto mb-14 sm:mb-18"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E2EAF4] border border-[#D0DEEC] text-[#2563EB] text-xs font-bold uppercase tracking-wider mb-4">
-            THE JOURNEY
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#0F172A] mb-4">
-            From Learning to Building
-          </h2>
-          <p className="text-base text-[#475569] leading-relaxed font-normal">
-            How a BCA student turned curiosity, disciplined engineering, and real-world observation into a production-grade lending system.
-          </p>
-        </motion.div>
+            {/* Right Column: Vertical Editorial Timeline */}
+            <div className="lg:col-span-7 pt-2 sm:pt-0">
+              <div className="relative pl-6 sm:pl-7">
+                {/* Continuous thin vertical line */}
+                <div
+                  className="absolute top-2 bottom-4 left-[5.5px] w-px bg-[#D6D6CE]"
+                  aria-hidden="true"
+                />
 
-        {/* 4 Connected Milestone Cards */}
-        <div className="relative">
-          {/* Subtle horizontal connecting dashed line on desktop */}
-          <div className="hidden lg:block absolute top-12 left-12 right-12 h-0.5 border-t-2 border-dashed border-[#CBD5E1] -z-0" />
+                <div className="space-y-6 sm:space-y-7">
+                  {journeyMilestones.map((milestone) => (
+                    <div key={milestone.number} className="relative group">
+                      {/* Milestone Node on the line */}
+                      <div
+                        className="absolute -left-6 top-[5px] w-3 h-3 rounded-full bg-[#0F172A] ring-4 ring-[#F7F7F4]"
+                        aria-hidden="true"
+                      />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-            {journeyMilestones.map((milestone, idx) => (
-              <motion.div
-                key={milestone.number}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.4, delay: idx * 0.1 }}
-                className="bg-white border border-[#DCE5EF] rounded-2xl p-6 shadow-xs hover:border-[#CBDCEE] hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-xl bg-[#E8EFF8] border border-[#D0DEEC] text-[#2563EB] font-bold text-sm flex items-center justify-center font-mono">
-                      {milestone.number}
+                      {/* Milestone Text with Fine Separator */}
+                      <div className="border-b border-[#E8E8E2] pb-6 group-last:border-b-0 group-last:pb-0">
+                        <span className="text-xs font-mono font-medium text-slate-400 block mb-1">
+                          {milestone.number}
+                        </span>
+                        <h3 className="text-base font-semibold text-[#0F172A] tracking-tight mb-1.5">
+                          {milestone.title}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                          {milestone.desc}
+                        </p>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider bg-slate-50 border border-[#E2E8F0] px-2.5 py-1 rounded-full">
-                      {milestone.tag}
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-bold text-[#0F172A] mb-2">
-                    {milestone.title}
-                  </h3>
-
-                  <p className="text-xs sm:text-sm text-[#475569] leading-relaxed mb-0 font-normal">
-                    {milestone.desc}
-                  </p>
+                  ))}
                 </div>
-              </motion.div>
-            ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ════════════════════════════════════════════════════════════
-          5. CLOSING CTA SECTION — EDITORIAL NAVY CONTAINER
+          5. CLOSING CTA SECTION — EDITORIAL NAVY PANEL
       ════════════════════════════════════════════════════════════ */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-[1240px] mx-auto">
+      <section className="py-10 sm:py-14 lg:py-16 px-4 sm:px-6 lg:px-8 max-w-[1240px] mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.6 }}
-          className="relative bg-[#0F172A] border border-white/10 text-white rounded-[32px] sm:rounded-[40px] p-8 sm:p-12 lg:p-14 overflow-hidden shadow-2xl"
+          viewport={{ once: true, margin: '-50px' }}
+          transition={{ duration: 0.5 }}
+          className="bg-[#0F172A] border border-slate-800/80 text-white rounded-2xl sm:rounded-3xl p-7 sm:p-9 lg:p-11 shadow-xs"
         >
-          {/* Subtle glowing ambient accents */}
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-[#2563EB]/20 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-[#3B82F6]/15 blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* Left Col: Headline & Subtitle */}
-            <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs font-bold uppercase tracking-wider mb-4">
-                GET STARTED TODAY
-              </div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.12] mb-4">
-                Take Control of Your Lending Operations Today
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 lg:gap-10">
+            {/* Left Column: Headline & Supporting Copy */}
+            <div className="max-w-xl">
+              <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-bold tracking-tight text-white leading-tight">
+                Make lending easier to manage.
               </h2>
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl font-normal">
-                Join smart lenders who save hours every week, eliminate spreadsheet calculation errors, and build transparent relationships with borrowers.
+              <p className="text-sm sm:text-base text-slate-300 mt-2 sm:mt-2.5 leading-relaxed font-normal">
+                Keep customer records, loans, repayments, and conversations organized in one place.
               </p>
             </div>
 
-            {/* Right Col: Action Buttons & Reassurance Points */}
-            <div className="lg:col-span-5 flex flex-col items-start lg:items-end">
-              <div className="flex items-center gap-3.5 flex-wrap mb-4">
-                <Link
-                  to="/register"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#2563EB] text-white font-bold text-sm hover:bg-blue-600 transition-colors shadow-md no-underline"
-                >
-                  Get Started Free <ArrowUpRight size={16} />
-                </Link>
-                <Link
-                  to="/login"
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/15 text-white border border-white/20 font-semibold text-sm transition-colors no-underline"
-                >
-                  Sign In
-                </Link>
-              </div>
-
-              {/* Reassurance Tags */}
-              <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
-                <span className="flex items-center gap-1">
-                  <Check size={12} className="text-emerald-400" /> Free to get started
-                </span>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <Check size={12} className="text-emerald-400" /> No credit card
-                </span>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <Check size={12} className="text-emerald-400" /> Instant setup
-                </span>
-              </div>
+            {/* Right Column: Action Buttons */}
+            <div className="flex items-center gap-3.5 sm:gap-4 flex-wrap shrink-0 pt-1 md:pt-0">
+              <Link
+                to="/register"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 sm:py-3 rounded-xl bg-[#2563EB] hover:bg-blue-600 text-white font-semibold text-sm transition-colors shadow-2xs no-underline"
+              >
+                <span>Get Started Free</span>
+                <ArrowUpRight size={15} />
+              </Link>
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center px-6 py-2.5 sm:py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/15 font-semibold text-sm transition-colors no-underline"
+              >
+                Sign In
+              </Link>
             </div>
           </div>
         </motion.div>
       </section>
 
       {/* ════════════════════════════════════════════════════════════
-          6. ATTRIBUTION RIBBON & UNIVERSAL FOOTER
+          6. UNIVERSAL FOOTER
       ════════════════════════════════════════════════════════════ */}
-      <div className="bg-[#E2EAF4] border-t border-b border-[#D0DEEC] py-3.5">
-        <div className="max-w-[1240px] mx-auto px-4 flex justify-center items-center gap-2 text-xs font-medium text-[#475569] text-center">
-          <Code2 size={14} className="text-[#2563EB]" />
-          <span>
-            Built with passion by <strong className="text-[#0F172A]">Rajdeep Singh</strong> · Full-Stack Developer &amp; BCA Student
-          </span>
-          <Zap size={12} className="text-[#2563EB] fill-[#2563EB]" />
-        </div>
-      </div>
-
       <Footer />
     </div>
   );
