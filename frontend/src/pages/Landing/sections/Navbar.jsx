@@ -11,7 +11,6 @@ const navLinks = [
   { label: 'Features', type: 'scroll', target: 'features' },
   { label: 'How It Works', type: 'scroll', target: 'how-it-works' },
   { label: 'About Us', type: 'route', target: '/about' },
-  { label: 'Contact', type: 'scroll', target: 'contact' },
 ];
 
 export default function Navbar() {
@@ -161,7 +160,7 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Center Navigation: Links (Home, Features, How It Works, About Us, Contact) */}
+          {/* Center Navigation: Links (Home, Features, How It Works, About Us) */}
           <nav
             aria-label="Main Navigation"
             className="hide-mobile"
