@@ -14,8 +14,7 @@ export function HeroProductVisual({ className = '' }) {
     <div
       className={`relative w-[840px] sm:w-[920px] lg:w-[980px] xl:w-[1040px] select-none text-left ${className}`}
     >
-      {/* ── 1. Studio Display Chassis (Precision Dark Anodized Aluminum) ── */}
-      <div className="relative rounded-[28px] sm:rounded-[36px] bg-[#16181e] p-2.5 sm:p-3 border border-[#2e313b] ring-1 ring-black/70 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.38),0_50px_110px_-18px_rgba(15,23,42,0.28)] transition-all">
+      <div className="relative rounded-[28px] sm:rounded-[36px] bg-[#16181e] p-2.5 sm:p-3 border border-[#2e313b] ring-1 ring-black/70 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.38),0_50px_110px_-18px_rgba(15,23,42,0.28)]">
         {/* ── Pro Display Hardware Camera Notch ── */}
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 z-30 w-24 sm:w-28 h-4 sm:h-4.5 bg-[#0f1015] rounded-b-xl border-b border-x border-[#2d303b] shadow-[0_3px_8px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.06)] flex items-center justify-center gap-2 pointer-events-none"
