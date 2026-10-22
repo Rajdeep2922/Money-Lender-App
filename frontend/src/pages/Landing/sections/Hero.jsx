@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createTimeline } from 'animejs';
@@ -7,14 +7,20 @@ import HeroProductVisual from '../components/HeroProductVisual';
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 /**
- * Hero Component — Ultra-Smooth Credix-Style Scroll Experience
+ * Hero Component — Adaptive Desktop & Mobile Architecture
  *
- * Polished with:
- * - High-precision critically-damped spring smoothing (eliminates stepped mouse-wheel notches).
- * - 9-knot harmonic physical trajectory with smooth curvature continuity.
+ * Desktop (>= 768px):
+ * - Cinematic 320vh scroll-driven 3D parallax experience.
+ * - Critically-damped spring smoothing with 9-knot harmonic physical trajectory.
+ * - Hardware-accelerated video decoding with offscreen pause observer.
  * - Perfectly synchronized physical glide (X, Y, rotate, scale evolve in lockstep).
- * - Multi-knot invisible video fade.
- * - Restrained horizontal left text reveal.
+ *
+ * Mobile (< 768px):
+ * - Natural, lightweight vertical stack (no 320vh spacer or sticky scroll-trap).
+ * - Zero desktop scroll transform / spring calculations overhead.
+ * - Lightweight sky-inspired gradient backdrop (zero MP4 downloading or video decoding).
+ * - Studio Display frame scaled responsively to min(92vw, 440px) without overflow.
+ * - Editorial bridge gracefully leads directly into the InformationStrip.
  */
 export default function Hero() {
   const containerRef = useRef(null);
@@ -24,9 +30,25 @@ export default function Hero() {
   const ctaRef = useRef(null);
   const dashboardIntroRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
+  const introCompletedRef = useRef(false);
 
-  // Pause offscreen video to preserve GPU rendering capacity
+  // Responsive desktop detection (768px boundary)
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 768px)').matches;
+  });
+
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(min-width: 768px)');
+    const onChange = (e) => setIsDesktop(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
+  // Pause offscreen video to preserve GPU rendering capacity (desktop only)
+  useEffect(() => {
+    if (!isDesktop) return;
     const video = videoRef.current;
     const container = containerRef.current;
     if (!video || !container) return;
@@ -44,37 +66,59 @@ export default function Hero() {
 
     observer.observe(container);
     return () => observer.disconnect();
-  }, []);
+  }, [isDesktop]);
 
-  // Anime.js Page-Load Cinematic Intro Timeline
+  // Anime.js Page-Load Cinematic Intro Timeline (Desktop only)
   // Scoped STRICTLY to Hero refs; NEVER touches or selects the Navbar.
   useIsomorphicLayoutEffect(() => {
-    if (shouldReduceMotion) return;
-
-    // If page is already scrolled down on refresh, skip intro to prevent any scroll collision
-    if (typeof window !== 'undefined' && window.scrollY > 4) {
+    // If reduced motion is requested, settle immediately and mark complete
+    if (shouldReduceMotion) {
+      introCompletedRef.current = true;
       return;
     }
+
+    // Do nothing on mobile viewports
+    if (!isDesktop) return;
 
     const headline = headlineRef.current;
     const subtext = subtextRef.current;
     const cta = ctaRef.current;
     const dashboard = dashboardIntroRef.current;
 
-    if (!headline || !subtext || !cta || !dashboard) return;
-
-    let isCleanedUp = false;
-
-    // Helper to safely reset inline styles back to clean stylesheet rules
+    // Helper to unconditionally reset inline styles back to clean stylesheet rules
     const resetInlineStyles = () => {
-      if (isCleanedUp) return;
-      isCleanedUp = true;
       [headline, subtext, cta, dashboard].forEach((el) => {
         if (el) {
           el.style.opacity = '';
           el.style.transform = '';
         }
       });
+    };
+
+    // If intro has already completed or been bypassed on a previous pass,
+    // ensure inline styles are pristine and never replay
+    if (introCompletedRef.current) {
+      resetInlineStyles();
+      return;
+    }
+
+    // If page is already scrolled down on refresh, skip intro to prevent any scroll collision
+    if (typeof window !== 'undefined' && window.scrollY > 4) {
+      introCompletedRef.current = true;
+      resetInlineStyles();
+      return;
+    }
+
+    if (!headline || !subtext || !cta || !dashboard) return;
+
+    // Mark intro as initiated so subsequent resize events will not replay it
+    introCompletedRef.current = true;
+
+    let isCleanedUp = false;
+    const safeResetInlineStyles = () => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+      resetInlineStyles();
     };
 
     // Synchronous initial hidden states before paint (zero FOUC / flash)
@@ -93,7 +137,7 @@ export default function Hero() {
     let tl;
     try {
       tl = createTimeline({
-        onComplete: resetInlineStyles,
+        onComplete: safeResetInlineStyles,
       });
 
       // ~200ms: Headline begins subtle entrance
@@ -146,7 +190,7 @@ export default function Hero() {
       );
     } catch (err) {
       console.error('Anime.js timeline initialization error:', err);
-      resetInlineStyles();
+      safeResetInlineStyles();
       return;
     }
 
@@ -158,7 +202,7 @@ export default function Hero() {
           tl.pause();
         }
         clearTimeout(safetyTimer);
-        resetInlineStyles();
+        safeResetInlineStyles();
         window.removeEventListener('scroll', handleEarlyScroll);
       }
     };
@@ -166,7 +210,7 @@ export default function Hero() {
 
     // Safety fallback: ensure inline styles are unconditionally cleared after 1.6s
     const safetyTimer = setTimeout(() => {
-      resetInlineStyles();
+      safeResetInlineStyles();
       window.removeEventListener('scroll', handleEarlyScroll);
     }, 1600);
 
@@ -176,9 +220,9 @@ export default function Hero() {
       if (tl && typeof tl.pause === 'function') {
         tl.pause();
       }
-      resetInlineStyles();
+      safeResetInlineStyles();
     };
-  }, [shouldReduceMotion]);
+  }, [shouldReduceMotion, isDesktop]);
 
   // 1. Raw scroll progress from the container
   const { scrollYProgress } = useScroll({
@@ -275,28 +319,34 @@ export default function Hero() {
     <section
       ref={containerRef}
       id="hero"
-      className="relative z-10 w-full h-[320vh] bg-[#edf2f8] dark:bg-[#0c0e14]"
+      className="relative z-10 w-full md:h-[320vh] bg-[#edf2f8] dark:bg-[#0c0e14]"
     >
-      {/* ── Sticky Viewport Frame (Pinned 100vh during the scroll transformation) ── */}
+      {/* ════════════════════════════════════════════════════════════
+          DESKTOP VIEWPORT (>= 768px)
+          Cinematic 320vh scroll-driven 3D parallax experience
+          Pinned 100vh during the scroll transformation
+      ════════════════════════════════════════════════════════════ */}
       <div
-        className="sticky top-0 left-0 w-full h-screen overflow-x-clip flex items-center justify-center"
+        className="hidden md:flex sticky top-0 left-0 w-full h-screen overflow-x-clip items-center justify-center"
         style={{ overflowY: 'visible' }}
       >
-        {/* ── Layer 1: Background Sky Video (Opacity 1.00 -> 0.00 across 0.00–0.68) ── */}
-        <motion.div
-          style={{ opacity: videoOpacity, display: videoDisplay }}
-          className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden"
-        >
-          <video
-            ref={videoRef}
-            src="/hero-sky.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover"
-          />
-        </motion.div>
+        {/* ── Layer 1: Background Sky Video (Desktop only: zero mobile download or decoding) ── */}
+        {isDesktop && (
+          <motion.div
+            style={{ opacity: videoOpacity, display: videoDisplay }}
+            className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden"
+          >
+            <video
+              ref={videoRef}
+              src="/hero-sky.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+        )}
 
         {/* ── Layer 2: Initial Hero Centered Content & Get Started CTA (Elevated z-30 in front of dashboard) ── */}
         <motion.div
@@ -383,6 +433,60 @@ export default function Hero() {
               <HeroProductVisual />
             </div>
           </motion.div>
+        </div>
+      </div>
+
+      {/* ════════════════════════════════════════════════════════════
+          MOBILE VIEWPORT (< 768px)
+          Touch-first, natural vertical stack without scroll trap
+          Zero video decoding, zero heavy spring calculations
+      ════════════════════════════════════════════════════════════ */}
+      <div className="md:hidden relative w-full overflow-hidden flex flex-col items-center pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 sm:px-6">
+        {/* Lightweight sky-inspired static backdrop (zero video payload) */}
+        <div
+          aria-hidden="true"
+          className="absolute top-0 left-0 right-0 h-[500px] sm:h-[560px] pointer-events-none overflow-hidden z-0"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1b3a5b] via-[#2563eb] via-50% to-[#edf2f8] dark:to-[#0c0e14]" />
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-[120%] h-[260px] bg-gradient-to-b from-white/20 via-sky-200/10 to-transparent blur-xl pointer-events-none" />
+        </div>
+
+        {/* 1. Mobile Headline & Supporting Text */}
+        <div className="relative z-10 flex flex-col items-center text-center max-w-[540px] mx-auto select-none">
+          <h1 className="font-display font-['Space_Grotesk'] text-3xl sm:text-4xl font-bold text-white tracking-[-0.035em] leading-[1.08] mb-3 drop-shadow-sm">
+            Manage Every Loan.<br />
+            From One Place.
+          </h1>
+
+          <p className="text-sm sm:text-base text-white/90 max-w-[420px] leading-relaxed mb-6 font-normal drop-shadow-xs px-2">
+            Track customers, loans, repayments and your lending portfolio from one clear workspace.
+          </p>
+
+          <Link
+            to="/register"
+            className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-white text-[#0c0d12] font-bold text-sm tracking-tight shadow-md hover:bg-white/95 active:scale-[0.98] cursor-pointer transition-transform"
+          >
+            Get Started
+          </Link>
+        </div>
+
+        {/* 2. Scaled Studio Display Hardware Visual */}
+        <div className="relative z-10 mt-7 sm:mt-9 flex justify-center w-full">
+          <HeroProductVisual />
+        </div>
+
+        {/* 3. Editorial Bridge into Next Section */}
+        <div className="relative z-10 mt-10 sm:mt-12 text-center max-w-[440px] mx-auto px-4 select-none">
+          <h2 className="font-display font-['Space_Grotesk'] text-2xl sm:text-3xl font-black text-[#0c0d12] dark:text-white tracking-[-0.03em] leading-[1.1] mb-2.5">
+            Manage your<br />
+            lending, clearly.
+          </h2>
+
+          <div className="w-8 h-[2px] bg-[#2563eb] mx-auto my-3 opacity-70" />
+
+          <p className="text-sm sm:text-base text-[#526077] dark:text-[#94a3b8] leading-relaxed font-normal">
+            Keep customer records, loan terms and repayments together in one place.
+          </p>
         </div>
       </div>
     </section>

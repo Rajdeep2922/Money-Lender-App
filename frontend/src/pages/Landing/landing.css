@@ -272,13 +272,13 @@
 }
 
 /* ── Mobile & Responsive Overrides ───────────────────────────────────────── */
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .hide-mobile {
     display: none !important;
   }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 768px) {
   .show-mobile {
     display: none !important;
   }
