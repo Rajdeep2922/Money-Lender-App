@@ -1,0 +1,104 @@
+Money-Lender App Source-Available License
+
+Copyright (c) 2026 Rajdeep2922. All rights reserved.
+Project: Money-Lender App
+Repository: https://github.com/Rajdeep2922/Money-Lender-App
+
+===============================================================================
+1. PREAMBLE & CLASSIFICATION
+===============================================================================
+
+This software and its associated documentation files (the "Software") are made
+available by the copyright holder under a custom source-available license for
+personal learning, academic study, and portfolio demonstration purposes.
+
+This license is NOT an Open Source Initiative (OSI) approved open-source license.
+It does NOT grant public commercial exploitation or unrestricted redistribution
+rights. All rights not expressly granted herein are reserved by the copyright
+holder.
+
+===============================================================================
+2. PERMITTED USES (NON-COMMERCIAL & EDUCATIONAL)
+===============================================================================
+
+Subject to the terms and conditions of this license, any individual is hereby
+granted permission, free of charge, to:
+
+a. View, inspect, study, and research the Software's source code, documentation,
+   and system architecture.
+b. Execute and run the Software locally for personal learning, educational
+   evaluation, and skill demonstration.
+c. Clone or fork the repository solely for private, personal, non-commercial
+   learning, experimentation, and academic coursework.
+d. Modify the source code solely for personal educational purposes and private
+   experimentation, provided that such modifications are retained privately and
+   are not used commercially, publicly redistributed, or transferred in violation
+   of this license.
+e. Portfolio & Attribution: Reference the Software in resumes, personal portfolios,
+   and academic papers as an educational or research project. Users may provide
+   links to the original repository and display project screenshots or
+   descriptions, provided that they do not publicly redistribute the Software or
+   modified source code without permission. Appropriate attribution to Rajdeep2922
+   and a link to the original repository must be included.
+
+===============================================================================
+3. RESTRICTIONS & PROHIBITED ACTIVITIES
+===============================================================================
+
+Except as expressly authorized in Section 2, the following activities are strictly
+prohibited without prior, explicit written permission from the copyright holder:
+
+a. Commercial Use: Using the Software, or any substantial portion thereof, to
+   operate, facilitate, or support any commercial business, lending operations,
+   paid financial services, or revenue-generating activities.
+b. Resale & Sublicensing: Selling, licensing, sublicensing, renting, leasing,
+   or monetizing the Software, whether in source code or compiled binary form.
+c. Public Redistribution & Publication: Publishing, publicly redistributing,
+   republishing, mirroring, or making the original Software or any modified
+   version available for download or distribution, in whole or in part, without
+   prior written permission from the copyright holder. This restriction does not
+   prohibit the private, non-commercial local use expressly permitted under
+   Section 2.
+d. White-Labeling & Product Plagiarism: Rebranding, renaming, or republishing
+   the Software—in whole or in part—as your own product, service, template, or
+   commercial deliverable.
+e. Client & Business Deployment: Deploying, hosting, configuring, or delivering
+   the Software for clients, commercial enterprises, third-party companies, or
+   production lending organizations.
+f. Commercial Derivative Works: Creating, distributing, or offering commercial
+   derivative software, modules, plugins, or services based on this Software.
+g. Ownership & Attribution Removal: Removing, altering, or obscuring any original
+   copyright notices, project identifiers, author attribution lines, or license
+   text, or claiming ownership of the original source code.
+h. Paid Services & Packaging: Bundling or embedding the Software into any paid
+   training course, commercial software suite, or SaaS platform.
+
+===============================================================================
+4. COMMERCIAL LICENSING & PERMISSIONS
+===============================================================================
+
+Any commercial use, business implementation, client deployment, sublicensing,
+or public redistribution beyond the explicit personal and educational permissions
+granted in Section 2 requires a separate commercial license negotiated and granted
+in writing by the copyright holder.
+
+Nothing in this document shall be construed as implicitly granting commercial
+rights, patents, trademarks, or proprietary endorsements.
+
+Inquiries regarding commercial permissions, custom licensing, or institutional
+use may be directed to:
+- Copyright Holder: Rajdeep2922
+- GitHub: https://github.com/Rajdeep2922
+
+===============================================================================
+5. DISCLAIMER OF WARRANTIES & LIMITATION OF LIABILITY
+===============================================================================
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, LOSSES,
+OR OTHER LIABILITIES, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE,
+ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE, ITS SOURCE CODE, OR THE
+USE, MISUSE, OR OTHER DEALINGS IN THE SOFTWARE.

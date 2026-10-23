@@ -16,8 +16,8 @@
     "express",
     "mongodb"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Rajdeep2922",
+  "license": "MIT",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cloudinary": "^1.41.3",
