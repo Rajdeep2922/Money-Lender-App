@@ -125,8 +125,30 @@ const EXPLORE_CARDS = [
   },
 ];
 
+/**
+ * Hook to detect mobile viewports (< 768px)
+ */
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < breakpoint;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    const update = (e) => setIsMobile(e.matches);
+    setIsMobile(mql.matches);
+    mql.addEventListener('change', update);
+    return () => mql.removeEventListener('change', update);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 export default function Explore() {
   const shouldReduceMotion = useReducedMotion();
+  const isMobile = useIsMobile(768);
   const trackRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -138,14 +160,16 @@ export default function Explore() {
   const isDraggingRef = useRef(false);
   const isAutoScrollingRef = useRef(false);
   const autoScrollTimerRef = useRef(null);
+  const rAFScrollRef = useRef(null);
   const startXRef = useRef(0);
   const startScrollLeftRef = useRef(0);
   const hasMovedRef = useRef(false);
 
-  // Clean up timer on unmount
+  // Clean up timer and animation frame on unmount
   useEffect(() => {
     return () => {
       if (autoScrollTimerRef.current) clearTimeout(autoScrollTimerRef.current);
+      if (rAFScrollRef.current) cancelAnimationFrame(rAFScrollRef.current);
     };
   }, []);
 
@@ -158,10 +182,10 @@ export default function Explore() {
 
   // Calculate focal point where the active card pops out (left-center on desktop, center on mobile)
   const getFocalOffset = useCallback((containerWidth) => {
-    return window.innerWidth < 768
+    return isMobile
       ? containerWidth * 0.5
       : Math.min(containerWidth * 0.32, 440);
-  }, []);
+  }, [isMobile]);
 
   // Smoothly scroll to a specific card index and trigger immediate pop
   const scrollToCard = useCallback((idx) => {
@@ -205,62 +229,76 @@ export default function Explore() {
   }, [activeIndex, dismissHint, scrollToCard]);
 
   // Recalculate which card center is closest to the focal point as the user scrolls
+  // Uses mathematical offsetLeft without synchronous layout thrashing (getBoundingClientRect)
   const handleScroll = useCallback(() => {
     if (isAutoScrollingRef.current) return;
     const container = containerRef.current;
     const track = trackRef.current;
     if (!container || !track) return;
 
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    if (maxScroll > 10) {
-      if (container.scrollLeft <= 25) {
-        setActiveIndex(0);
-        return;
+    if (rAFScrollRef.current) cancelAnimationFrame(rAFScrollRef.current);
+    rAFScrollRef.current = requestAnimationFrame(() => {
+      const scrollLeft = container.scrollLeft;
+      const clientWidth = container.clientWidth;
+      const maxScroll = container.scrollWidth - clientWidth;
+
+      if (maxScroll > 10) {
+        if (scrollLeft <= 25) {
+          setActiveIndex(0);
+          return;
+        }
+        if (scrollLeft >= maxScroll - 35) {
+          setActiveIndex(EXPLORE_CARDS.length - 1);
+          return;
+        }
       }
-      if (container.scrollLeft >= maxScroll - 35) {
-        setActiveIndex(EXPLORE_CARDS.length - 1);
-        return;
+
+      const focalPoint = getFocalOffset(clientWidth);
+      const children = track.children;
+      let closestIdx = 0;
+      let minDistance = Infinity;
+
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        // Mathematical card center without layout thrashing
+        const cardCenter = child.offsetLeft + child.offsetWidth / 2 - scrollLeft;
+        const distance = Math.abs(cardCenter - focalPoint);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestIdx = i;
+        }
       }
-    }
 
-    const containerRect = container.getBoundingClientRect();
-    const focalPoint = containerRect.left + getFocalOffset(containerRect.width);
-
-    const children = track.children;
-    let closestIdx = 0;
-    let minDistance = Infinity;
-
-    for (let i = 0; i < children.length; i++) {
-      const cardRect = children[i].getBoundingClientRect();
-      const cardCenter = cardRect.left + cardRect.width / 2;
-      const distance = Math.abs(cardCenter - focalPoint);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestIdx = i;
-      }
-    }
-
-    setActiveIndex((prev) => (prev !== closestIdx ? closestIdx : prev));
+      setActiveIndex((prev) => (prev !== closestIdx ? closestIdx : prev));
+    });
   }, [getFocalOffset]);
 
-  // Desktop Pointer Drag handlers (allowing grab cursor & natural drag)
+  // Pointer Drag handlers:
+  // Strictly mouse-only! Touch devices use native momentum scrolling and pan-x pan-y gestures
+  // without pointer capture interference, preventing vertical scroll hijacking and jitter.
   const handlePointerDown = (e) => {
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (e.pointerType !== 'mouse') return;
+    if (e.button !== 0) return;
     if (autoScrollTimerRef.current) clearTimeout(autoScrollTimerRef.current);
     isAutoScrollingRef.current = false;
     isDraggingRef.current = true;
     setIsDragging(true);
     startXRef.current = e.clientX;
-    startScrollLeftRef.current = containerRef.current.scrollLeft;
+    startScrollLeftRef.current = containerRef.current?.scrollLeft || 0;
     hasMovedRef.current = false;
     dismissHint();
 
-    if (containerRef.current.setPointerCapture) {
-      containerRef.current.setPointerCapture(e.pointerId);
+    if (containerRef.current?.setPointerCapture) {
+      try {
+        containerRef.current.setPointerCapture(e.pointerId);
+      } catch {
+        // Safe fallback if pointer capture fails
+      }
     }
   };
 
   const handlePointerMove = (e) => {
+    if (e.pointerType !== 'mouse') return;
     if (!isDraggingRef.current || !containerRef.current) return;
     const deltaX = e.clientX - startXRef.current;
     if (Math.abs(deltaX) > 4) {
@@ -271,6 +309,7 @@ export default function Explore() {
   };
 
   const handlePointerUp = (e) => {
+    if (e.pointerType !== 'mouse') return;
     isDraggingRef.current = false;
     setIsDragging(false);
     if (containerRef.current?.releasePointerCapture && e.pointerId) {
@@ -299,15 +338,15 @@ export default function Explore() {
   return (
     <section
       id="explore"
-      className="relative w-full bg-[#f8faff] dark:bg-[#0c0e14] border-t border-black/[0.04] dark:border-white/[0.04] transition-colors duration-300 pt-0 sm:pt-2 lg:pt-4 -mt-10 sm:-mt-14 lg:-mt-20 pb-8 sm:pb-10 lg:pb-12 overflow-hidden"
+      className="relative w-full bg-[#f8faff] dark:bg-[#0c0e14] border-t border-black/[0.04] dark:border-white/[0.04] transition-colors duration-300 pt-6 sm:pt-10 lg:pt-14 pb-8 sm:pb-12 lg:pb-16 overflow-hidden"
     >
       {/* ── Centered Section Header ── */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center select-none pt-10 sm:pt-12 mb-3 sm:mb-4">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center select-none pt-4 sm:pt-8 mb-3 sm:mb-4">
         <motion.div
           variants={introVariants}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.3 }}
+          viewport={{ once: true, amount: 0.2 }}
         >
           {/* Eyebrow Pill */}
           <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#e8eef9] dark:bg-[#151c28] border border-[#d2def2] dark:border-[#222e44] text-[#335384] dark:text-[#93b4e6] text-[11px] sm:text-xs font-bold tracking-[0.08em] uppercase mb-4 sm:mb-5 shadow-2xs">
@@ -346,12 +385,12 @@ export default function Explore() {
 
       {/* ── Carousel Container with Floating Side Arrow Buttons at Card/Cursor Height ── */}
       <div className="relative w-full group">
-        {/* Floating Left/Previous Arrow Button (Vertically centered at card height, right at cursor level) */}
+        {/* Floating Left/Previous Arrow Button (Desktop & Tablet only to avoid mobile finger gesture blocking) */}
         <button
           type="button"
           onClick={handlePrev}
           aria-label="Previous card"
-          className="absolute left-3 sm:left-5 lg:left-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/90 dark:bg-[#151c28]/90 backdrop-blur-md border border-black/10 dark:border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-[#0c0d12] dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:bg-white dark:hover:bg-[#1e2738] active:scale-95 cursor-pointer"
+          className="hidden md:flex absolute left-3 sm:left-5 lg:left-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/90 dark:bg-[#151c28]/90 backdrop-blur-md border border-black/10 dark:border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-[#0c0d12] dark:text-white items-center justify-center transition-all duration-200 hover:scale-110 hover:bg-white dark:hover:bg-[#1e2738] active:scale-95 cursor-pointer"
         >
           <svg
             className="w-5 h-5 sm:w-6 sm:h-6"
@@ -367,12 +406,12 @@ export default function Explore() {
           </svg>
         </button>
 
-        {/* Floating Right/Next Arrow Button (Vertically centered at card height, right at cursor level) */}
+        {/* Floating Right/Next Arrow Button (Desktop & Tablet only to avoid mobile finger gesture blocking) */}
         <button
           type="button"
           onClick={handleNext}
           aria-label="Next card"
-          className="absolute right-3 sm:right-5 lg:right-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/90 dark:bg-[#151c28]/90 backdrop-blur-md border border-black/10 dark:border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-[#0c0d12] dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-110 hover:bg-white dark:hover:bg-[#1e2738] active:scale-95 cursor-pointer"
+          className="hidden md:flex absolute right-3 sm:right-5 lg:right-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-white/90 dark:bg-[#151c28]/90 backdrop-blur-md border border-black/10 dark:border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)] text-[#0c0d12] dark:text-white items-center justify-center transition-all duration-200 hover:scale-110 hover:bg-white dark:hover:bg-[#1e2738] active:scale-95 cursor-pointer"
         >
           <svg
             className="w-5 h-5 sm:w-6 sm:h-6"
@@ -396,13 +435,18 @@ export default function Explore() {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          className={`w-full overflow-x-auto select-none pt-10 sm:pt-12 pb-4 sm:pb-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+          style={{
+            touchAction: 'pan-x pan-y',
+            WebkitOverflowScrolling: 'touch',
+            scrollSnapType: isMobile ? 'x mandatory' : 'none',
+          }}
+          className={`w-full overflow-x-auto select-none pt-6 sm:pt-12 pb-4 sm:pb-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
         >
           <div
             ref={trackRef}
-            className="flex gap-6 sm:gap-8 lg:gap-10 items-end w-max"
+            className="flex gap-5 sm:gap-8 lg:gap-10 items-end w-max"
             style={{
               paddingLeft: 'max(1.5rem, calc((100vw - 80rem) / 2 + 2rem))',
               paddingRight: 'max(6rem, calc(72vw - 160px))',
@@ -412,20 +456,24 @@ export default function Explore() {
               const { title, description, image, Icon, isSolid } = card;
               const isActive = idx === activeIndex;
 
-              // Active Card Pop-Out: translateY (-44px desktop / -24px mobile), scale up (1.02), high z-index
+              // Active Card Pop-Out: translateY (-44px desktop / 0 mobile), scale up (1.02 desktop / 1 mobile)
+              // On mobile, keeping cards at a stable baseline eliminates layout and compositor thrashing
               return (
                 <motion.div
                   key={card.id}
                   onClick={() => handleCardClick(idx)}
                   animate={{
-                    y: shouldReduceMotion ? 0 : isActive ? -44 : 0,
-                    scale: shouldReduceMotion ? 1 : isActive ? 1.02 : 1,
+                    y: shouldReduceMotion || isMobile ? 0 : isActive ? -44 : 0,
+                    scale: shouldReduceMotion || isMobile ? 1 : isActive ? 1.02 : 1,
                     zIndex: isActive ? 20 : 1,
                     opacity: isActive ? 1 : 0.88,
                   }}
                   transition={{
-                    duration: 0.5,
+                    duration: 0.45,
                     ease: [0.16, 1, 0.3, 1],
+                  }}
+                  style={{
+                    scrollSnapAlign: isMobile ? 'center' : 'none',
                   }}
                   className={`relative w-[280px] sm:w-[330px] md:w-[360px] lg:w-[390px] h-[480px] sm:h-[530px] lg:h-[580px] shrink-0 rounded-[28px] sm:rounded-[32px] overflow-hidden flex flex-col justify-between p-7 sm:p-9 lg:p-10 isolate cursor-pointer transition-shadow duration-300 ${
                     isActive
@@ -480,7 +528,7 @@ export default function Explore() {
                       className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shadow-sm ${
                         isSolid
                           ? 'bg-white dark:bg-white/10 border border-[#c6d7ee] dark:border-white/15 text-[#1e3a8a] dark:text-white'
-                          : 'bg-black/35 dark:bg-black/45 backdrop-blur-md border border-white/20 text-white'
+                          : 'bg-black/50 dark:bg-black/70 md:backdrop-blur-md border border-white/20 text-white'
                       }`}
                     >
                       <Icon className="w-5 h-5 shrink-0" />

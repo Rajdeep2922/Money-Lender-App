@@ -326,12 +326,12 @@ export default function Hero() {
           Cinematic 320vh scroll-driven 3D parallax experience
           Pinned 100vh during the scroll transformation
       ════════════════════════════════════════════════════════════ */}
-      <div
-        className="hidden md:flex sticky top-0 left-0 w-full h-screen overflow-x-clip items-center justify-center"
-        style={{ overflowY: 'visible' }}
-      >
-        {/* ── Layer 1: Background Sky Video (Desktop only: zero mobile download or decoding) ── */}
-        {isDesktop && (
+      {isDesktop && (
+        <div
+          className="hidden md:flex sticky top-0 left-0 w-full h-screen overflow-x-clip items-center justify-center"
+          style={{ overflowY: 'visible' }}
+        >
+          {/* ── Layer 1: Background Sky Video (Desktop only: zero mobile download or decoding) ── */}
           <motion.div
             style={{ opacity: videoOpacity, display: videoDisplay }}
             className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden"
@@ -346,149 +346,151 @@ export default function Hero() {
               className="w-full h-full object-cover"
             />
           </motion.div>
-        )}
 
-        {/* ── Layer 2: Initial Hero Centered Content & Get Started CTA (Elevated z-30 in front of dashboard) ── */}
-        <motion.div
-          style={{
-            opacity: heroTextOpacity,
-            y: heroTextY,
-            pointerEvents: heroTextPointerEvents,
-          }}
-          className="absolute top-[10vh] sm:top-[11vh] md:top-[12vh] left-0 right-0 z-30 flex flex-col items-center text-center px-4 max-w-[820px] mx-auto select-none"
-        >
-          <h1
-            ref={headlineRef}
-            data-hero-intro="headline"
-            className="font-display font-['Space_Grotesk'] text-4xl sm:text-5xl md:text-[62px] font-bold text-white tracking-[-0.035em] leading-[1.04] mb-3.5 drop-shadow-sm will-change-transform"
+          {/* ── Layer 2: Initial Hero Centered Content & Get Started CTA (Elevated z-30 in front of dashboard) ── */}
+          <motion.div
+            style={{
+              opacity: heroTextOpacity,
+              y: heroTextY,
+              pointerEvents: heroTextPointerEvents,
+            }}
+            className="absolute top-[10vh] sm:top-[11vh] md:top-[12vh] left-0 right-0 z-30 flex flex-col items-center text-center px-4 max-w-[820px] mx-auto select-none"
           >
-            Manage Every Loan.<br />
-            From One Place.
-          </h1>
-
-          <p
-            ref={subtextRef}
-            data-hero-intro="supporting"
-            className="text-sm sm:text-base md:text-lg text-white/90 max-w-[520px] leading-relaxed mb-5 sm:mb-6 font-normal drop-shadow-xs will-change-transform"
-          >
-            Track customers, loans, repayments and your lending portfolio from one clear workspace.
-          </p>
-
-          <div
-            ref={ctaRef}
-            data-hero-intro="cta"
-            className="will-change-transform"
-          >
-            <Link
-              to="/register"
-              className="inline-flex items-center justify-center px-7 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white text-[#0c0d12] font-bold text-sm sm:text-base tracking-tight shadow-lg hover:bg-white/95 active:scale-[0.98] cursor-pointer relative z-10"
+            <h1
+              ref={headlineRef}
+              data-hero-intro="headline"
+              className="font-display font-['Space_Grotesk'] text-4xl sm:text-5xl md:text-[62px] font-bold text-white tracking-[-0.035em] leading-[1.04] mb-3.5 drop-shadow-sm will-change-transform"
             >
-              Get Started
-            </Link>
-          </div>
-        </motion.div>
+              Manage Every Loan.<br />
+              From One Place.
+            </h1>
 
-        {/* ── Layer 3: Left Editorial Text (Static vertical centering + isolated Framer Motion horizontal reveal) ── */}
-        <div className="absolute left-6 sm:left-12 lg:left-20 xl:left-28 top-1/2 -translate-y-1/2 z-10 max-w-[420px] text-left select-none pointer-events-none">
-          <motion.div
-            style={{
-              opacity: leftTextOpacity,
-              x: leftTextX,
-              pointerEvents: leftTextPointerEvents,
-            }}
-          >
-            <h2 className="font-display font-['Space_Grotesk'] text-3xl sm:text-5xl lg:text-[50px] font-black text-[#0c0d12] dark:text-white tracking-[-0.035em] leading-[1.05] mb-4">
-              Manage your<br />
-              lending, clearly.
-            </h2>
-
-            <div className="w-10 h-[2px] bg-[#2563eb] my-5 opacity-70" />
-
-            <p className="text-base sm:text-lg text-[#526077] dark:text-[#94a3b8] leading-relaxed font-normal">
-              Keep customer records, loan terms and repayments together in one place.
+            <p
+              ref={subtextRef}
+              data-hero-intro="supporting"
+              className="text-sm sm:text-base md:text-lg text-white/90 max-w-[520px] leading-relaxed mb-5 sm:mb-6 font-normal drop-shadow-xs will-change-transform"
+            >
+              Track customers, loans, repayments and your lending portfolio from one clear workspace.
             </p>
-          </motion.div>
-        </div>
 
-        {/* ── Layer 4: Centered Single-Object Motion Container (Elevated Foreground Product Plane) ── */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-          <motion.div
-            style={{
-              x: dashboardX,
-              y: dashboardY,
-              rotate: dashboardRotate,
-              scale: dashboardScale,
-              transformOrigin: 'center center',
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-            }}
-            className="pointer-events-auto will-change-transform"
-          >
-            {/* Inner Intro Wrapper for Anime.js entrance; zero collision with Framer Motion transforms */}
             <div
-              ref={dashboardIntroRef}
-              data-hero-intro="dashboard"
+              ref={ctaRef}
+              data-hero-intro="cta"
               className="will-change-transform"
             >
-              <HeroProductVisual />
+              <Link
+                to="/register"
+                className="inline-flex items-center justify-center px-7 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white text-[#0c0d12] font-bold text-sm sm:text-base tracking-tight shadow-lg hover:bg-white/95 active:scale-[0.98] cursor-pointer relative z-10"
+              >
+                Get Started
+              </Link>
             </div>
           </motion.div>
+
+          {/* ── Layer 3: Left Editorial Text (Static vertical centering + isolated Framer Motion horizontal reveal) ── */}
+          <div className="absolute left-6 sm:left-12 lg:left-20 xl:left-28 top-1/2 -translate-y-1/2 z-10 max-w-[420px] text-left select-none pointer-events-none">
+            <motion.div
+              style={{
+                opacity: leftTextOpacity,
+                x: leftTextX,
+                pointerEvents: leftTextPointerEvents,
+              }}
+            >
+              <h2 className="font-display font-['Space_Grotesk'] text-3xl sm:text-5xl lg:text-[50px] font-black text-[#0c0d12] dark:text-white tracking-[-0.035em] leading-[1.05] mb-4">
+                Manage your<br />
+                lending, clearly.
+              </h2>
+
+              <div className="w-10 h-[2px] bg-[#2563eb] my-5 opacity-70" />
+
+              <p className="text-base sm:text-lg text-[#526077] dark:text-[#94a3b8] leading-relaxed font-normal">
+                Keep customer records, loan terms and repayments together in one place.
+              </p>
+            </motion.div>
+          </div>
+
+          {/* ── Layer 4: Centered Single-Object Motion Container (Elevated Foreground Product Plane) ── */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <motion.div
+              style={{
+                x: dashboardX,
+                y: dashboardY,
+                rotate: dashboardRotate,
+                scale: dashboardScale,
+                transformOrigin: 'center center',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+              }}
+              className="pointer-events-auto will-change-transform"
+            >
+              {/* Inner Intro Wrapper for Anime.js entrance; zero collision with Framer Motion transforms */}
+              <div
+                ref={dashboardIntroRef}
+                data-hero-intro="dashboard"
+                className="will-change-transform"
+              >
+                <HeroProductVisual />
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ════════════════════════════════════════════════════════════
           MOBILE VIEWPORT (< 768px)
           Touch-first, natural vertical stack without scroll trap
           Zero video decoding, zero heavy spring calculations
       ════════════════════════════════════════════════════════════ */}
-      <div className="md:hidden relative w-full overflow-hidden flex flex-col items-center pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 sm:px-6">
-        {/* Lightweight sky-inspired static backdrop (zero video payload) */}
-        <div
-          aria-hidden="true"
-          className="absolute top-0 left-0 right-0 h-[500px] sm:h-[560px] pointer-events-none overflow-hidden z-0"
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1b3a5b] via-[#2563eb] via-50% to-[#edf2f8] dark:to-[#0c0e14]" />
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-[120%] h-[260px] bg-gradient-to-b from-white/20 via-sky-200/10 to-transparent blur-xl pointer-events-none" />
-        </div>
-
-        {/* 1. Mobile Headline & Supporting Text */}
-        <div className="relative z-10 flex flex-col items-center text-center max-w-[540px] mx-auto select-none">
-          <h1 className="font-display font-['Space_Grotesk'] text-3xl sm:text-4xl font-bold text-white tracking-[-0.035em] leading-[1.08] mb-3 drop-shadow-sm">
-            Manage Every Loan.<br />
-            From One Place.
-          </h1>
-
-          <p className="text-sm sm:text-base text-white/90 max-w-[420px] leading-relaxed mb-6 font-normal drop-shadow-xs px-2">
-            Track customers, loans, repayments and your lending portfolio from one clear workspace.
-          </p>
-
-          <Link
-            to="/register"
-            className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-white text-[#0c0d12] font-bold text-sm tracking-tight shadow-md hover:bg-white/95 active:scale-[0.98] cursor-pointer transition-transform"
+      {!isDesktop && (
+        <div className="md:hidden relative w-full overflow-hidden flex flex-col items-center pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 sm:px-6">
+          {/* Lightweight sky-inspired static backdrop (zero video payload) */}
+          <div
+            aria-hidden="true"
+            className="absolute top-0 left-0 right-0 h-[500px] sm:h-[560px] pointer-events-none overflow-hidden z-0"
           >
-            Get Started
-          </Link>
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1b3a5b] via-[#2563eb] via-50% to-[#edf2f8] dark:to-[#0c0e14]" />
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-[120%] h-[260px] bg-gradient-to-b from-white/20 via-sky-200/10 to-transparent blur-xl pointer-events-none" />
+          </div>
+
+          {/* 1. Mobile Headline & Supporting Text */}
+          <div className="relative z-10 flex flex-col items-center text-center max-w-[540px] mx-auto select-none">
+            <h1 className="font-display font-['Space_Grotesk'] text-3xl sm:text-4xl font-bold text-white tracking-[-0.035em] leading-[1.08] mb-3 drop-shadow-sm">
+              Manage Every Loan.<br />
+              From One Place.
+            </h1>
+
+            <p className="text-sm sm:text-base text-white/90 max-w-[420px] leading-relaxed mb-6 font-normal drop-shadow-xs px-2">
+              Track customers, loans, repayments and your lending portfolio from one clear workspace.
+            </p>
+
+            <Link
+              to="/register"
+              className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-white text-[#0c0d12] font-bold text-sm tracking-tight shadow-md hover:bg-white/95 active:scale-[0.98] cursor-pointer transition-transform"
+            >
+              Get Started
+            </Link>
+          </div>
+
+          {/* 2. Scaled Studio Display Hardware Visual */}
+          <div className="relative z-10 mt-7 sm:mt-9 flex justify-center w-full">
+            <HeroProductVisual />
+          </div>
+
+          {/* 3. Editorial Bridge into Next Section */}
+          <div className="relative z-10 mt-10 sm:mt-12 text-center max-w-[440px] mx-auto px-4 select-none">
+            <h2 className="font-display font-['Space_Grotesk'] text-2xl sm:text-3xl font-black text-[#0c0d12] dark:text-white tracking-[-0.03em] leading-[1.1] mb-2.5">
+              Manage your<br />
+              lending, clearly.
+            </h2>
+
+            <div className="w-8 h-[2px] bg-[#2563eb] mx-auto my-3 opacity-70" />
+
+            <p className="text-sm sm:text-base text-[#526077] dark:text-[#94a3b8] leading-relaxed font-normal">
+              Keep customer records, loan terms and repayments together in one place.
+            </p>
+          </div>
         </div>
-
-        {/* 2. Scaled Studio Display Hardware Visual */}
-        <div className="relative z-10 mt-7 sm:mt-9 flex justify-center w-full">
-          <HeroProductVisual />
-        </div>
-
-        {/* 3. Editorial Bridge into Next Section */}
-        <div className="relative z-10 mt-10 sm:mt-12 text-center max-w-[440px] mx-auto px-4 select-none">
-          <h2 className="font-display font-['Space_Grotesk'] text-2xl sm:text-3xl font-black text-[#0c0d12] dark:text-white tracking-[-0.03em] leading-[1.1] mb-2.5">
-            Manage your<br />
-            lending, clearly.
-          </h2>
-
-          <div className="w-8 h-[2px] bg-[#2563eb] mx-auto my-3 opacity-70" />
-
-          <p className="text-sm sm:text-base text-[#526077] dark:text-[#94a3b8] leading-relaxed font-normal">
-            Keep customer records, loan terms and repayments together in one place.
-          </p>
-        </div>
-      </div>
+      )}
     </section>
   );
 }

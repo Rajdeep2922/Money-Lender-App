@@ -137,10 +137,10 @@ export default function Navbar() {
       {/* ── Main navbar bar: Transparent over sky video on landing, soft cool blue-gray when scrolled or on light pages ── */}
       <header
         ref={navbarRef}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-[background-color,border-color,box-shadow] duration-200 ${
           isDarkNav
             ? 'bg-transparent border-b border-white/[0.08]'
-            : 'bg-[#F0F4F9]/95 backdrop-blur-md border-b border-[#DCE5EF] shadow-2xs'
+            : 'bg-[#F0F4F9] dark:bg-[#0c0e14] md:bg-[#F0F4F9]/95 md:backdrop-blur-md border-b border-[#DCE5EF] dark:border-white/10 shadow-2xs'
         }`}
       >
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -228,7 +228,7 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/register"
-                className={`transition-all duration-300 text-sm font-semibold no-underline shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                className={`transition-colors duration-200 text-sm font-semibold no-underline shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   isDarkNav
                     ? 'bg-white text-[#0F172A] hover:bg-slate-50'
                     : 'bg-[#0F172A] text-white hover:bg-[#1E293B]'
@@ -264,7 +264,7 @@ export default function Navbar() {
 
       {/* ── Mobile dropdown ── */}
       {menuOpen && (
-        <div className="fixed top-[57px] left-0 right-0 z-40 bg-[#F0F4F9]/98 border-b border-[#DCE5EF] py-3 shadow-md backdrop-blur-md">
+        <div className="fixed top-[57px] left-0 right-0 z-40 bg-[#F0F4F9] dark:bg-[#0c0e14] border-b border-[#DCE5EF] dark:border-white/10 py-3 shadow-md">
           {/* Mobile navigation links */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {navLinks.map((item) => {

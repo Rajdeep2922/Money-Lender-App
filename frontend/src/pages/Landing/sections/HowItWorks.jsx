@@ -69,7 +69,7 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="relative w-full bg-[#f8faff] dark:bg-[#0c0e14] border-t border-black/[0.04] dark:border-white/[0.04] transition-colors duration-300 pt-10 sm:pt-12 md:pt-12 lg:pt-8 pb-24 sm:pb-32 md:pb-36 lg:pb-44"
+      className="relative w-full bg-[#f8faff] dark:bg-[#0c0e14] border-t border-black/[0.04] dark:border-white/[0.04] transition-colors duration-300 pt-10 sm:pt-12 md:pt-12 lg:pt-8 pb-12 sm:pb-20 md:pb-28 lg:pb-36 overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         {/* ── Section Introduction (Editorial Statement / WHY US) ── */}
@@ -77,27 +77,27 @@ export default function HowItWorks() {
           variants={introVariants}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.3 }}
-          className="text-center mb-16 sm:mb-20 md:mb-24 lg:mb-28 select-none"
+          viewport={{ once: true, amount: 0.2 }}
+          className="text-center mb-12 sm:mb-16 md:mb-24 lg:mb-28 select-none"
         >
           {/* Small understated eyebrow pill (28px margin-bottom to heading) */}
-          <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#e8eef9] dark:bg-[#151c28] border border-[#d2def2] dark:border-[#222e44] text-[#335384] dark:text-[#93b4e6] text-[11px] sm:text-xs font-bold tracking-[0.08em] uppercase mb-7 shadow-2xs">
+          <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#e8eef9] dark:bg-[#151c28] border border-[#d2def2] dark:border-[#222e44] text-[#335384] dark:text-[#93b4e6] text-[11px] sm:text-xs font-bold tracking-[0.08em] uppercase mb-5 sm:mb-7 shadow-2xs">
             WHY US
           </div>
 
           {/* Large editorial headline (24px margin-bottom to paragraph) */}
-          <h2 className="font-display font-['Space_Grotesk'] text-3xl sm:text-4xl md:text-5xl lg:text-[52px] xl:text-[56px] font-bold text-[#0c0d12] dark:text-white tracking-[-0.035em] leading-[1.08] mb-6 max-w-[820px] mx-auto">
+          <h2 className="font-display font-['Space_Grotesk'] text-2xl sm:text-4xl md:text-5xl lg:text-[52px] xl:text-[56px] font-bold text-[#0c0d12] dark:text-white tracking-[-0.035em] leading-[1.12] sm:leading-[1.08] mb-4 sm:mb-6 max-w-[820px] mx-auto">
             Lending Made Simple, Organized, and Connected.
           </h2>
 
           {/* Short supporting paragraph */}
-          <p className="text-base sm:text-lg md:text-xl text-[#526077] dark:text-[#94a3b8] max-w-[640px] mx-auto leading-relaxed font-normal">
+          <p className="text-sm sm:text-lg md:text-xl text-[#526077] dark:text-[#94a3b8] max-w-[640px] mx-auto leading-relaxed font-normal">
             Manage loans, payments, customers, and real-time borrower communication from one connected workspace.
           </p>
         </motion.div>
 
         {/* ── Three Editorial Story Blocks ── */}
-        <div className="space-y-28 sm:space-y-36 md:space-y-44 lg:space-y-52">
+        <div className="space-y-16 sm:space-y-28 md:space-y-40 lg:space-y-48">
           {STORY_BLOCKS.map((block) => (
             <EditorialStoryBlock
               key={block.id}

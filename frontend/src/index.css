@@ -284,19 +284,10 @@ body {
 /* Mobile Optimizations - Performance */
 @media (max-width: 640px) {
 
-  *,
-  *::before,
-  *::after {
-    animation-delay: 0s !important;
-  }
-
   .card,
-  .btn,
-  [class*="motion"] {
-    transform: translateZ(0);
+  .btn {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    will-change: auto;
   }
 
   input,

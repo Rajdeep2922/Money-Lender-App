@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring, useReducedMotion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -17,10 +17,36 @@ import {
 } from '@phosphor-icons/react';
 
 /**
+ * Hook to reliably detect mobile viewport (< 768px)
+ */
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < breakpoint;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    const update = (e) => setIsMobile(e.matches);
+    setIsMobile(mql.matches);
+    if (mql.addEventListener) {
+      mql.addEventListener('change', update);
+      return () => mql.removeEventListener('change', update);
+    } else {
+      mql.addListener(update);
+      return () => mql.removeListener(update);
+    }
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
+/**
  * Screen 1: Mobile Dashboard (Home)
  * Displays active loans, total outstanding card, upcoming payments
  */
-function MobileDashboardScreen() {
+function MobileDashboardScreen({ onTabChange }) {
   return (
     <div className="w-full h-full flex flex-col justify-between bg-[#f8fafc] text-[#0f172a] select-none pt-10 pb-3 px-3.5">
       {/* Top Header */}
@@ -106,7 +132,7 @@ function MobileDashboardScreen() {
       </div>
 
       {/* Screen Bottom Tab Bar */}
-      <BottomTabBar activeTab="home" />
+      <BottomTabBar activeTab="home" onTabChange={onTabChange} />
     </div>
   );
 }
@@ -115,7 +141,7 @@ function MobileDashboardScreen() {
  * Screen 2: Mobile Messages / Chat ("STAY CONNECTED")
  * Displays real-time communication, borrower threads, typing states
  */
-function MobileChatScreen() {
+function MobileChatScreen({ onTabChange }) {
   const conversations = [
     {
       initials: 'AS',
@@ -223,7 +249,7 @@ function MobileChatScreen() {
       </div>
 
       {/* Screen Bottom Tab Bar */}
-      <BottomTabBar activeTab="chat" />
+      <BottomTabBar activeTab="chat" onTabChange={onTabChange} />
     </div>
   );
 }
@@ -237,6 +263,7 @@ function MobilePaymentsScreen({
   paymentListY,
   insideMessageOpacity,
   insideMessageY,
+  onTabChange,
 }) {
   const payments = [
     { name: 'Amit Sharma', date: '2 Sep 2026', amount: '₹5,000', status: 'Received', color: 'emerald' },
@@ -360,7 +387,7 @@ function MobilePaymentsScreen({
       </div>
 
       {/* Screen Bottom Tab Bar */}
-      <BottomTabBar activeTab="payments" />
+      <BottomTabBar activeTab="payments" onTabChange={onTabChange} />
     </div>
   );
 }
@@ -368,7 +395,7 @@ function MobilePaymentsScreen({
 /**
  * Reusable Mobile App Bottom Navigation Bar
  */
-function BottomTabBar({ activeTab = 'home' }) {
+function BottomTabBar({ activeTab = 'home', onTabChange }) {
   const tabs = [
     { id: 'home', label: 'Home', Icon: House },
     { id: 'loans', label: 'Loans', Icon: FileText },
@@ -383,7 +410,12 @@ function BottomTabBar({ activeTab = 'home' }) {
         {tabs.map(({ id, label, Icon }) => {
           const isActive = id === activeTab;
           return (
-            <div key={id} className="flex flex-col items-center gap-0.5">
+            <button
+              key={id}
+              type="button"
+              onClick={() => onTabChange && onTabChange(id)}
+              className="flex flex-col items-center gap-0.5 cursor-pointer bg-transparent border-0 p-1 focus:outline-none"
+            >
               <Icon
                 size={14}
                 weight={isActive ? 'fill' : 'regular'}
@@ -395,7 +427,7 @@ function BottomTabBar({ activeTab = 'home' }) {
               >
                 {label}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -408,33 +440,35 @@ function BottomTabBar({ activeTab = 'home' }) {
 /**
  * Premium Smartphone Frame (iPhone 15 Pro Titanium Graphite silhouette)
  */
-function SmartphoneFrame({ children }) {
+function SmartphoneFrame({ children, isMobile = false }) {
   return (
     <div className="relative select-none">
-      {/* Outer Titanium Edge Highlight & Credix Multi-Tier Physical Shadow Stack */}
+      {/* Outer Titanium Edge Highlight & Multi-Tier Physical Shadow Stack */}
       <div
-        className="relative mx-auto rounded-[46px] sm:rounded-[48px] p-[9px] sm:p-[11px] bg-gradient-to-b from-[#383d4c] via-[#1e2129] to-[#111317] border border-white/20"
+        className="relative mx-auto rounded-[44px] sm:rounded-[48px] p-[8px] sm:p-[11px] bg-gradient-to-b from-[#383d4c] via-[#1e2129] to-[#111317] border border-white/20"
         style={{
-          boxShadow: [
-            /* Tight contact outline */
-            '0 0 0 1px rgba(0, 0, 0, 0.85)',
-            /* Crisp ambient contact shadow */
-            '0 8px 20px -4px rgba(0, 0, 0, 0.65)',
-            /* Directional depth shadow */
-            '0 20px 42px -8px rgba(0, 0, 0, 0.55)',
-            /* Soft atmospheric grounding diffusion directly behind chassis */
-            '0 36px 80px -12px rgba(8, 12, 28, 0.60)',
-            /* Overhead specular rim highlight (light from top) */
-            'inset 0 1.5px 2px rgba(255, 255, 255, 0.45)',
-            /* Left metallic beveled chamfer */
-            'inset 1px 0 1px rgba(255, 255, 255, 0.18)',
-            /* Right edge subtle highlight */
-            'inset -1px 0 1px rgba(255, 255, 255, 0.10)',
-            /* Bottom grounding shadow */
-            'inset 0 -2px 4px rgba(0, 0, 0, 0.85)',
-          ].join(', '),
+          boxShadow: isMobile
+            ? '0 0 0 1px rgba(0, 0, 0, 0.85), 0 16px 36px -8px rgba(0, 0, 0, 0.55)'
+            : [
+                /* Tight contact outline */
+                '0 0 0 1px rgba(0, 0, 0, 0.85)',
+                /* Crisp ambient contact shadow */
+                '0 8px 20px -4px rgba(0, 0, 0, 0.65)',
+                /* Directional depth shadow */
+                '0 20px 42px -8px rgba(0, 0, 0, 0.55)',
+                /* Soft atmospheric grounding diffusion directly behind chassis */
+                '0 36px 80px -12px rgba(8, 12, 28, 0.60)',
+                /* Overhead specular rim highlight (light from top) */
+                'inset 0 1.5px 2px rgba(255, 255, 255, 0.45)',
+                /* Left metallic beveled chamfer */
+                'inset 1px 0 1px rgba(255, 255, 255, 0.18)',
+                /* Right edge subtle highlight */
+                'inset -1px 0 1px rgba(255, 255, 255, 0.10)',
+                /* Bottom grounding shadow */
+                'inset 0 -2px 4px rgba(0, 0, 0, 0.85)',
+              ].join(', '),
           width: 'min(295px, 82vw)',
-          height: 'min(570px, 70vh)',
+          height: isMobile ? '560px' : 'min(570px, 70vh)',
         }}
       >
         {/* Subtle hardware buttons on side with metallic specular highlight */}
@@ -484,10 +518,10 @@ function SmartphoneFrame({ children }) {
 }
 
 /**
- * Section 5: Scroll-Driven Mobile Product Story
- * Choreographed using Framer Motion scroll transforms.
+ * Section 5 (Desktop >= 768px): Scroll-Driven Cinematic Product Story
+ * Choreographed using Framer Motion scroll transforms and bilateral typography wings.
  */
-export default function Section5ProductJourney() {
+function DesktopProductJourney() {
   const containerRef = useRef(null);
   const stickyRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
@@ -662,7 +696,7 @@ export default function Section5ProductJourney() {
     <section
       id="product-story"
       ref={containerRef}
-      className="relative w-full h-[300vh] text-[#f8f8fa] bg-[#0c0f1d]"
+      className="hidden md:block relative w-full h-[300vh] text-[#f8f8fa] bg-[#0c0f1d]"
       style={{
         backgroundColor: '#0c0f1d',
       }}
@@ -676,9 +710,9 @@ export default function Section5ProductJourney() {
             'radial-gradient(ellipse 85% 75% at 50% 48%, #212a4a 0%, #1a2038 42%, #121628 75%, #0c0f1d 100%)',
         }}
       >
-        {/* ── Layer 0: Ultra-Subtle Studio Backdrop Matte Texture (Behind Everything) (z-0, 1.5% opacity) ── */}
+        {/* ── Layer 0: Ultra-Subtle Studio Backdrop Matte Texture (Behind Everything) (z-0, 1.5% opacity) (Desktop only) ── */}
         <div
-          className="absolute inset-0 z-0 pointer-events-none select-none opacity-[0.015]"
+          className="hidden md:block absolute inset-0 z-0 pointer-events-none select-none opacity-[0.015]"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
           }}
@@ -925,4 +959,150 @@ export default function Section5ProductJourney() {
       </div>
     </section>
   );
+}
+
+/**
+ * Mobile-Optimized Product Story (< 768px):
+ * Eliminates 300vh scroll-trap, sticky pinning jitter from dynamic address bars,
+ * heavy feTurbulence SVG filters, and multi-tier shadow stalls.
+ * Provides a responsive, touch-friendly interactive editorial tour.
+ */
+function MobileProductJourney() {
+  const [activeStage, setActiveStage] = useState(0);
+
+  const stages = [
+    {
+      id: 'dashboard',
+      tabId: 'home',
+      label: 'Dashboard',
+      title: 'Manage Every Loan',
+      description: 'Active loans, total outstanding, and upcoming collections at a single glance.',
+    },
+    {
+      id: 'chat',
+      tabId: 'chat',
+      label: 'Messages',
+      title: 'Stay Connected',
+      description: 'Real-time borrower threads, payment notifications, and updates in one place.',
+    },
+    {
+      id: 'payments',
+      tabId: 'payments',
+      label: 'Payments',
+      title: 'Track Every Payment',
+      description: 'Every payment verified and in sync. Keep repayments and balances accurate.',
+    },
+  ];
+
+  const handleTabChange = (tabId) => {
+    if (tabId === 'home' || tabId === 'loans') setActiveStage(0);
+    else if (tabId === 'chat') setActiveStage(1);
+    else if (tabId === 'payments' || tabId === 'more') setActiveStage(2);
+  };
+
+  const currentStage = stages[activeStage];
+
+  return (
+    <section
+      id="product-story"
+      className="block md:hidden relative w-full text-[#f8f8fa] bg-[#0c0f1d] py-14 px-4 overflow-hidden isolate"
+      style={{
+        background: 'radial-gradient(ellipse 95% 70% at 50% 30%, #1e2642 0%, #13182b 60%, #0c0f1d 100%)',
+      }}
+    >
+      {/* Editorial Header */}
+      <div className="max-w-md mx-auto text-center mb-5">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-bold uppercase tracking-wider mb-2.5">
+          PRODUCT JOURNEY
+        </div>
+        <h2 className="font-['Space_Grotesk'] text-2xl font-extrabold uppercase tracking-tight text-white mb-2 leading-tight">
+          {currentStage.title}
+        </h2>
+        <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+          {currentStage.description}
+        </p>
+      </div>
+
+      {/* Segmented Stage Selector */}
+      <div className="flex items-center justify-center gap-1.5 p-1 rounded-full bg-white/[0.06] border border-white/10 max-w-xs mx-auto mb-6">
+        {stages.map((stage, idx) => {
+          const isActive = idx === activeStage;
+          return (
+            <button
+              key={stage.id}
+              type="button"
+              onClick={() => setActiveStage(idx)}
+              className={`flex-1 py-1.5 px-3 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {stage.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Phone Showcase (Touch-action pan-y allows 100% natural vertical scroll over phone) */}
+      <div
+        className="flex items-center justify-center mb-7 relative isolate"
+        style={{ touchAction: 'pan-y' }}
+      >
+        {/* Lightweight ambient glow (CSS radial gradient only, zero SVG turbulence, zero Gaussian blur filter) */}
+        <div
+          className="absolute inset-0 max-w-[320px] mx-auto rounded-[50px] pointer-events-none -z-10"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.12) 0%, rgba(12,15,29,0) 70%)',
+          }}
+          aria-hidden="true"
+        />
+
+        <SmartphoneFrame isMobile={true}>
+          <div className="relative w-full h-full">
+            {activeStage === 0 && <MobileDashboardScreen onTabChange={handleTabChange} />}
+            {activeStage === 1 && <MobileChatScreen onTabChange={handleTabChange} />}
+            {activeStage === 2 && (
+              <MobilePaymentsScreen
+                paymentListOpacity={1}
+                paymentListY={0}
+                insideMessageOpacity={0}
+                insideMessageY={10}
+                onTabChange={handleTabChange}
+              />
+            )}
+          </div>
+        </SmartphoneFrame>
+      </div>
+
+      {/* Editorial Statement & CTA */}
+      <div className="max-w-md mx-auto text-center px-2">
+        <p className="font-['Space_Grotesk'] text-base font-semibold text-white/95 tracking-[-0.02em] leading-snug mb-3">
+          One workspace for every part of your lending business.
+        </p>
+        <Link
+          to="/register"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-[#0c0f1d] hover:bg-[#f8fafc] text-xs font-bold tracking-tight shadow-sm transition-all duration-200 active:scale-95 no-underline"
+        >
+          <span>Explore Platform</span>
+          <ArrowRight size={13} weight="bold" className="text-[#0c0f1d]/70" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Main Product Journey Export:
+ * Dynamically switches between Desktop cinematic 300vh sticky scroll story and
+ * Mobile lightweight natural touch-scroll showcase.
+ */
+export default function Section5ProductJourney() {
+  const isMobile = useIsMobile(768);
+
+  if (isMobile) {
+    return <MobileProductJourney />;
+  }
+
+  return <DesktopProductJourney />;
 }

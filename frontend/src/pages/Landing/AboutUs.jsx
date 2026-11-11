@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -75,6 +75,20 @@ const journeyMilestones = [
 export default function AboutUs() {
   const shouldReduceMotion = useReducedMotion();
 
+  // Responsive desktop detection (768px boundary) to avoid loading MP4 video on mobile
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 768px)').matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(min-width: 768px)');
+    const onChange = (e) => setIsDesktop(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
   return (
     <div className="landing-root bg-[#F0F4F9] text-[#0F172A] min-h-screen selection:bg-[#2563EB]/20 selection:text-[#0F172A] relative overflow-x-hidden">
       {/* Universal Navbar (configured to render clean light-mode on /about) */}
@@ -82,12 +96,12 @@ export default function AboutUs() {
 
       {/* ════════════════════════════════════════════════════════════
           1. HERO SECTION — FOUNDER'S STORY & AUTHENTIC PORTRAIT
-          (Full-width Sky Video Background matching Landing Page)
+          (Full-width Sky Video on Desktop; lightweight static backdrop on Mobile)
       ════════════════════════════════════════════════════════════ */}
-      <section className="relative w-full overflow-hidden bg-[#EAF1F8]">
-        {/* Full-width Sky Video Background */}
-        {!shouldReduceMotion && (
-          <div className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+      <section className="relative w-full overflow-hidden bg-[#EAF1F8] dark:bg-[#0c0e14]">
+        {/* Full-width Sky Video Background (Desktop only: zero mobile download or decoding) */}
+        {!shouldReduceMotion && isDesktop && (
+          <div className="hidden md:block absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
             <video
               src="/hero-sky.mp4"
               autoPlay
@@ -99,10 +113,10 @@ export default function AboutUs() {
           </div>
         )}
 
-        {/* Restrained Translucent Pale-Blue/White Editorial Overlay */}
+        {/* Lightweight sky-inspired static backdrop overlay / mobile fallback */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full pointer-events-none z-[1] bg-gradient-to-b from-white/45 via-[#F0F4F9]/55 to-[#F0F4F9]"
+          className="absolute inset-0 w-full h-full pointer-events-none z-[1] bg-gradient-to-b from-[#1b3a5b]/10 via-[#F0F4F9]/60 to-[#F0F4F9] dark:from-[#1b3a5b]/25 dark:via-[#0c0e14]/70 dark:to-[#0c0e14] md:from-white/45 md:via-[#F0F4F9]/55 md:to-[#F0F4F9]"
         />
 
         {/* Hero Content Container */}
