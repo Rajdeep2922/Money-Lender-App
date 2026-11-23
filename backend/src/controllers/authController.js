@@ -15,22 +15,24 @@ const register = async (req, res, next) => {
     try {
         const { username, email, password, businessName, ownerName, phone } = req.body;
 
-        // Check if user already exists
-        const existingUser = await User.findOne({
-            $or: [{ email }, { username }]
-        });
-
-        if (existingUser) {
+        if (!email || !password) {
             return res.status(400).json({
                 success: false,
-                message: existingUser.email === email
-                    ? 'Email already registered'
-                    : 'Username already taken',
+                message: 'Email and password are required',
+            });
+        }
+
+        // Check if email already registered
+        const existingEmail = await User.findOne({ email: email.toLowerCase().trim() });
+        if (existingEmail) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email already registered',
             });
         }
 
         // Also check if email exists as a customer (prevent conflicts)
-        const existingCustomer = await Customer.findOne({ email, isDeleted: false });
+        const existingCustomer = await Customer.findOne({ email: email.toLowerCase().trim(), isDeleted: false });
         if (existingCustomer) {
             return res.status(400).json({
                 success: false,
@@ -38,11 +40,41 @@ const register = async (req, res, next) => {
             });
         }
 
+        // Derive unique username if not provided
+        let finalUsername = (username || '').trim();
+        if (finalUsername) {
+            const existingUsername = await User.findOne({ username: finalUsername });
+            if (existingUsername) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Username already taken',
+                });
+            }
+        } else {
+            // Auto-generate sanitized unique username from email
+            const baseHandle = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') || 'lender';
+            finalUsername = baseHandle.length < 3 ? `${baseHandle}_usr` : baseHandle;
+            let candidate = finalUsername;
+            let isUnique = false;
+            let attempts = 0;
+            while (!isUnique && attempts < 10) {
+                const found = await User.findOne({ username: candidate });
+                if (!found) {
+                    isUnique = true;
+                    finalUsername = candidate;
+                } else {
+                    attempts++;
+                    const suffix = Math.floor(100 + Math.random() * 900);
+                    candidate = `${baseHandle.slice(0, 15)}_${suffix}`;
+                }
+            }
+        }
+
         // Create lender profile
         const lender = await Lender.create({
-            businessName: businessName || `${username}'s Business`,
-            ownerName: ownerName || username,
-            email,
+            businessName: businessName || `${finalUsername}'s Business`,
+            ownerName: ownerName || finalUsername,
+            email: email.toLowerCase().trim(),
             phone: phone || '+91-0000000000',
             address: {
                 street: '',
@@ -54,8 +86,8 @@ const register = async (req, res, next) => {
 
         // Create user with lender reference
         const user = await User.create({
-            username,
-            email,
+            username: finalUsername,
+            email: email.toLowerCase().trim(),
             password,
             lenderId: lender._id,
         });
