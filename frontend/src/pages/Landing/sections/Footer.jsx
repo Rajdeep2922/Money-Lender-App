@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Zap, Github, Linkedin } from 'lucide-react';
+import { Coins, GithubLogo, LinkedinLogo } from '@phosphor-icons/react';
 
 /**
  * Footer Component — Compact, Founder-Built Product Ending
@@ -58,7 +58,7 @@ export default function Footer() {
               className="inline-flex items-center gap-2 no-underline text-[#0F172A]"
             >
               <div className="w-5.5 h-5.5 rounded-md bg-[#2563EB] flex items-center justify-center text-white shadow-2xs">
-                <Zap size={12} color="#fff" fill="#fff" />
+                <Coins size={13} weight="duotone" color="#fff" />
               </div>
               <span className="font-bold text-sm tracking-tight text-[#0F172A]">
                 Money Lender
@@ -78,7 +78,7 @@ export default function Footer() {
                 aria-label="GitHub Repository"
                 className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[#2563EB] transition-colors no-underline group"
               >
-                <Github size={13} className="text-slate-500 group-hover:text-[#2563EB] transition-colors" />
+                <GithubLogo size={14} weight="fill" className="text-slate-500 group-hover:text-[#2563EB] transition-colors" />
                 <span>GitHub</span>
               </a>
               <span className="text-[#CBD5E1]" aria-hidden="true">·</span>
@@ -89,7 +89,7 @@ export default function Footer() {
                 aria-label="LinkedIn Profile"
                 className="inline-flex items-center gap-1.5 text-slate-600 hover:text-[#2563EB] transition-colors no-underline group"
               >
-                <Linkedin size={13} className="text-slate-500 group-hover:text-[#2563EB] transition-colors" />
+                <LinkedinLogo size={14} weight="fill" className="text-slate-500 group-hover:text-[#2563EB] transition-colors" />
                 <span>LinkedIn</span>
               </a>
             </div>

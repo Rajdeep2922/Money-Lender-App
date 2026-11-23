@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, Scale, FileText, TrendingUp, Calendar, ShieldCheck, AlertTriangle, Lock, Phone, ChevronDown, ChevronUp } from 'lucide-react';
+import { Scale, FileText, TrendingUp, Calendar, ShieldCheck, AlertTriangle, Lock, Phone, ChevronDown, ChevronUp } from 'lucide-react';
+import { Coins } from '@phosphor-icons/react';
 
 // ── Policy catalogue (no desc — content lives inside the accordion) ──────────
 const POLICY_TYPES = [
@@ -167,7 +168,7 @@ export default function PublicLegalCenter() {
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(2,6,23,0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0.875rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
           <div style={{ width: '1.75rem', height: '1.75rem', borderRadius: '0.45rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Zap size={13} color="#fff" fill="#fff" />
+            <Coins size={14} weight="duotone" color="#fff" />
           </div>
           <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>Money Lenders</span>
         </Link>

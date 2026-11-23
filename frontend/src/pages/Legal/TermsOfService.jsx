@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ArrowLeft, FileText, Zap, CheckCircle2,
+  ArrowLeft, FileText, CheckCircle2,
   ClipboardList, Settings, UserCheck, ShieldOff,
   AlertTriangle, Copyright, XCircle, RefreshCw,
   Scale, Mail,
 } from 'lucide-react';
+import { Coins } from '@phosphor-icons/react';
 
 /* ── Section data for ToC ──────────────────────────── */
 const sections = [
@@ -147,7 +148,7 @@ export default function TermsOfService() {
             <span style={{ color: '#1e293b' }}>|</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '0.375rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Zap size={11} color="#fff" fill="#fff" />
+                <Coins size={12} weight="duotone" color="#fff" />
               </div>
               <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>Money Lenders</span>
             </div>

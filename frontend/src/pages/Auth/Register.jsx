@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, Mail, Lock, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Wallet, Mail, Lock, User, ArrowRight, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import Button from '../../components/common/Button';
 import { useRegister } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
@@ -15,6 +15,8 @@ const Register = () => {
         password: '',
         confirmPassword: '',
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -176,14 +178,27 @@ const Register = () => {
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="input pl-10 pr-10 disabled:opacity-60 disabled:cursor-not-allowed"
                                     placeholder="••••••••"
                                     disabled={isLoading}
                                 />
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={() => setShowPassword((prev) => !prev)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5" />
+                                    ) : (
+                                        <Eye className="h-5 w-5" />
+                                    )}
+                                </button>
                             </div>
                             <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
                         </div>
@@ -199,14 +214,27 @@ const Register = () => {
                                 <input
                                     id="confirmPassword"
                                     name="confirmPassword"
-                                    type="password"
+                                    type={showConfirmPassword ? 'text' : 'password'}
                                     required
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
-                                    className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="input pl-10 pr-10 disabled:opacity-60 disabled:cursor-not-allowed"
                                     placeholder="••••••••"
                                     disabled={isLoading}
                                 />
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
+                                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showConfirmPassword ? (
+                                        <EyeOff className="h-5 w-5" />
+                                    ) : (
+                                        <Eye className="h-5 w-5" />
+                                    )}
+                                </button>
                             </div>
                         </div>
 

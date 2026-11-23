@@ -94,18 +94,31 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { email, username, identifier, password } = req.body;
+        const loginIdentifier = (identifier || email || username || '').trim();
 
         // Validate input
-        if (!email || !password) {
+        if (!loginIdentifier || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide email and password',
+                message: 'Please provide email or username and password',
             });
         }
 
-        // STEP 1: Try to find as Lender (User table)
-        const user = await User.findOne({ email }).select('+password').populate('lenderId');
+        // STEP 1: Try to find as Lender (User table) by email or username
+        const isEmail = loginIdentifier.includes('@');
+        let user;
+        if (isEmail) {
+            user = await User.findOne({ email: loginIdentifier.toLowerCase() }).select('+password').populate('lenderId');
+        } else {
+            const escapedIdentifier = loginIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            user = await User.findOne({
+                $or: [
+                    { username: { $regex: new RegExp(`^${escapedIdentifier}$`, 'i') } },
+                    { email: loginIdentifier.toLowerCase() },
+                ]
+            }).select('+password').populate('lenderId');
+        }
 
         if (user) {
             // Check if account is active
@@ -152,7 +165,13 @@ const login = async (req, res, next) => {
         }
 
         // STEP 2: Try to find as Customer
-        const customer = await Customer.findOne({ email, isDeleted: false }).select('+password');
+        const customer = await Customer.findOne({
+            $or: [
+                { email: loginIdentifier.toLowerCase() },
+                { phone: loginIdentifier }
+            ],
+            isDeleted: false
+        }).select('+password');
 
         if (customer) {
             // Check if customer has portal access enabled

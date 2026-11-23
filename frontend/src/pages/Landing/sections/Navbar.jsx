@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { Menu, X, Zap } from 'lucide-react';
+import { List, X, Coins } from '@phosphor-icons/react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { animate } from 'animejs';
 
@@ -152,7 +152,7 @@ export default function Navbar() {
               className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md"
             >
               <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Zap size={16} color="#fff" fill="#fff" />
+                <Coins size={18} weight="duotone" color="#fff" />
               </div>
               <span className={`font-bold text-[15px] tracking-tight transition-colors duration-300 ${isDarkNav ? 'text-white' : 'text-[#0F172A]'}`}>
                 Money Lender
@@ -256,7 +256,7 @@ export default function Navbar() {
               aria-label="Toggle navigation menu"
               aria-expanded={menuOpen}
             >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              {menuOpen ? <X size={22} weight="bold" /> : <List size={22} weight="bold" />}
             </button>
           </div>
         </div>

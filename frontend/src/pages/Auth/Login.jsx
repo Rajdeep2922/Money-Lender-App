@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Wallet, Mail, Lock, ArrowRight, Loader2, AlertCircle, Flame, Search } from 'lucide-react';
+import { Wallet, Lock, User, ArrowRight, Loader2, AlertCircle, Flame, Search, Eye, EyeOff } from 'lucide-react';
 import { useLogin } from '../../hooks/useAuth';
 import PublicLoanFlow from '../Public/PublicLoanFlow';
 import TrackLoanRequest from '../Public/TrackLoanRequest';
@@ -9,7 +9,8 @@ import TrackLoanRequest from '../Public/TrackLoanRequest';
 const Login = () => {
     const navigate = useNavigate();
     const loginMutation = useLogin();
-    const [formData, setFormData] = useState({ email: '', password: '' });
+    const [formData, setFormData] = useState({ identifier: '', password: '' });
+    const [showPassword, setShowPassword] = useState(false);
     const [showLoanFlow, setShowLoanFlow] = useState(false);
     const [showTracker, setShowTracker] = useState(false);
 
@@ -20,7 +21,11 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await loginMutation.mutateAsync(formData);
+            const response = await loginMutation.mutateAsync({
+                identifier: formData.identifier,
+                email: formData.identifier, // fallback for legacy handlers expecting email
+                password: formData.password,
+            });
             const redirectTo = response.data?.redirectTo || '/dashboard';
             navigate(redirectTo);
         } catch (error) {
@@ -68,12 +73,12 @@ const Login = () => {
                             </AnimatePresence>
 
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+                                <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email or Username</label>
                                 <div className="mt-1 relative rounded-md shadow-sm">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Mail className="h-5 w-5 text-gray-400" />
+                                        <User className="h-5 w-5 text-gray-400" />
                                     </div>
-                                    <input id="email" name="email" type="email" autoComplete="email" required value={formData.email} onChange={handleChange} disabled={isLoading} className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed" placeholder="you@example.com" />
+                                    <input id="identifier" name="identifier" type="text" autoComplete="username" required value={formData.identifier} onChange={handleChange} disabled={isLoading} className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Email address or username" />
                                 </div>
                             </div>
 
@@ -83,7 +88,20 @@ const Login = () => {
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <Lock className="h-5 w-5 text-gray-400" />
                                     </div>
-                                    <input id="password" name="password" type="password" autoComplete="current-password" required value={formData.password} onChange={handleChange} disabled={isLoading} className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed" placeholder="••••••••" />
+                                    <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={formData.password} onChange={handleChange} disabled={isLoading} className="input pl-10 pr-10 disabled:opacity-60 disabled:cursor-not-allowed" placeholder="••••••••" />
+                                    <button
+                                        type="button"
+                                        tabIndex={-1}
+                                        onClick={() => setShowPassword((prev) => !prev)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-5 w-5" />
+                                        ) : (
+                                            <Eye className="h-5 w-5" />
+                                        )}
+                                    </button>
                                 </div>
                             </div>
 

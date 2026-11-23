@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HandCoins, Mail, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { HandCoins, Mail, Lock, ArrowRight, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { customerAuthAPI } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
@@ -16,6 +16,7 @@ const CustomerLogin = () => {
     const nextPath = searchParams.get('next') || '/portal';
     const { login } = useAuthStore();
     const [formData, setFormData] = useState({ email: '', password: '' });
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -134,15 +135,28 @@ const CustomerLogin = () => {
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     autoComplete="current-password"
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="input pl-10 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="input pl-10 pr-10 disabled:opacity-60 disabled:cursor-not-allowed"
                                     placeholder="••••••••"
                                     disabled={isLoading}
                                 />
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={() => setShowPassword((prev) => !prev)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5" />
+                                    ) : (
+                                        <Eye className="h-5 w-5" />
+                                    )}
+                                </button>
                             </div>
                         </div>
 

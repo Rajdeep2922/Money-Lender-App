@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft, ShieldCheck, Database, Share2, Lock,
-  Clock, UserCheck, Cookie, Mail, CheckCircle2, Zap,
+  Clock, UserCheck, Cookie, Mail, CheckCircle2, Sliders,
 } from 'lucide-react';
+import { Coins } from '@phosphor-icons/react';
 
 /* ── Data ──────────────────────────────────────────── */
 const sections = [
   { id: 'collect',   num: '01', title: 'Information We Collect',  icon: Database },
-  { id: 'use',       num: '02', title: 'How We Use Your Info',    icon: Zap },
+  { id: 'use',       num: '02', title: 'How We Use Your Info',    icon: Sliders },
   { id: 'sharing',   num: '03', title: 'Information Sharing',     icon: Share2 },
   { id: 'security',  num: '04', title: 'Data Security',           icon: Lock },
   { id: 'retention', num: '05', title: 'Data Retention',          icon: Clock },
@@ -130,7 +131,7 @@ export default function PrivacyPolicy() {
             <span style={{ color: '#1e293b' }}>|</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '0.375rem', background: 'linear-gradient(135deg,#06b6d4,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Zap size={11} color="#fff" fill="#fff" />
+                <Coins size={12} weight="duotone" color="#fff" />
               </div>
               <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>Money Lenders</span>
             </div>
@@ -206,7 +207,7 @@ export default function PrivacyPolicy() {
             ]} />
           </SectionCard>
 
-          <SectionCard id="use" num="02" title="How We Use Your Information" icon={Zap} iconColor="#a78bfa" iconBg="rgba(139,92,246,0.12)" iconBorder="rgba(139,92,246,0.2)">
+          <SectionCard id="use" num="02" title="How We Use Your Information" icon={Sliders} iconColor="#a78bfa" iconBg="rgba(139,92,246,0.12)" iconBorder="rgba(139,92,246,0.2)">
             <p>We use the information we collect to:</p>
             <CheckList items={[
               'Process and manage loan requests and repayments',
