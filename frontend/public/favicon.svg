@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Background Gradient: Brand Cobalt into Deep Violet -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F55F1" />
+      <stop offset="100%" stop-color="#3A40C4" />
+    </linearGradient>
+
+    <!-- Coin Shimmer Gradient -->
+    <linearGradient id="coinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#EEF2FD" />
+    </linearGradient>
+
+    <!-- Subtle Drop Shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#0F1026" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Squircle Base with 18px radius -->
+  <rect width="64" height="64" rx="18" fill="url(#bgGrad)" />
+  <rect width="62" height="62" x="1" y="1" rx="17" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1.5" />
+
+  <!-- Lending Coins Icon (Geometric Precision) -->
+  <g filter="url(#shadow)">
+    <!-- Back Coin -->
+    <circle cx="26" cy="38" r="13" fill="#2E339B" stroke="#FFFFFF" stroke-width="2.5" />
+    <circle cx="26" cy="38" r="7.5" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.85" />
+    
+    <!-- Front Coin (Elevated & Overlapping) -->
+    <circle cx="38" cy="26" r="14" fill="url(#coinGrad)" stroke="#FFFFFF" stroke-width="1" />
+    
+    <!-- Front Coin Inner Mint Ring -->
+    <circle cx="38" cy="26" r="9.5" fill="none" stroke="#494FDF" stroke-width="2" />
+    
+    <!-- Minimalist Currency Pillar / Growth Notch -->
+    <path d="M38 21.5V30.5M34.5 24H41.5M35 28H41" stroke="#494FDF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>
+
