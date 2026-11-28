@@ -34,7 +34,7 @@ const ChatWindow = ({ loanRequestId, currentUserId, currentRole, disabled = fals
         queryKey: ['chat-messages', loanRequestId],
         queryFn: () => chatAPI.getMessages(loanRequestId).then((r) => r.data.data),
         enabled: !!loanRequestId && !disabled,
-        staleTime: 0,          // always fetch fresh on mount
+        staleTime: 30000,      // 30s cache; socket delivers live updates
         refetchOnMount: true,
     });
 

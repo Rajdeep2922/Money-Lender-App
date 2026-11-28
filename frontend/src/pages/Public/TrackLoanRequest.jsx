@@ -5,6 +5,7 @@ import { io } from 'socket.io-client';
 import api from '../../services/api';
 import { formatDistanceToNow } from '../../utils/dateUtils';
 import MessageStatusTicks from '../../components/chat/MessageStatusTicks';
+import { safeAttachmentUrl } from '../../utils/safeUrl';
 import toast from 'react-hot-toast';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
@@ -381,15 +382,17 @@ const GuestChatWindow = ({ request, trackingToken, socket: propSocket }) => {
                             <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-xs ${isSelf ? 'bg-primary text-white rounded-br-sm' : 'bg-surface-elevated text-gray-100 border border-white/[0.08] rounded-bl-sm'}`}>
                                 {!isSelf && <p className="text-primary-bright text-xs font-semibold mb-1">Lender</p>}
                                 {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
-                                {msg.fileUrl && (
-                                    msg.fileType === 'image'
-                                        ? <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
-                                            <img src={msg.fileUrl} alt="attachment" className="max-w-full rounded-lg max-h-40 object-cover mt-1" />
+                                {msg.fileUrl && (() => {
+                                    const safeUrl = safeAttachmentUrl(msg.fileUrl);
+                                    if (!safeUrl) return <span className="text-xs opacity-75 break-all">{msg.fileUrl}</span>;
+                                    return msg.fileType === 'image'
+                                        ? <a href={safeUrl} target="_blank" rel="noopener noreferrer">
+                                            <img src={safeUrl} alt="attachment" className="max-w-full rounded-lg max-h-40 object-cover mt-1" />
                                           </a>
-                                        : <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="underline text-xs opacity-80 flex items-center gap-1 mt-1">
+                                        : <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="underline text-xs opacity-80 flex items-center gap-1 mt-1">
                                             <Paperclip className="w-3 h-3" /> View attachment
-                                          </a>
-                                )}
+                                          </a>;
+                                })()}
                                 <div className={`flex items-center justify-end gap-1 text-[10px] mt-1 ${isSelf ? 'text-white/80' : 'text-gray-400'}`}>
                                     <span>{formatDistanceToNow(msg.createdAt)}</span>
                                     <MessageStatusTicks message={msg} isSelf={isSelf} />

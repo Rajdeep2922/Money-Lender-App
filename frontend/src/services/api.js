@@ -107,7 +107,10 @@ export const invoiceAPI = {
 export const paymentAPI = {
     list: (params = {}) => api.get('/payments', { params }),
     get: (id) => api.get(`/payments/${id}`),
-    record: (data) => api.post('/payments', data),
+    record: (data) => {
+        const key = data?.idempotencyKey || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+        return api.post('/payments', data, { headers: { 'Idempotency-Key': key } });
+    },
     update: (id, data) => api.put(`/payments/${id}`, data),
     delete: (id) => api.delete(`/payments/${id}`),
     getForLoan: (loanId) => api.get(`/payments/loan/${loanId}`),

@@ -1,11 +1,13 @@
 import { formatDistanceToNow } from '../../utils/dateUtils';
 import MessageStatusTicks from './MessageStatusTicks';
+import { safeAttachmentUrl } from '../../utils/safeUrl';
 
 /**
  * MessageBubble — single chat message with file preview support
  */
 const MessageBubble = ({ message, isSelf }) => {
     const { text, fileUrl, fileType, createdAt } = message;
+    const safeUrl = safeAttachmentUrl(fileUrl);
     const timeAgo = formatDistanceToNow(new Date(createdAt));
 
     return (
@@ -20,17 +22,19 @@ const MessageBubble = ({ message, isSelf }) => {
                 {/* File attachment */}
                 {fileUrl && (
                     <div className="mb-2">
-                        {fileType === 'image' ? (
-                            <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                        {!safeUrl ? (
+                            <span className="text-xs opacity-75 break-all">{fileUrl}</span>
+                        ) : fileType === 'image' ? (
+                            <a href={safeUrl} target="_blank" rel="noopener noreferrer">
                                 <img
-                                    src={fileUrl}
+                                    src={safeUrl}
                                     alt="attachment"
                                     className="max-w-full rounded-xl max-h-56 object-cover hover:opacity-95 transition-opacity cursor-pointer border border-white/10"
                                 />
                             </a>
                         ) : (
                             <a
-                                href={fileUrl}
+                                href={safeUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`inline-flex items-center gap-2 text-xs font-medium py-1.5 px-3 rounded-lg border ${
@@ -41,7 +45,7 @@ const MessageBubble = ({ message, isSelf }) => {
                             >
                                 <span>{fileType === 'pdf' ? '📄' : '📎'}</span>
                                 <span className="truncate max-w-[180px]">
-                                    {fileUrl.split('/').pop() || 'Document'}
+                                    {safeUrl.split('/').pop() || 'Document'}
                                 </span>
                             </a>
                         )}
