@@ -137,6 +137,10 @@ const loanSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    nextDueDate: {
+        type: Date,
+        index: true,
+    },
     amortizationSchedule: [amortizationSchema],
     notes: {
         type: String,
@@ -232,8 +236,19 @@ const loanSchema = new mongoose.Schema({
         trim: true,
     },
 
+    // ── Soft Delete ──────────────────────────────────────────────────────────────
+    isDeleted: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
+    deletedAt: {
+        type: Date,
+    },
+
 }, {
     timestamps: true,
+    optimisticConcurrency: true,
 });
 
 // Compound indexes for common queries

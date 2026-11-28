@@ -118,35 +118,21 @@ const lenderSchema = new mongoose.Schema({
     timestamps: true,
 });
 
-// Get lender by ID, or get the most recently updated one
-lenderSchema.statics.getLender = async function (lenderId = null) {
-    let lender;
+lenderSchema.index({ email: 1 }, { unique: true });
 
-    if (lenderId) {
-        // If lenderId provided, find that specific lender
-        lender = await this.findById(lenderId);
+const { AppError } = require('../middleware/errorHandler');
+
+// Get lender by concrete ID; never fall back to another lender or create a default
+lenderSchema.statics.getLender = async function (lenderId) {
+    if (!lenderId) {
+        throw new AppError('Lender not found', 404);
     }
 
+    const lender = await this.findById(lenderId);
     if (!lender) {
-        // Fallback: find the most recently updated lender
-        lender = await this.findOne().sort({ updatedAt: -1 });
+        throw new AppError('Lender not found', 404);
     }
 
-    if (!lender) {
-        // Create default if none exists
-        lender = await this.create({
-            businessName: 'Your Finance Company',
-            ownerName: 'Owner Name',
-            email: 'contact@yourfinance.com',
-            phone: '+91-9999999999',
-            address: {
-                street: '123 Main Street',
-                city: 'Mumbai',
-                state: 'Maharashtra',
-                country: 'India',
-            },
-        });
-    }
     return lender;
 };
 

@@ -1,12 +1,12 @@
 /**
  * File Upload Controller
- * Uploads to Cloudinary and returns the file URL.
- * Requires an accepted loan request membership for authorization.
+ * Validates magic bytes, limits size to 5 MB and 3 files, uses UUID public_id,
+ * and uploads to Cloudinary. Requires accepted loan request membership.
  */
+const crypto = require('crypto');
 const LoanRequest = require('../models/LoanRequest');
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 // Configure Cloudinary
 cloudinary.config({
@@ -15,39 +15,47 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Cloudinary storage — auto-detect resource type
-const storage = new CloudinaryStorage({
-    cloudinary,
-    params: async (req, file) => {
-        const loanRequestId = req.query.loanRequestId;
-        const isImage = file.mimetype.startsWith('image/');
-        return {
-            folder: `moneylender/chat/${loanRequestId}`,
-            resource_type: isImage ? 'image' : 'raw',
-            allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx'],
-            public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`,
-        };
-    },
-});
+/**
+ * Inspect file magic bytes to prevent MIME/extension spoofing.
+ * Allows only JPEG, PNG, and PDF.
+ */
+function detectMagicMime(buf) {
+    if (!Buffer.isBuffer(buf) || buf.length < 4) return null;
+    if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) {
+        return 'image/jpeg';
+    }
+    if (
+        buf.length >= 8 &&
+        buf[0] === 0x89 &&
+        buf[1] === 0x50 &&
+        buf[2] === 0x4E &&
+        buf[3] === 0x47 &&
+        buf[4] === 0x0D &&
+        buf[5] === 0x0A &&
+        buf[6] === 0x1A &&
+        buf[7] === 0x0A
+    ) {
+        return 'image/png';
+    }
+    if (buf.subarray(0, 4).toString('ascii') === '%PDF') {
+        return 'application/pdf';
+    }
+    return null;
+}
 
 const fileFilter = (req, file, cb) => {
-    const allowed = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
+    const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
     if (allowed.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Unsupported file type. Allowed: images, PDF, DOC, DOCX'), false);
+        cb(new Error('Unsupported file type. Allowed: JPEG, PNG, PDF'), false);
     }
 };
 
 const upload = multer({
-    storage,
+    storage: multer.memoryStorage(),
     fileFilter,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+    limits: { fileSize: 5 * 1024 * 1024, files: 3 }, // 5 MB max, max 3 files
 });
 
 /**
@@ -63,6 +71,7 @@ const protectBoth = async (req, res, next) => {
         if (!loanReq) return res.status(401).json({ success: false, message: 'Invalid tracking token' });
         req.guestTrackingToken = trackingToken;
         req.guestLoanRequestId = loanReq._id.toString();
+        req.loanRequest = loanReq;
         return next();
     }
 
@@ -80,12 +89,20 @@ const protectBoth = async (req, res, next) => {
         const decoded = jwt.verify(token, JWT_SECRET);
         if (decoded.role === 'lender') {
             const user = await User.findById(decoded.id).populate('lenderId');
-            if (!user || !user.isActive) return res.status(401).json({ success: false, message: 'Unauthorized' });
+            if (!user || !user.isActive || (decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+                return res.status(401).json({ success: false, message: 'Unauthorized' });
+            }
             req.user = user;
         } else if (decoded.role === 'customer') {
             const customer = await Customer.findById(decoded.id);
-            if (!customer || customer.isDeleted || !customer.isPortalActive)
+            if (
+                !customer ||
+                customer.isDeleted ||
+                !customer.isPortalActive ||
+                (decoded.tokenVersion ?? 0) !== (customer.tokenVersion ?? 0)
+            ) {
                 return res.status(401).json({ success: false, message: 'Unauthorized' });
+            }
             req.customer = customer;
         } else {
             return res.status(401).json({ success: false, message: 'Unknown role' });
@@ -105,8 +122,8 @@ const verifyUploadAccess = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'loanRequestId query param is required' });
     }
 
-    const loanRequest = await LoanRequest.findById(loanRequestId);
-    if (!loanRequest) {
+    const loanRequest = req.loanRequest || (await LoanRequest.findById(loanRequestId));
+    if (!loanRequest || loanRequest._id.toString() !== loanRequestId) {
         return res.status(404).json({ success: false, message: 'Loan request not found' });
     }
 
@@ -117,7 +134,6 @@ const verifyUploadAccess = async (req, res, next) => {
         });
     }
 
-    // Guest: verify trackingToken matches this request
     if (req.guestTrackingToken) {
         if (loanRequest.trackingToken !== req.guestTrackingToken) {
             return res.status(403).json({ success: false, message: 'Access denied' });
@@ -126,12 +142,11 @@ const verifyUploadAccess = async (req, res, next) => {
         return next();
     }
 
-    // JWT user: verify participant
     let userId;
     if (req.customer) {
         userId = req.customer._id.toString();
     } else if (req.user) {
-        userId = req.user._id.toString(); // User account ID
+        userId = req.user._id.toString();
     }
 
     const isCustomer = loanRequest.customerId && loanRequest.customerId.toString() === userId;
@@ -145,6 +160,16 @@ const verifyUploadAccess = async (req, res, next) => {
     next();
 };
 
+function uploadBufferToCloudinary(buffer, options) {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+        });
+        stream.end(buffer);
+    });
+}
+
 /**
  * @desc    Upload file to Cloudinary
  * @route   POST /api/upload?loanRequestId=xxx
@@ -154,29 +179,45 @@ const uploadFile = [
     protectBoth,
     verifyUploadAccess,
     upload.single('file'),
-    (req, res) => {
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'No file uploaded' });
+    async (req, res, next) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ success: false, message: 'No file uploaded' });
+            }
+
+            const detectedMime = detectMagicMime(req.file.buffer);
+            if (!detectedMime) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Unsupported or invalid file content. Allowed: JPEG, PNG, PDF',
+                });
+            }
+
+            const isImage = detectedMime.startsWith('image/');
+            const result = await uploadBufferToCloudinary(req.file.buffer, {
+                folder: `moneylender/chat/${req.loanRequest._id}`,
+                resource_type: isImage ? 'image' : 'raw',
+                public_id: crypto.randomUUID(),
+            });
+
+            const safeOriginalName = (req.file.originalname || 'file')
+                .replace(/[^\w.\- ]/g, '_')
+                .slice(0, 120);
+
+            res.setHeader('X-Content-Type-Options', 'nosniff');
+            res.json({
+                success: true,
+                data: {
+                    fileUrl: result.secure_url,
+                    fileType: detectedMime === 'application/pdf' ? 'pdf' : 'image',
+                    originalName: safeOriginalName,
+                    size: req.file.size,
+                },
+            });
+        } catch (err) {
+            next(err);
         }
-
-        const fileUrl = req.file.path; // Cloudinary URL
-        const isImage = req.file.mimetype.startsWith('image/');
-        const fileType = req.file.mimetype === 'application/pdf'
-            ? 'pdf'
-            : isImage
-                ? 'image'
-                : 'document';
-
-        res.json({
-            success: true,
-            data: {
-                fileUrl,
-                fileType,
-                originalName: req.file.originalname,
-                size: req.file.size,
-            },
-        });
     },
 ];
 
-module.exports = { uploadFile };
+module.exports = { uploadFile, detectMagicMime };

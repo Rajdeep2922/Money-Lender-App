@@ -73,6 +73,12 @@ const createLoanRequest = async (req, res, next) => {
             data: loanRequest,
         });
     } catch (error) {
+        if (error?.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: 'You already have a pending request with this lender',
+            });
+        }
         next(error);
     }
 };
@@ -100,19 +106,30 @@ const getLoanRequests = async (req, res, next) => {
             query = { lenderId: req.user.lenderId._id || req.user.lenderId };
         }
 
-        const { status } = req.query;
+        const { status, page = 1, limit = 20 } = req.query;
+        const safePage = Math.max(1, parseInt(page, 10) || 1);
+        const safeLimit = Math.min(Math.max(1, parseInt(limit, 10) || 20), 100);
+
         if (status && ['pending', 'accepted', 'rejected'].includes(status)) {
             query.status = status;
         }
 
-        const loanRequests = await LoanRequest.find(query)
-            .populate('customerId', 'firstName lastName email phone')
-            .populate('lenderId', 'businessName ownerName interestRate rating')
-            .sort({ createdAt: -1 });
+        const [loanRequests, total] = await Promise.all([
+            LoanRequest.find(query)
+                .populate('customerId', 'firstName lastName email phone')
+                .populate('lenderId', 'businessName ownerName interestRate rating')
+                .sort({ createdAt: -1 })
+                .skip((safePage - 1) * safeLimit)
+                .limit(safeLimit),
+            LoanRequest.countDocuments(query),
+        ]);
 
         res.json({
             success: true,
             count: loanRequests.length,
+            total,
+            page: safePage,
+            pages: Math.ceil(total / safeLimit),
             data: loanRequests,
         });
     } catch (error) {
@@ -185,44 +202,49 @@ const respondToLoanRequest = async (req, res, next) => {
             });
         }
 
-        const loanRequest = await LoanRequest.findById(req.params.id);
-        if (!loanRequest) {
-            return res.status(404).json({ success: false, message: 'Loan request not found' });
-        }
-
-        // Verify lender owns this request
         const lenderProfileId = req.user?.lenderId?._id?.toString() || req.user?.lenderId?.toString();
-        if (!lenderProfileId || loanRequest.lenderId.toString() !== lenderProfileId) {
+        if (!lenderProfileId) {
             return res.status(403).json({ success: false, message: 'Access denied' });
         }
 
-        if (loanRequest.status !== 'pending') {
-            return res.status(400).json({
+        // Compare-and-set on pending status
+        const updated = await LoanRequest.findOneAndUpdate(
+            { _id: req.params.id, lenderId: lenderProfileId, status: 'pending' },
+            { $set: { status } },
+            { new: true }
+        );
+
+        if (!updated) {
+            const existing = await LoanRequest.findById(req.params.id).select('lenderId status');
+            if (!existing) {
+                return res.status(404).json({ success: false, message: 'Loan request not found' });
+            }
+            if (existing.lenderId.toString() !== lenderProfileId) {
+                return res.status(403).json({ success: false, message: 'Access denied' });
+            }
+            return res.status(409).json({
                 success: false,
-                message: `Loan request is already ${loanRequest.status}`,
+                message: `Loan request is already ${existing.status}`,
             });
         }
 
-        loanRequest.status = status;
-        await loanRequest.save();
-
-        // Real-time notification to customer (only if portal customer, not guest)
-        if (loanRequest.customerId) {
+        // Real-time notification to customer only after atomic update succeeds
+        if (updated.customerId) {
             const io = req.app.get('io');
             const eventName = status === 'accepted' ? 'loan_request_accepted' : 'loan_request_rejected';
-            emitToUser(io, loanRequest.customerId.toString(), eventName, {
-                loanRequestId: loanRequest._id,
+            emitToUser(io, updated.customerId.toString(), eventName, {
+                loanRequestId: updated._id,
                 status,
                 lenderBusinessName: req.user.lenderId?.businessName || 'The lender',
-                amount: loanRequest.amount,
-                purpose: loanRequest.purpose,
+                amount: updated.amount,
+                purpose: updated.purpose,
             });
         }
 
         res.json({
             success: true,
             message: `Loan request ${status}`,
-            data: loanRequest,
+            data: updated,
         });
     } catch (error) {
         next(error);

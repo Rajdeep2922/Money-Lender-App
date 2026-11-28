@@ -45,41 +45,44 @@ exports.updateLender = async (req, res, next) => {
         }
 
         let lender = await Lender.findById(lenderId);
-
         if (!lender) {
-            lender = new Lender(req.body);
-        } else {
-            // Handle nested objects properly
-            const updateData = { ...req.body };
-
-            // Debug: Log companyStamp
-            console.log('Received companyStamp:', updateData.companyStamp ? `${updateData.companyStamp.substring(0, 50)}...` : 'undefined');
-
-            // Merge address if provided
-            if (updateData.address) {
-                updateData.address = {
-                    ...lender.address?.toObject?.() || lender.address || {},
-                    ...updateData.address
-                };
-            }
-
-            // Merge bankDetails if provided
-            if (updateData.bankDetails) {
-                updateData.bankDetails = {
-                    ...lender.bankDetails?.toObject?.() || lender.bankDetails || {},
-                    ...updateData.bankDetails
-                };
-            }
-
-            // Update all fields including companyStamp
-            Object.keys(updateData).forEach(key => {
-                lender[key] = updateData[key];
-            });
-
-            // Debug: Log saved companyStamp
-            console.log('Saved companyStamp:', lender.companyStamp ? `${lender.companyStamp.substring(0, 50)}...` : 'undefined');
+            return next(new AppError('Lender not found', 404));
         }
 
+        // Explicit whitelist — never allow _id, email, or activePolicies via unvalidated spread
+        const ALLOWED_LENDER_FIELDS = [
+            'businessName', 'ownerName', 'phone', 'panNumber',
+            'interestRate', 'rating', 'description', 'isPublic',
+            'logo', 'companyStamp', 'invoicePrefix', 'contractPrefix',
+            'loanPrefix', 'loanPolicy',
+        ];
+        for (const field of ALLOWED_LENDER_FIELDS) {
+            if (req.body[field] !== undefined) {
+                lender[field] = req.body[field];
+            }
+        }
+
+        // Merge address if provided
+        if (req.body.address && typeof req.body.address === 'object') {
+            lender.address = {
+                ...lender.address?.toObject?.() || lender.address || {},
+                street: req.body.address.street ?? lender.address?.street,
+                city: req.body.address.city ?? lender.address?.city,
+                state: req.body.address.state ?? lender.address?.state,
+                country: req.body.address.country ?? lender.address?.country,
+            };
+        }
+
+        // Merge bankDetails if provided
+        if (req.body.bankDetails && typeof req.body.bankDetails === 'object') {
+            lender.bankDetails = {
+                ...lender.bankDetails?.toObject?.() || lender.bankDetails || {},
+                accountName: req.body.bankDetails.accountName ?? lender.bankDetails?.accountName,
+                accountNumber: req.body.bankDetails.accountNumber ?? lender.bankDetails?.accountNumber,
+                ifscCode: req.body.bankDetails.ifscCode ?? lender.bankDetails?.ifscCode,
+                bankName: req.body.bankDetails.bankName ?? lender.bankDetails?.bankName,
+            };
+        }
 
         await lender.save();
 

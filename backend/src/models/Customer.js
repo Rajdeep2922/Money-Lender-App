@@ -93,6 +93,10 @@ const customerSchema = new mongoose.Schema({
     photo: {
         type: String, // Store passport photo as Base64 string
     },
+    tokenVersion: {
+        type: Number,
+        default: 0,
+    },
 }, {
     timestamps: true,
 });

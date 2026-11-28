@@ -63,7 +63,7 @@ const customerLogin = async (req, res, next) => {
         await customer.save({ validateBeforeSave: false });
 
         // Generate token
-        const token = generateCustomerToken(customer._id);
+        const token = generateCustomerToken(customer._id, customer.tokenVersion);
 
         res.json({
             success: true,

@@ -1,8 +1,11 @@
+const mongoose = require('mongoose');
 const Loan = require('../models/Loan');
 const Customer = require('../models/Customer');
 const Lender = require('../models/Lender');
 const Payment = require('../models/Payment');
+const Invoice = require('../models/Invoice');
 const { AppError } = require('../middleware/errorHandler');
+const { nextDocumentNumber, nextSequence } = require('../utils/sequence');
 const {
     PAGINATION,
     LOAN_STATUS,
@@ -37,6 +40,9 @@ const {
     detectMismatch,
     generatePreviewText,
 } = require('../utils/customAgreementValidator');
+const { lenderIdOf } = require('../utils/tenant');
+
+const ALLOWED_LOAN_SORTS = ['createdAt', '-createdAt', 'loanNumber', '-loanNumber', 'principal', '-principal'];
 
 
 /**
@@ -44,6 +50,7 @@ const {
  */
 exports.listLoans = async (req, res, next) => {
     try {
+        const lenderId = lenderIdOf(req);
         const {
             page = PAGINATION.DEFAULT_PAGE,
             limit = PAGINATION.DEFAULT_LIMIT,
@@ -53,27 +60,25 @@ exports.listLoans = async (req, res, next) => {
             search
         } = req.query;
 
-        const filter = {};
+        const safePage = Math.max(1, parseInt(page, 10) || PAGINATION.DEFAULT_PAGE);
+        const safeLimit = Math.min(Math.max(1, parseInt(limit, 10) || PAGINATION.DEFAULT_LIMIT), PAGINATION.MAX_LIMIT);
+        const safeSort = ALLOWED_LOAN_SORTS.includes(sortBy) ? sortBy : '-createdAt';
 
-        // SECURITY: Filter by lender to isolate user data
-        if (req.user && req.user.lenderId) {
-            filter.lenderId = req.user.lenderId;
-        }
+        const filter = { lenderId, isDeleted: { $ne: true } };
 
         if (customerId) filter.customerId = customerId;
         if (status) filter.status = status;
 
         if (search) {
-            // Find customers that match the name (also filter by lenderId)
+            const escaped = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(escaped, 'i');
             const customerFilter = {
+                lenderId,
                 $or: [
-                    { firstName: new RegExp(search, 'i') },
-                    { lastName: new RegExp(search, 'i') },
+                    { firstName: regex },
+                    { lastName: regex },
                 ]
             };
-            if (req.user && req.user.lenderId) {
-                customerFilter.lenderId = req.user.lenderId;
-            }
             const matchingCustomers = await Customer.find(customerFilter).select('_id');
 
             const customerIds = matchingCustomers.map(c => c._id);
@@ -81,16 +86,16 @@ exports.listLoans = async (req, res, next) => {
             filter.$and = filter.$and || [];
             filter.$and.push({
                 $or: [
-                    { loanNumber: new RegExp(search, 'i') },
+                    { loanNumber: regex },
                     { customerId: { $in: customerIds } }
                 ]
             });
         }
 
         const loans = await Loan.find(filter)
-            .sort(sortBy)
-            .limit(Math.min(limit * 1, PAGINATION.MAX_LIMIT))
-            .skip((page - 1) * limit)
+            .sort(safeSort)
+            .limit(safeLimit)
+            .skip((safePage - 1) * safeLimit)
             .populate('customerId', 'firstName lastName email phone');
 
         const total = await Loan.countDocuments(filter);
@@ -99,10 +104,10 @@ exports.listLoans = async (req, res, next) => {
             success: true,
             loans,
             pagination: {
-                page: Number(page),
-                limit: Number(limit),
+                page: safePage,
+                limit: safeLimit,
                 total,
-                pages: Math.ceil(total / limit),
+                pages: Math.ceil(total / safeLimit),
             },
         });
     } catch (error) {
@@ -115,7 +120,8 @@ exports.listLoans = async (req, res, next) => {
  */
 exports.getLoan = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id)
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId, isDeleted: { $ne: true } })
             .populate('customerId', 'firstName lastName email phone address');
 
         if (!loan) {
@@ -136,6 +142,7 @@ exports.getLoan = async (req, res, next) => {
  */
 exports.createLoan = async (req, res, next) => {
     try {
+        const lenderId = lenderIdOf(req);
         const {
             customerId,
             principal,
@@ -152,14 +159,14 @@ exports.createLoan = async (req, res, next) => {
             foreclosurePolicy,
         } = req.body;
 
-        // Verify customer exists
-        const customer = await Customer.findById(customerId);
+        // Verify customer exists and belongs to this lender
+        const customer = await Customer.findOne({ _id: customerId, lenderId, isDeleted: { $ne: true } });
         if (!customer) {
             return next(new AppError('Customer not found', 404));
         }
 
         // Get lender for prefix
-        const lender = await Lender.getLender(req.user?.lenderId);
+        const lender = await Lender.getLender(lenderId);
 
         console.log('createLoan received:', { manualEMI, interestType, monthlyInterestRate, principal, loanDurationMonths });
 
@@ -185,21 +192,8 @@ exports.createLoan = async (req, res, next) => {
         const totalAmountPayable = monthlyEMI * loanDurationMonths;
         const totalInterestAmount = totalAmountPayable - principal;
 
-        // Generate unique loan number
-        // Generate unique loan number
-        // Find the last created loan to determine the next sequence number
-        const lastLoan = await Loan.findOne({}, { loanNumber: 1 }).sort({ createdAt: -1 });
-        let nextSequence = 0;
-
-        if (lastLoan && lastLoan.loanNumber) {
-            const parts = lastLoan.loanNumber.split('-');
-            const lastSeq = parseInt(parts[parts.length - 1], 10);
-            if (!isNaN(lastSeq)) {
-                nextSequence = lastSeq;
-            }
-        }
-
-        const loanNumber = generateDocumentNumber(lender.loanPrefix, nextSequence);
+        // Generate unique loan number atomically via Counter
+        const loanNumber = await nextDocumentNumber(`loan:${lenderId}`, lender.loanPrefix || 'LN');
 
         // Calculate end date
         const endDate = new Date(loanStartDate);
@@ -225,10 +219,11 @@ exports.createLoan = async (req, res, next) => {
             totalAmountPayable,
             totalInterestAmount,
             remainingBalance: totalAmountPayable,
+            nextDueDate: amortizationSchedule[0]?.dueDate || null,
             amortizationSchedule,
             status: LOAN_STATUS.PENDING_APPROVAL,
             notes,
-            lenderId: req.user && req.user.lenderId ? req.user.lenderId : undefined,
+            lenderId,
             // Policy fields
             gracePeriodDays:    resolvedGracePeriod,
             lateFeeType:        resolvedLateFeeType,
@@ -244,6 +239,9 @@ exports.createLoan = async (req, res, next) => {
             loan,
         });
     } catch (error) {
+        if (error?.code === 11000) {
+            return next(new AppError('Duplicate loan number conflict, please retry', 409));
+        }
         next(error);
     }
 };
@@ -253,19 +251,17 @@ exports.createLoan = async (req, res, next) => {
  */
 exports.approveLoan = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id);
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOneAndUpdate(
+            { _id: req.params.id, lenderId, isDeleted: { $ne: true }, status: LOAN_STATUS.PENDING_APPROVAL },
+            { $set: { status: LOAN_STATUS.ACTIVE, approvalDate: new Date() } },
+            { new: true }
+        );
 
         if (!loan) {
-            return next(new AppError('Loan not found', 404));
+            const exists = await Loan.exists({ _id: req.params.id, lenderId, isDeleted: { $ne: true } });
+            return next(new AppError(exists ? 'Loan is no longer pending approval' : 'Loan not found', exists ? 409 : 404));
         }
-
-        if (loan.status !== LOAN_STATUS.PENDING_APPROVAL) {
-            return next(new AppError('Only pending loans can be approved', 400));
-        }
-
-        loan.status = LOAN_STATUS.ACTIVE;
-        loan.approvalDate = new Date();
-        await loan.save();
 
         res.json({
             success: true,
@@ -282,7 +278,8 @@ exports.approveLoan = async (req, res, next) => {
  */
 exports.getAmortizationSchedule = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id);
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId });
 
         if (!loan) {
             return next(new AppError('Loan not found', 404));
@@ -334,7 +331,8 @@ exports.getAmortizationSchedule = async (req, res, next) => {
  */
 exports.getCurrentBalance = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id);
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId });
 
         if (!loan) {
             return next(new AppError('Loan not found', 404));
@@ -362,7 +360,8 @@ exports.getCurrentBalance = async (req, res, next) => {
  */
 exports.updateLoan = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id);
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId });
 
         if (!loan) {
             return next(new AppError('Loan not found', 404));
@@ -430,18 +429,17 @@ exports.updateLoan = async (req, res, next) => {
  */
 exports.cancelLoan = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id);
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOneAndUpdate(
+            { _id: req.params.id, lenderId, isDeleted: { $ne: true }, status: LOAN_STATUS.PENDING_APPROVAL },
+            { $set: { status: LOAN_STATUS.CLOSED } },
+            { new: true }
+        );
 
         if (!loan) {
-            return next(new AppError('Loan not found', 404));
+            const exists = await Loan.exists({ _id: req.params.id, lenderId, isDeleted: { $ne: true } });
+            return next(new AppError(exists ? 'Only pending loans can be cancelled' : 'Loan not found', exists ? 409 : 404));
         }
-
-        if (loan.status !== LOAN_STATUS.PENDING_APPROVAL) {
-            return next(new AppError('Only pending loans can be cancelled', 400));
-        }
-
-        loan.status = LOAN_STATUS.CLOSED;
-        await loan.save();
 
         res.json({
             success: true,
@@ -457,14 +455,15 @@ exports.cancelLoan = async (req, res, next) => {
  */
 exports.downloadAgreement = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id)
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId })
             .populate('customerId', 'firstName lastName email phone address aadhaarNumber panNumber signature photo');
 
         if (!loan) {
             return next(new AppError('Loan not found', 404));
         }
 
-        const lender = await Lender.getLender(req.user?.lenderId);
+        const lender = await Lender.getLender(lenderId);
 
         // ── ROUTE CUSTOMIZED AGREEMENT (if approved) ──
         if (loan.agreementSnapshot?.agreementType === AGREEMENT_TYPE.CUSTOMIZED && loan.agreementSnapshot?.customAgreementDetails?.approvedAt) {
@@ -478,9 +477,9 @@ exports.downloadAgreement = async (req, res, next) => {
 
         // Build immutable snapshot if not yet generated (first download)
         if (!loan.agreementSnapshot || !loan.agreementSnapshot.agreementVersion) {
-            const snapshot = await buildPolicySnapshot(req.user?.lenderId);
-            const existingLoanDocs = await Loan.countDocuments({ lenderId: req.user?.lenderId });
-            const agreementVersion = `v${existingLoanDocs}.0`;
+            const snapshot = await buildPolicySnapshot(lenderId);
+            const versionSeq = await nextSequence(`agreement:${lenderId}`);
+            const agreementVersion = `v${versionSeq}.0`;
             loan.agreementSnapshot = {
                 ...snapshot,
                 agreementVersion,
@@ -506,15 +505,16 @@ exports.downloadAgreement = async (req, res, next) => {
  */
 exports.downloadStatement = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id)
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId })
             .populate('customerId', 'firstName lastName email phone address aadhaarNumber panNumber photo');
 
         if (!loan) {
             return next(new AppError('Loan not found', 404));
         }
 
-        const lender = await Lender.getLender(req.user?.lenderId);
-        const payments = await Payment.find({ loanId: loan._id }).sort({ paymentDate: -1 });
+        const lender = await Lender.getLender(lenderId);
+        const payments = await Payment.find({ loanId: loan._id, lenderId }).sort({ paymentDate: -1 });
 
         const pdfDoc = await generateLoanStatement(loan, lender, payments);
 
@@ -531,7 +531,9 @@ exports.downloadStatement = async (req, res, next) => {
  * Foreclose/Early Settlement of a loan
  */
 exports.forecloseLoan = async (req, res, next) => {
+    const session = await mongoose.startSession();
     try {
+        const lenderId = lenderIdOf(req);
         const {
             discount = 0,
             discountReason,
@@ -539,80 +541,92 @@ exports.forecloseLoan = async (req, res, next) => {
             paymentMethod = 'CASH',
             bankDetails = {},
         } = req.body;
+        const idempotencyKey = req.get('Idempotency-Key') || `FORECLOSE-${req.params.id}`;
 
-        const loan = await Loan.findById(req.params.id);
-        if (!loan) return next(new AppError('Loan not found', 404));
+        let result;
+        await session.withTransaction(async () => {
+            const loan = await Loan.findOne({
+                _id: req.params.id,
+                lenderId,
+                isDeleted: { $ne: true },
+            }).session(session);
 
-        if (loan.status !== LOAN_STATUS.ACTIVE) {
-            return next(new AppError('Only active loans can be foreclosed', 400));
-        }
-
-        const policy = loan.foreclosurePolicy || FORECLOSURE_POLICY.WITHOUT_DISCOUNT;
-
-        // Compute settlement using pure utility (validates policy, discount limits)
-        const { settlementAmount, discountApplied, error } = computeForeclosureSettlement(
-            loan.remainingBalance,
-            policy,
-            Number(discount)
-        );
-
-        if (error) return next(new AppError(error, 400));
-
-        // Validate discountReason when MANUAL_DISCOUNT
-        if (policy === FORECLOSURE_POLICY.MANUAL_DISCOUNT && discountApplied > 0) {
-            if (!discountReason || !Object.values(DISCOUNT_REASON).includes(discountReason)) {
-                return next(new AppError('A valid discount reason is required for manual discount foreclosure', 400));
+            if (!loan) throw new AppError('Loan not found', 404);
+            if (loan.status !== LOAN_STATUS.ACTIVE) {
+                throw new AppError('Only active loans can be foreclosed', 409);
             }
-        }
 
-        const originalBalance = loan.remainingBalance;
+            const policy = loan.foreclosurePolicy || FORECLOSURE_POLICY.WITHOUT_DISCOUNT;
+            const { settlementAmount, discountApplied, error } = computeForeclosureSettlement(
+                loan.remainingBalance,
+                policy,
+                Number(discount)
+            );
+            if (error) throw new AppError(error, 400);
 
-        // Record final settlement payment
-        const payment = new Payment({
-            loanId: loan._id,
-            customerId: loan.customerId,
-            paymentNumber: loan.paymentsReceived + 1,
-            amountPaid: settlementAmount,
-            principalPortion: originalBalance,
-            interestPortion: 0,
-            balanceAfterPayment: 0,
-            paymentDate: new Date(),
-            paymentMethod,
-            notes: remarks || 'Foreclosure / Early Settlement',
-            referenceId: `FORECLOSURE-${loan.loanNumber}`,
-            bankDetails,
+            if (policy === FORECLOSURE_POLICY.MANUAL_DISCOUNT && discountApplied > 0) {
+                if (!discountReason || !Object.values(DISCOUNT_REASON).includes(discountReason)) {
+                    throw new AppError('A valid discount reason is required for manual discount foreclosure', 400);
+                }
+            }
+
+            const originalBalance = loan.remainingBalance;
+            const paymentNumber = loan.paymentsReceived + 1;
+
+            await Payment.create([{
+                loanId: loan._id,
+                customerId: loan.customerId,
+                lenderId,
+                idempotencyKey,
+                paymentNumber,
+                amountPaid: settlementAmount,
+                principalPortion: originalBalance,
+                interestPortion: 0,
+                balanceAfterPayment: 0,
+                paymentDate: new Date(),
+                paymentMethod: paymentMethod ? paymentMethod.toLowerCase() : 'cash',
+                notes: remarks || 'Foreclosure / Early Settlement',
+                referenceId: `FORECLOSURE-${loan.loanNumber}`,
+                bankDetails,
+            }], { session });
+
+            loan.status = LOAN_STATUS.FORECLOSED;
+            loan.completionType = LOAN_COMPLETION_TYPE.FORECLOSED;
+            loan.foreclosureDate = new Date();
+            loan.foreclosureDiscount = discountApplied;
+            loan.foreclosureSettlementAmount = settlementAmount;
+            loan.foreclosureRemarks = remarks || 'Foreclosure / Early Settlement';
+            loan.foreclosedBy = req.user?.name || req.user?.email || 'Lender';
+            if (discountReason) loan.discountReason = discountReason;
+            loan.settlementBalance = originalBalance;
+            loan.settlementAmount = settlementAmount;
+            loan.settlementDiscount = discountApplied;
+            loan.settlementPaymentMethod = paymentMethod;
+            loan.settlementNotes = remarks || 'Foreclosure / Early Settlement';
+            loan.settlementDate = new Date();
+            loan.settlementBankDetails = bankDetails;
+            loan.paymentsReceived = paymentNumber;
+            loan.remainingBalance = 0;
+            loan.nextDueDate = null;
+            await loan.save({ session });
+
+            result = { settlementAmount, discountApplied, loanId: loan._id };
         });
-        await payment.save();
-
-        // Update loan to FORECLOSED
-        loan.status = LOAN_STATUS.FORECLOSED;
-        loan.completionType = LOAN_COMPLETION_TYPE.FORECLOSED;
-        loan.foreclosureDate = new Date();
-        loan.foreclosureDiscount = discountApplied;
-        loan.foreclosureSettlementAmount = settlementAmount;
-        loan.foreclosureRemarks = remarks || 'Foreclosure / Early Settlement';
-        loan.foreclosedBy = req.user?.name || req.user?.email || 'Lender';
-        if (discountReason) loan.discountReason = discountReason;
-        // Legacy settlement fields for backward compat
-        loan.settlementBalance = originalBalance;
-        loan.settlementAmount = settlementAmount;
-        loan.settlementDiscount = discountApplied;
-        loan.settlementPaymentMethod = paymentMethod;
-        loan.settlementNotes = remarks || 'Foreclosure / Early Settlement';
-        loan.settlementDate = new Date();
-        loan.settlementBankDetails = bankDetails;
-        loan.remainingBalance = 0;
-        await loan.save();
 
         res.json({
             success: true,
             message: 'Loan foreclosed successfully',
-            settlementAmount,
-            discountApplied,
-            loanId: loan._id,
+            settlementAmount: result.settlementAmount,
+            discountApplied: result.discountApplied,
+            loanId: result.loanId,
         });
     } catch (error) {
+        if (error?.code === 11000) {
+            return next(new AppError('Foreclosure already processed or in progress', 409));
+        }
         next(error);
+    } finally {
+        await session.endSession();
     }
 };
 
@@ -622,7 +636,8 @@ exports.forecloseLoan = async (req, res, next) => {
  */
 exports.downloadNOC = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id)
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId })
             .populate('customerId', 'firstName lastName email phone address aadhaarNumber panNumber');
 
         if (!loan) {
@@ -633,7 +648,7 @@ exports.downloadNOC = async (req, res, next) => {
             return next(new AppError('NOC can only be generated for closed, completed, or foreclosed loans', 400));
         }
 
-        const lender = await Lender.getLender(req.user?.lenderId);
+        const lender = await Lender.getLender(lenderId);
         const pdfDoc = await generateLoanClosureNOC(loan, lender);
 
         res.setHeader('Content-Type', 'application/pdf');
@@ -649,37 +664,42 @@ exports.downloadNOC = async (req, res, next) => {
  */
 exports.updateLoanStatus = async (req, res, next) => {
     try {
+        const lenderId = lenderIdOf(req);
         const { status } = req.body;
-        const loan = await Loan.findById(req.params.id);
-
-        if (!loan) {
-            return next(new AppError('Loan not found', 404));
-        }
-
-        // Validate Status Transition
         const allowedStatuses = [LOAN_STATUS.PENDING_APPROVAL, LOAN_STATUS.APPROVED, LOAN_STATUS.ACTIVE];
 
         if (!allowedStatuses.includes(status)) {
             return next(new AppError('Invalid status update. Only Pending, Approved, or Active status can be set manually.', 400));
         }
 
+        let loan;
         if (status === LOAN_STATUS.PENDING_APPROVAL) {
-            // Check if payments exist
-            if (loan.paymentsReceived > 0) {
-                return next(new AppError('Cannot revert to Pending: Payments have already been recorded.', 400));
+            loan = await Loan.findOneAndUpdate(
+                { _id: req.params.id, lenderId, isDeleted: { $ne: true }, paymentsReceived: 0 },
+                { $set: { status: LOAN_STATUS.PENDING_APPROVAL }, $unset: { approvalDate: 1 } },
+                { new: true }
+            );
+            if (!loan) {
+                const exists = await Loan.exists({ _id: req.params.id, lenderId, isDeleted: { $ne: true } });
+                return next(new AppError(exists ? 'Cannot revert to Pending: Payments have already been recorded.' : 'Loan not found', exists ? 409 : 404));
             }
-            loan.status = LOAN_STATUS.PENDING_APPROVAL;
-            loan.approvalDate = undefined; // Clear approval date
         } else {
-            // For Approved or Active
-            loan.status = status;
-            // Set approval date if not already set
-            if (!loan.approvalDate) {
-                loan.approvalDate = new Date();
+            loan = await Loan.findOneAndUpdate(
+                { _id: req.params.id, lenderId, isDeleted: { $ne: true } },
+                [
+                    {
+                        $set: {
+                            status,
+                            approvalDate: { $ifNull: ['$approvalDate', new Date()] },
+                        },
+                    },
+                ],
+                { new: true }
+            );
+            if (!loan) {
+                return next(new AppError('Loan not found', 404));
             }
         }
-
-        await loan.save();
 
         res.json({
             success: true,
@@ -692,19 +712,37 @@ exports.updateLoanStatus = async (req, res, next) => {
 };
 
 /**
- * Delete loan
+ * Soft delete loan (rejects when payments exist unless ?cascade=true in a transaction)
  */
 exports.deleteLoan = async (req, res, next) => {
+    const session = await mongoose.startSession();
     try {
-        const loan = await Loan.findByIdAndDelete(req.params.id);
+        const lenderId = lenderIdOf(req);
+        const cascade = req.query.cascade === 'true';
 
-        if (!loan) {
-            return next(new AppError('Loan not found', 404));
-        }
+        await session.withTransaction(async () => {
+            const loan = await Loan.findOne({ _id: req.params.id, lenderId, isDeleted: { $ne: true } }).session(session);
+            if (!loan) {
+                throw new AppError('Loan not found', 404);
+            }
 
-        // Optional: Delete related payments and invoices
-        // await Payment.deleteMany({ loanId: loan._id });
-        // await Invoice.deleteMany({ loanId: loan._id });
+            const paymentCount = await Payment.countDocuments({ loanId: loan._id, lenderId }).session(session);
+            if (paymentCount > 0 && !cascade) {
+                throw new AppError('Cannot delete loan with recorded payments without explicit cascade', 409);
+            }
+
+            loan.isDeleted = true;
+            loan.deletedAt = new Date();
+            await loan.save({ session });
+
+            if (cascade) {
+                await Invoice.updateMany(
+                    { loanId: loan._id, lenderId },
+                    { $set: { status: 'cancelled' } },
+                    { session }
+                );
+            }
+        });
 
         res.json({
             success: true,
@@ -712,6 +750,8 @@ exports.deleteLoan = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
+    } finally {
+        await session.endSession();
     }
 };
 
@@ -720,20 +760,33 @@ exports.deleteLoan = async (req, res, next) => {
  */
 exports.completeLoan = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id);
-        if (!loan) return next(new AppError('Loan not found', 404));
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOneAndUpdate(
+            {
+                _id: req.params.id,
+                lenderId,
+                isDeleted: { $ne: true },
+                status: LOAN_STATUS.ACTIVE,
+                remainingBalance: { $lte: 0 },
+            },
+            {
+                $set: {
+                    status: LOAN_STATUS.COMPLETED,
+                    completionType: LOAN_COMPLETION_TYPE.COMPLETED,
+                    nextDueDate: null,
+                },
+            },
+            { new: true }
+        );
 
-        if (loan.status !== LOAN_STATUS.ACTIVE) {
-            return next(new AppError('Only active loans can be marked as completed', 400));
+        if (!loan) {
+            const existing = await Loan.findOne({ _id: req.params.id, lenderId, isDeleted: { $ne: true } });
+            if (!existing) return next(new AppError('Loan not found', 404));
+            if (existing.status !== LOAN_STATUS.ACTIVE) {
+                return next(new AppError('Only active loans can be marked as completed', 409));
+            }
+            return next(new AppError('Cannot complete loan — outstanding balance remaining', 409));
         }
-
-        if (loan.remainingBalance > 0) {
-            return next(new AppError('Cannot complete loan — outstanding balance remaining', 400));
-        }
-
-        loan.status = LOAN_STATUS.COMPLETED;
-        loan.completionType = LOAN_COMPLETION_TYPE.COMPLETED;
-        await loan.save();
 
         res.json({
             success: true,
@@ -750,7 +803,8 @@ exports.completeLoan = async (req, res, next) => {
  */
 exports.downloadSettlementCertificate = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id)
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId })
             .populate('customerId')
             .populate('lenderId');
 
@@ -762,7 +816,7 @@ exports.downloadSettlementCertificate = async (req, res, next) => {
             return next(new AppError('Settlement certificate is only available for closed loans', 400));
         }
 
-        const lender = loan.lenderId || await Lender.findOne();
+        const lender = loan.lenderId || await Lender.getLender(lenderId);
 
         // Get settlement data from loan or construct from history
         const settlementData = {
@@ -792,7 +846,8 @@ exports.downloadSettlementCertificate = async (req, res, next) => {
  */
 exports.previewCustomAgreement = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id)
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId })
             .populate('customerId', 'firstName lastName phone');
 
         if (!loan) {
@@ -838,7 +893,8 @@ exports.previewCustomAgreement = async (req, res, next) => {
  */
 exports.approveCustomAgreement = async (req, res, next) => {
     try {
-        const loan = await Loan.findById(req.params.id);
+        const lenderId = lenderIdOf(req);
+        const loan = await Loan.findOne({ _id: req.params.id, lenderId });
         if (!loan) {
             return next(new AppError('Loan not found', 404));
         }
@@ -870,9 +926,9 @@ exports.approveCustomAgreement = async (req, res, next) => {
         const previewText = generatePreviewText(sanitizedData, warnings);
 
         // Build policy snapshot from legal center
-        const snapshot = await buildPolicySnapshot(req.user?.lenderId);
-        const existingLoanDocs = await Loan.countDocuments({ lenderId: req.user?.lenderId });
-        const agreementVersion = `v${existingLoanDocs}.0`;
+        const snapshot = await buildPolicySnapshot(lenderId);
+        const versionSeq = await nextSequence(`agreement:${lenderId}`);
+        const agreementVersion = `v${versionSeq}.0`;
 
         loan.agreementSnapshot = {
             ...snapshot,

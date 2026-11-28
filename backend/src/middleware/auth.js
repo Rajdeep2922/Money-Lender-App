@@ -2,15 +2,17 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Customer = require('../models/Customer');
 
-// JWT Secret - should be in environment variable
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET must be set to at least 32 characters');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 /**
  * Generate JWT token for user (lender)
  */
-const generateToken = (userId) => {
-    return jwt.sign({ id: userId, role: 'lender' }, JWT_SECRET, {
+const generateToken = (userId, tokenVersion = 0) => {
+    return jwt.sign({ id: userId, role: 'lender', tokenVersion }, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN,
     });
 };
@@ -18,8 +20,8 @@ const generateToken = (userId) => {
 /**
  * Generate JWT token for customer (portal access)
  */
-const generateCustomerToken = (customerId) => {
-    return jwt.sign({ id: customerId, role: 'customer' }, JWT_SECRET, {
+const generateCustomerToken = (customerId, tokenVersion = 0) => {
+    return jwt.sign({ id: customerId, role: 'customer', tokenVersion }, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN,
     });
 };
@@ -48,6 +50,13 @@ const protect = async (req, res, next) => {
             // Verify token
             const decoded = jwt.verify(token, JWT_SECRET);
 
+            if (decoded.role !== 'lender') {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid token type.',
+                });
+            }
+
             // Get user from token
             const user = await User.findById(decoded.id).populate('lenderId');
 
@@ -62,6 +71,20 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({
                     success: false,
                     message: 'Account is deactivated. Please contact support.',
+                });
+            }
+
+            if ((decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Session has been revoked. Please login again.',
+                });
+            }
+
+            if (!user.lenderId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Lender profile not configured.',
                 });
             }
 
@@ -131,6 +154,13 @@ const protectCustomer = async (req, res, next) => {
                 });
             }
 
+            if ((decoded.tokenVersion ?? 0) !== (customer.tokenVersion ?? 0)) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Session has been revoked. Please login again.',
+                });
+            }
+
             req.customer = customer;
             next();
         } catch (error) {
@@ -158,9 +188,11 @@ const optionalAuth = async (req, res, next) => {
         if (token) {
             try {
                 const decoded = jwt.verify(token, JWT_SECRET);
-                const user = await User.findById(decoded.id).populate('lenderId');
-                if (user && user.isActive) {
-                    req.user = user;
+                if (decoded.role === 'lender') {
+                    const user = await User.findById(decoded.id).populate('lenderId');
+                    if (user && user.isActive && (decoded.tokenVersion ?? 0) === (user.tokenVersion ?? 0)) {
+                        req.user = user;
+                    }
                 }
             } catch (error) {
                 // Token invalid, but continue without user

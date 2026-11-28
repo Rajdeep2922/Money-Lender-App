@@ -18,19 +18,14 @@ const app = express();
 // Create HTTP server (required for Socket.IO)
 const httpServer = http.createServer(app);
 
-// Connect to MongoDB
-connectDB().then(() => {
-    if (process.env.RUN_MIGRATIONS === 'true') {
-        const runMigration = require('../migrations/20260911_backfill_message_read');
-        runMigration().catch((err) => console.error('[Migration] Startup migration error:', err.message));
-    }
-});
-
-// Initialize Schedulers
-initSchedulers();
-
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'same-site' },
+}));
+
+if (process.env.TRUST_PROXY === 'true') {
+    app.set('trust proxy', 1);
+}
 
 // Rate limiting - configurable via environment
 const limiter = rateLimit({
@@ -40,25 +35,27 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// CORS
+// CORS allow-list
+const allowedOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || 'http://localhost:5173')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
 const corsOptions = {
-    origin: process.env.NODE_ENV === 'production'
-        ? (process.env.FRONTEND_URL || 'http://localhost:5173')
-        : true,
+    origin(origin, cb) {
+        if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+        return cb(new Error('Not allowed by CORS'));
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 };
 app.use(cors(corsOptions));
 
 // Compression
 app.use(compression());
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Static uploads directory (for attachments, receipts, etc.)
-const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Body parsing (1 MB limit)
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Request logging in development
 if (process.env.NODE_ENV === 'development') {
@@ -136,30 +133,37 @@ app.get('/', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// ── Socket.IO Initialization ────────────────────────────────────────────
-const io = new Server(httpServer, {
-    cors: corsOptions,
-    pingTimeout: 60000,
-    pingInterval: 25000,
-});
+// ── Startup: await DB before listening ────────────────────────────────────
+async function start() {
+    await connectDB();
+    if (process.env.RUN_MIGRATIONS === 'true') {
+        const runMigration = require('../migrations/20260911_backfill_message_read');
+        await runMigration();
+    }
+    if (process.env.ENABLE_SCHEDULER === 'true') {
+        initSchedulers();
+    }
 
-// Make io accessible in route controllers via app locals
-app.set('io', io);
+    const io = new Server(httpServer, {
+        cors: corsOptions,
+        pingTimeout: 60000,
+        pingInterval: 25000,
+    });
+    app.set('io', io);
+    initSocketManager(io);
 
-initSocketManager(io);
-// ────────────────────────────────────────────────────────────────────────
+    const PORT = process.env.PORT || 5000;
+    httpServer.listen(PORT, () => {
+        console.log(`Loan Lender API Server v2.0 running on port ${PORT} (${process.env.NODE_ENV || 'development'})`);
+    });
+}
 
-// Start server (use httpServer, not app.listen)
-const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
-    console.log(`
-╔════════════════════════════════════════════════╗
-║     Loan Lender API Server v2.0                ║
-║     Running on port ${PORT}                        ║
-║     Environment: ${process.env.NODE_ENV || 'development'}               ║
-║     WebSocket: Socket.IO enabled               ║
-╚════════════════════════════════════════════════╝
-  `);
-});
+if (require.main === module) {
+    start().catch((err) => {
+        console.error('Failed to start server:', err);
+        process.exit(1);
+    });
+}
 
 module.exports = app;
+module.exports.start = start;

@@ -11,8 +11,10 @@ const LoanRequest = require('../models/LoanRequest');
  * For JWT users: userId is their customerId or lenderProfileId
  * For guests: pass trackingToken directly
  */
-const verifyAcceptedAccess = async (loanRequestId, { userId, userRole, trackingToken } = {}) => {
-    const loanRequest = await LoanRequest.findById(loanRequestId);
+const verifyAcceptedAccess = async (loanRequestId, { userId, userRole, trackingToken, preloadedLoanRequest } = {}) => {
+    const loanRequest = (preloadedLoanRequest && preloadedLoanRequest._id.toString() === loanRequestId)
+        ? preloadedLoanRequest
+        : await LoanRequest.findById(loanRequestId);
     if (!loanRequest) throw Object.assign(new Error('Loan request not found'), { statusCode: 404 });
 
     if (loanRequest.status !== 'accepted') {
@@ -64,7 +66,7 @@ const getMessages = async (req, res, next) => {
             };
         } else if (req.guestTrackingToken) {
             // Guest access via X-Tracking-Token header (set by protectBoth middleware)
-            authContext = { trackingToken: req.guestTrackingToken };
+            authContext = { trackingToken: req.guestTrackingToken, preloadedLoanRequest: req.loanRequest };
         }
 
         await verifyAcceptedAccess(loanRequestId, authContext);
@@ -124,7 +126,7 @@ const markMessagesAsRead = async (req, res, next) => {
             };
         } else if (req.guestTrackingToken) {
             userRole = 'customer';
-            authContext = { trackingToken: req.guestTrackingToken };
+            authContext = { trackingToken: req.guestTrackingToken, preloadedLoanRequest: req.loanRequest };
         }
 
         // Verify participant access to the accepted loan request

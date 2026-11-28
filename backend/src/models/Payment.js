@@ -68,6 +68,10 @@ const paymentSchema = new mongoose.Schema({
         ref: 'Lender',
         index: true,
     },
+    idempotencyKey: {
+        type: String,
+        trim: true,
+    },
     // Bank details for bank transfers
     bankDetails: {
         accountHolderName: { type: String, trim: true },
@@ -79,12 +83,18 @@ const paymentSchema = new mongoose.Schema({
         transactionId: { type: String, trim: true },
     },
 }, {
-
     timestamps: true,
+    optimisticConcurrency: true,
 });
 
 // Compound indexes
 paymentSchema.index({ loanId: 1, paymentDate: -1 });
 paymentSchema.index({ customerId: 1, paymentDate: -1 });
+paymentSchema.index({ loanId: 1, paymentNumber: 1 }, { unique: true });
+paymentSchema.index(
+    { lenderId: 1, idempotencyKey: 1 },
+    { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } }
+);
+paymentSchema.index({ lenderId: 1, paymentDate: -1 });
 
 module.exports = mongoose.model('Payment', paymentSchema);

@@ -22,10 +22,12 @@ const createPublicLoanRequest = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Lender not found' });
         }
 
+        const normalizedPhone = String(guestPhone).replace(/[\s\-()]/g, '').trim();
+
         // Check for duplicate pending request from same phone to same lender
         const existing = await LoanRequest.findOne({
             lenderId,
-            guestPhone,
+            guestPhone: normalizedPhone,
             status: 'pending',
         });
         if (existing) {
@@ -38,7 +40,7 @@ const createPublicLoanRequest = async (req, res) => {
         const loanRequest = await LoanRequest.create({
             lenderId,
             guestName: guestName.trim(),
-            guestPhone: guestPhone.trim(),
+            guestPhone: normalizedPhone,
             guestEmail: guestEmail?.trim() || undefined,
             amount: Number(amount),
             purpose,
@@ -73,6 +75,12 @@ const createPublicLoanRequest = async (req, res) => {
             },
         });
     } catch (err) {
+        if (err?.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: 'You already have a pending request with this lender. Check your request status first.',
+            });
+        }
         console.error('createPublicLoanRequest error:', err);
         return res.status(500).json({ success: false, message: 'Server error' });
     }
@@ -102,17 +110,14 @@ const trackLoanRequest = async (req, res) => {
             });
         }
 
-        // Strip trackingToken from response UNLESS status is accepted
+        // Return status only — never expose trackingToken or customer PII on phone lookup
         const sanitised = requests.map((r) => ({
             _id: r._id,
-            lender: r.lenderId,
+            lenderName: r.lenderId?.businessName || null,
             amount: r.amount,
             purpose: r.purpose,
-            message: r.message,
             status: r.status,
             createdAt: r.createdAt,
-            // Only expose trackingToken if accepted (needed for chat)
-            trackingToken: r.status === 'accepted' ? r.trackingToken : undefined,
         }));
 
         return res.json({ success: true, data: sanitised });

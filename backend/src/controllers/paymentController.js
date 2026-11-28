@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Payment = require('../models/Payment');
 const Loan = require('../models/Loan');
 const Customer = require('../models/Customer');
@@ -5,7 +6,9 @@ const Lender = require('../models/Lender');
 const Invoice = require('../models/Invoice');
 const { generatePaymentReceipt } = require('../utils/pdfGenerator');
 const { AppError } = require('../middleware/errorHandler');
-const { PAGINATION, LOAN_STATUS, INVOICE_STATUS } = require('../config/constants');
+const { PAGINATION, LOAN_STATUS, INVOICE_STATUS, INVOICE_TYPES } = require('../config/constants');
+const { lenderIdOf } = require('../utils/tenant');
+const { nextDocumentNumber } = require('../utils/sequence');
 
 /**
  * List all payments with pagination
@@ -23,12 +26,8 @@ exports.listPayments = async (req, res, next) => {
             search
         } = req.query;
 
-        const filter = {};
-
-        // SECURITY: Filter by lender to isolate user data
-        if (req.user && req.user.lenderId) {
-            filter.lenderId = req.user.lenderId;
-        }
+        const lenderId = lenderIdOf(req);
+        const filter = { lenderId };
 
         if (loanId) filter.loanId = loanId;
         if (customerId) filter.customerId = customerId;
@@ -42,16 +41,20 @@ exports.listPayments = async (req, res, next) => {
 
         // Search filter
         if (search) {
-            // Find customers and loans that match the search
+            const escaped = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(escaped, 'i');
+            // Find customers and loans that match the search within this tenant
             const [matchingCustomers, matchingLoans] = await Promise.all([
                 Customer.find({
+                    lenderId,
                     $or: [
-                        { firstName: new RegExp(search, 'i') },
-                        { lastName: new RegExp(search, 'i') },
+                        { firstName: regex },
+                        { lastName: regex },
                     ]
                 }).select('_id'),
                 Loan.find({
-                    loanNumber: new RegExp(search, 'i')
+                    lenderId,
+                    loanNumber: regex
                 }).select('_id')
             ]);
 
@@ -61,7 +64,7 @@ exports.listPayments = async (req, res, next) => {
             filter.$and = filter.$and || [];
             filter.$and.push({
                 $or: [
-                    { referenceId: new RegExp(search, 'i') },
+                    { referenceId: regex },
                     { customerId: { $in: customerIds } },
                     { loanId: { $in: loanIds } }
                 ]
@@ -97,7 +100,8 @@ exports.listPayments = async (req, res, next) => {
  */
 exports.getPayment = async (req, res, next) => {
     try {
-        const payment = await Payment.findById(req.params.id)
+        const lenderId = lenderIdOf(req);
+        const payment = await Payment.findOne({ _id: req.params.id, lenderId })
             .populate('loanId', 'loanNumber principal monthlyInterestRate')
             .populate('customerId', 'firstName lastName email phone');
 
@@ -118,148 +122,149 @@ exports.getPayment = async (req, res, next) => {
  * Record new payment
  */
 exports.recordPayment = async (req, res, next) => {
+    const session = await mongoose.startSession();
     try {
-        console.log('Recording Payment Body:', JSON.stringify(req.body, null, 2));
+        const lenderId = lenderIdOf(req);
+        const key = req.get('Idempotency-Key') || req.body.idempotencyKey;
+        if (!key) {
+            return next(new AppError('Idempotency-Key is required', 400));
+        }
+
+        const existing = await Payment.findOne({ lenderId, idempotencyKey: key });
+        if (existing) {
+            return res.status(200).json({ success: true, payment: existing, replayed: true });
+        }
+
         const { loanId, amountPaid, paymentMethod, paymentDate, referenceId, notes, bankDetails = {} } = req.body;
-
-        // Find loan
-        const loan = await Loan.findById(loanId).populate('customerId');
-
-        if (!loan) {
-            return next(new AppError('Loan not found', 404));
+        const amount = Number(amountPaid);
+        if (!Number.isFinite(amount) || amount <= 0) {
+            return next(new AppError('Invalid amount', 400));
         }
 
-        if (loan.status !== LOAN_STATUS.ACTIVE && loan.status !== LOAN_STATUS.APPROVED) {
-            return next(new AppError('Can only record payments for active loans', 400));
-        }
+        let payload;
+        await session.withTransaction(async () => {
+            // Acquire write lock on Loan first so concurrent payments serialize via WriteConflict retry
+            const loan = await Loan.findOneAndUpdate(
+                {
+                    _id: loanId,
+                    lenderId,
+                    isDeleted: { $ne: true },
+                    status: { $in: [LOAN_STATUS.ACTIVE, LOAN_STATUS.APPROVED] },
+                },
+                { $inc: { paymentsReceived: 1 } },
+                { new: true, session }
+            ).populate('customerId');
 
-        if (loan.remainingBalance <= 0) {
-            return next(new AppError('Loan is already fully paid', 400));
-        }
-
-        // Get expected payment from schedule
-        const paymentNumber = loan.paymentsReceived + 1;
-        const scheduledPayment = loan.amortizationSchedule[loan.paymentsReceived];
-
-        // Calculate principal and interest portions
-        let interestPortion, principalPortion;
-
-        if (scheduledPayment) {
-            interestPortion = Math.min(scheduledPayment.interest, amountPaid);
-            principalPortion = amountPaid - interestPortion;
-        } else {
-            // Extra payment - all goes to principal
-            interestPortion = 0;
-            principalPortion = amountPaid;
-        }
-
-        // Update loan balance
-        const newRemainingBalance = Math.max(0, loan.remainingBalance - amountPaid);
-
-        // Create payment record
-        const payment = new Payment({
-            loanId: loan._id,
-            customerId: loan.customerId._id,
-            paymentNumber,
-            amountPaid,
-            principalPortion,
-            interestPortion,
-            paymentMethod: paymentMethod ? paymentMethod.toLowerCase() : 'bank_transfer',
-            paymentDate: paymentDate || new Date(),
-            referenceId,
-            balanceAfterPayment: newRemainingBalance,
-            notes,
-            bankDetails,
-            lenderId: req.user && req.user.lenderId ? req.user.lenderId : undefined,
-        });
-
-
-        await payment.save();
-
-        // Update loan
-        loan.paymentsReceived = paymentNumber;
-        loan.remainingBalance = newRemainingBalance;
-
-        // Check if loan is fully paid
-        if (newRemainingBalance <= 0) {
-            loan.status = LOAN_STATUS.COMPLETED;
-        } else if (loan.status === LOAN_STATUS.APPROVED) {
-            loan.status = LOAN_STATUS.ACTIVE;
-        }
-
-        await loan.save();
-
-        // ------------------------------------------------------------------
-        // NEW: Update linked Invoice if exists
-        // ------------------------------------------------------------------
-        // Strategy: Find the oldest 'pending' invoice for this loan
-        const pendingInvoice = await Invoice.findOne({
-            loanId: loan._id,
-            status: { $in: [INVOICE_STATUS.PENDING, INVOICE_STATUS.OVERDUE, INVOICE_STATUS.ISSUED] }
-        }).sort({ 'period.year': 1, 'period.month': 1 }); // Oldest first
-
-        if (pendingInvoice) {
-            // Calculate how much this payment covers
-            const coverage = amountPaid;
-
-            pendingInvoice.amountPaid += coverage;
-            pendingInvoice.balanceDue = Math.max(0, pendingInvoice.amountDue - pendingInvoice.amountPaid);
-            pendingInvoice.paymentId = payment._id; // Link the payment
-
-            if (pendingInvoice.balanceDue <= 0) {
-                pendingInvoice.status = INVOICE_STATUS.PAID;
-            } else {
-                // Partial payment logic could go here (e.g. PARTIALLY_PAID status if you had one)
-                // For now, keep as pending/overdue/issued unless fully paid
+            if (!loan) {
+                const existingLoan = await Loan.findOne({ _id: loanId, lenderId, isDeleted: { $ne: true } }).session(session);
+                if (!existingLoan) throw new AppError('Loan not found', 404);
+                throw new AppError('Can only record payments for active loans', 409);
+            }
+            if (!loan.customerId || String(loan.customerId.lenderId) !== String(lenderId)) {
+                throw new AppError('Customer does not belong to this lender', 403);
+            }
+            if (loan.remainingBalance <= 0) {
+                throw new AppError('Loan is already fully paid', 409);
+            }
+            if (amount > loan.remainingBalance) {
+                throw new AppError('Amount exceeds outstanding balance', 400);
             }
 
-            await pendingInvoice.save();
-        } else {
-            // ------------------------------------------------------------------
-            // AUTO-CREATE INVOICE (RECEIPT) IF NONE EXISTS
-            // ------------------------------------------------------------------
-            // Validating if we need to generate a receipt for this ad-hoc payment
-            console.log(`[Payment] No pending invoice found for Loan ${loan.loanNumber}. Auto-generating receipt.`);
+            const paymentNumber = loan.paymentsReceived;
+            const scheduled = loan.amortizationSchedule[paymentNumber - 1];
+            const interestPortion = scheduled ? Math.min(scheduled.interest, amount) : 0;
+            const principalPortion = amount - interestPortion;
+            const newBalance = loan.remainingBalance - amount;
 
-            const newInvoice = new Invoice({
-                invoiceNumber: `INV-${loan.loanNumber}-${paymentNumber}-${Date.now()}`, // Unique: includes loan + payment + timestamp
-                customerId: loan.customerId._id,
+            const [payment] = await Payment.create([{
                 loanId: loan._id,
-                amountDue: amountPaid, // For receipt, due matches paid
-                amountPaid: amountPaid,
-                balanceDue: 0,
-                dueDate: paymentDate || new Date(),
-                issuedDate: new Date(),
-                status: INVOICE_STATUS.PAID,
-                type: 'emi_receipt',
-                period: {
-                    month: new Date().getMonth() + 1,
-                    year: new Date().getFullYear()
-                },
-                paymentId: payment._id
-            });
+                customerId: loan.customerId._id,
+                lenderId,
+                idempotencyKey: key,
+                paymentNumber,
+                amountPaid: amount,
+                principalPortion,
+                interestPortion,
+                paymentMethod: paymentMethod ? paymentMethod.toLowerCase() : 'bank_transfer',
+                paymentDate: paymentDate || new Date(),
+                referenceId,
+                balanceAfterPayment: newBalance,
+                notes,
+                bankDetails,
+            }], { session });
 
-            await newInvoice.save();
-        }
+            loan.remainingBalance = newBalance;
+            loan.nextDueDate = loan.amortizationSchedule[paymentNumber]?.dueDate || null;
+            if (newBalance === 0) {
+                loan.status = LOAN_STATUS.COMPLETED;
+            } else if (loan.status === LOAN_STATUS.APPROVED) {
+                loan.status = LOAN_STATUS.ACTIVE;
+            }
+            await loan.save({ session });
 
-        res.status(201).json({
+            const pendingInvoice = await Invoice.findOne({
+                loanId: loan._id,
+                lenderId,
+                status: { $in: [INVOICE_STATUS.PENDING, INVOICE_STATUS.OVERDUE, INVOICE_STATUS.ISSUED] },
+            }).sort({ 'period.year': 1, 'period.month': 1 }).session(session);
+
+            if (pendingInvoice) {
+                pendingInvoice.amountPaid = Math.min(pendingInvoice.amountDue, pendingInvoice.amountPaid + amount);
+                pendingInvoice.balanceDue = Math.max(0, pendingInvoice.amountDue - pendingInvoice.amountPaid);
+                pendingInvoice.paymentId = payment._id;
+                pendingInvoice.status = pendingInvoice.balanceDue === 0 ? INVOICE_STATUS.PAID : pendingInvoice.status;
+                await pendingInvoice.save({ session });
+            } else {
+                const invoiceNumber = await nextDocumentNumber(`invoice:${lenderId}`, 'INV');
+                const pDate = paymentDate ? new Date(paymentDate) : new Date();
+                await Invoice.create([{
+                    invoiceNumber,
+                    lenderId,
+                    loanId: loan._id,
+                    customerId: loan.customerId._id,
+                    paymentId: payment._id,
+                    invoiceType: INVOICE_TYPES.EMI_RECEIPT,
+                    amountDue: amount,
+                    amountPaid: amount,
+                    balanceDue: 0,
+                    dueDate: pDate,
+                    status: INVOICE_STATUS.PAID,
+                }], { session });
+            }
+
+            payload = { payment, loan, newBalance, paymentNumber };
+        });
+
+        return res.status(201).json({
             success: true,
             message: 'Payment recorded successfully',
             payment: {
-                ...payment.toObject(),
-                loanNumber: loan.loanNumber,
-                customerName: `${loan.customerId.firstName} ${loan.customerId.lastName}`,
+                ...payload.payment.toObject(),
+                loanNumber: payload.loan.loanNumber,
+                customerName: `${payload.loan.customerId.firstName} ${payload.loan.customerId.lastName}`,
             },
             loanStatus: {
-                remainingBalance: newRemainingBalance,
-                paymentsReceived: paymentNumber,
-                status: loan.status,
-                nextDueDate: loan.amortizationSchedule[paymentNumber]?.dueDate,
-                isFullyPaid: newRemainingBalance <= 0,
+                remainingBalance: payload.newBalance,
+                paymentsReceived: payload.paymentNumber,
+                status: payload.loan.status,
+                nextDueDate: payload.loan.nextDueDate,
+                isFullyPaid: payload.newBalance === 0,
             },
         });
     } catch (error) {
+        if (error?.code === 11000) {
+            const key = req.get('Idempotency-Key') || req.body?.idempotencyKey;
+            if (key) {
+                const existing = await Payment.findOne({ lenderId: lenderIdOf(req), idempotencyKey: key });
+                if (existing) {
+                    return res.status(200).json({ success: true, payment: existing, replayed: true });
+                }
+            }
+            return next(new AppError('Duplicate payment', 409));
+        }
         next(error);
+    } finally {
+        await session.endSession();
     }
 };
 
@@ -268,14 +273,15 @@ exports.recordPayment = async (req, res, next) => {
  */
 exports.getPaymentsForLoan = async (req, res, next) => {
     try {
+        const lenderId = lenderIdOf(req);
         const { loanId } = req.params;
 
-        const loan = await Loan.findById(loanId);
+        const loan = await Loan.findOne({ _id: loanId, lenderId });
         if (!loan) {
             return next(new AppError('Loan not found', 404));
         }
 
-        const payments = await Payment.find({ loanId })
+        const payments = await Payment.find({ loanId, lenderId })
             .sort({ paymentDate: -1 })
             .populate('customerId', 'firstName lastName');
 
@@ -299,9 +305,15 @@ exports.getPaymentsForLoan = async (req, res, next) => {
  */
 exports.getPaymentsForCustomer = async (req, res, next) => {
     try {
+        const lenderId = lenderIdOf(req);
         const { customerId } = req.params;
 
-        const payments = await Payment.find({ customerId })
+        const customer = await Customer.findOne({ _id: customerId, lenderId });
+        if (!customer) {
+            return next(new AppError('Customer not found', 404));
+        }
+
+        const payments = await Payment.find({ customerId, lenderId })
             .sort({ paymentDate: -1 })
             .populate('loanId', 'loanNumber principal');
 
@@ -323,13 +335,27 @@ exports.getPaymentsForCustomer = async (req, res, next) => {
  */
 exports.updatePayment = async (req, res, next) => {
     try {
-        const payment = await Payment.findById(req.params.id);
+        const lenderId = lenderIdOf(req);
+        const payment = await Payment.findOne({ _id: req.params.id, lenderId });
 
         if (!payment) {
             return next(new AppError('Payment not found', 404));
         }
 
-        Object.assign(payment, req.body);
+        // Reject immutable ledger fields
+        const FORBIDDEN_FIELDS = ['amountPaid', 'loanId', 'customerId', 'paymentNumber', 'lenderId', 'balanceAfterPayment'];
+        for (const f of FORBIDDEN_FIELDS) {
+            if (req.body[f] !== undefined) {
+                return next(new AppError(`Cannot modify ${f} via metadata update`, 400));
+            }
+        }
+
+        const ALLOWED_PAYMENT_FIELDS = ['paymentMethod', 'paymentDate', 'referenceId', 'notes', 'bankDetails'];
+        for (const field of ALLOWED_PAYMENT_FIELDS) {
+            if (req.body[field] !== undefined) {
+                payment[field] = req.body[field];
+            }
+        }
         await payment.save();
 
         res.json({
@@ -346,42 +372,44 @@ exports.updatePayment = async (req, res, next) => {
  * Delete payment (if recent)
  */
 exports.deletePayment = async (req, res, next) => {
+    const session = await mongoose.startSession();
     try {
-        const payment = await Payment.findById(req.params.id);
-
-        if (!payment) {
-            return next(new AppError('Payment not found', 404));
-        }
-
-        // Revert loan balance
-        const loan = await Loan.findById(payment.loanId);
-        if (loan) {
-            loan.remainingBalance += payment.amountPaid;
-            loan.paymentsReceived = Math.max(0, loan.paymentsReceived - 1);
-            if (loan.status === LOAN_STATUS.COMPLETED) {
-                loan.status = LOAN_STATUS.ACTIVE;
+        const lenderId = lenderIdOf(req);
+        await session.withTransaction(async () => {
+            const payment = await Payment.findOneAndDelete({ _id: req.params.id, lenderId }).session(session);
+            if (!payment) {
+                throw new AppError('Payment not found', 404);
             }
-            await loan.save();
-        }
 
-        // ------------------------------------------------------------------
-        // NEW: Revert linked Invoice if exists
-        // ------------------------------------------------------------------
-        const linkedInvoice = await Invoice.findOne({ paymentId: payment._id });
-        if (linkedInvoice) {
-            linkedInvoice.amountPaid = Math.max(0, linkedInvoice.amountPaid - payment.amountPaid);
-            linkedInvoice.balanceDue = linkedInvoice.amountDue - linkedInvoice.amountPaid;
-
-            // If balance due > 0, revert status to PENDING (or OVERDUE based on date, simplified to PENDING here)
-            if (linkedInvoice.balanceDue > 0) {
-                linkedInvoice.status = INVOICE_STATUS.PENDING;
+            if (payment.idempotencyKey && payment.idempotencyKey.startsWith('FORECLOSE-')) {
+                throw new AppError('Cannot delete a foreclosure settlement payment directly', 409);
             }
-            // Remove payment link
-            linkedInvoice.paymentId = undefined;
-            await linkedInvoice.save();
-        }
 
-        await payment.deleteOne();
+            const loan = await Loan.findOne({ _id: payment.loanId, lenderId }).session(session);
+            if (loan) {
+                if (loan.status === LOAN_STATUS.FORECLOSED) {
+                    throw new AppError('Cannot delete payment on a foreclosed loan', 409);
+                }
+                loan.remainingBalance = Math.min(loan.totalAmountPayable, loan.remainingBalance + payment.amountPaid);
+                loan.paymentsReceived = Math.max(0, loan.paymentsReceived - 1);
+                loan.nextDueDate = loan.amortizationSchedule[loan.paymentsReceived]?.dueDate || null;
+                if (loan.status === LOAN_STATUS.COMPLETED) {
+                    loan.status = LOAN_STATUS.ACTIVE;
+                }
+                await loan.save({ session });
+            }
+
+            const linkedInvoice = await Invoice.findOne({ paymentId: payment._id, lenderId }).session(session);
+            if (linkedInvoice) {
+                linkedInvoice.amountPaid = Math.max(0, linkedInvoice.amountPaid - payment.amountPaid);
+                linkedInvoice.balanceDue = Math.max(0, linkedInvoice.amountDue - linkedInvoice.amountPaid);
+                if (linkedInvoice.balanceDue > 0) {
+                    linkedInvoice.status = INVOICE_STATUS.PENDING;
+                }
+                linkedInvoice.paymentId = undefined;
+                await linkedInvoice.save({ session });
+            }
+        });
 
         res.json({
             success: true,
@@ -389,6 +417,8 @@ exports.deletePayment = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
+    } finally {
+        await session.endSession();
     }
 };
 
@@ -397,7 +427,8 @@ exports.deletePayment = async (req, res, next) => {
  */
 exports.downloadReceipt = async (req, res, next) => {
     try {
-        const payment = await Payment.findById(req.params.id)
+        const lenderId = lenderIdOf(req);
+        const payment = await Payment.findOne({ _id: req.params.id, lenderId })
             .populate('loanId')
             .populate('customerId');
 
@@ -405,10 +436,7 @@ exports.downloadReceipt = async (req, res, next) => {
             return next(new AppError('Payment not found', 404));
         }
 
-        const lender = await Lender.findById(req.user?.lenderId);
-        if (!lender) {
-            return next(new AppError('Lender details not configured', 400));
-        }
+        const lender = await Lender.getLender(lenderId);
 
         console.log('Generating receipt for payment:', payment._id);
         console.log('Payment Method:', payment.paymentMethod);

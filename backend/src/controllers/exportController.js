@@ -1,33 +1,59 @@
 const Customer = require('../models/Customer');
 const Loan = require('../models/Loan');
 const Payment = require('../models/Payment');
+const { lenderIdOf } = require('../utils/tenant');
 
 /**
- * Helper to convert array of objects to CSV string
+ * Escape CSV cell to prevent formula injection and properly quote special characters
  */
-const convertToCSV = (data, fields) => {
-    const header = fields.join(',');
-    const rows = data.map(item => {
-        return fields.map(field => {
-            let val = field.split('.').reduce((obj, key) => (obj && obj[key] !== 'undefined') ? obj[key] : '', item);
-            // Handle dates and escaping commas
-            if (val instanceof Date) val = val.toLocaleDateString();
-            if (typeof val === 'string') val = `"${val.replace(/"/g, '""')}"`;
-            return val;
-        }).join(',');
-    });
-    return [header, ...rows].join('\n');
+const escapeCsvCell = (raw) => {
+    if (raw === null || raw === undefined) return '';
+    let str = raw instanceof Date ? raw.toISOString().split('T')[0] : String(raw);
+    if (/^[=+\-@\t\r]/.test(str)) {
+        str = `'${str}`;
+    }
+    if (/[",\n\r]/.test(str)) {
+        str = `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
 };
+
+const toCsvRow = (doc, fields) => {
+    return (
+        fields
+            .map((field) => {
+                const val = field
+                    .split('.')
+                    .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ''), doc);
+                return escapeCsvCell(val);
+            })
+            .join(',') + '\n'
+    );
+};
+
+async function streamCursorToCsv(res, filename, cursor, fields) {
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.write(fields.join(',') + '\n');
+
+    for await (const doc of cursor) {
+        if (!res.write(toCsvRow(doc, fields))) {
+            await new Promise((resolve) => res.once('drain', resolve));
+        }
+    }
+    res.end();
+}
 
 exports.exportCustomers = async (req, res, next) => {
     try {
-        const customers = await Customer.find().lean();
+        const lenderId = lenderIdOf(req);
         const fields = ['firstName', 'lastName', 'email', 'phone', 'status', 'createdAt'];
-        const csv = convertToCSV(customers, fields);
+        const cursor = Customer.find({ lenderId, isDeleted: { $ne: true } })
+            .select(fields.join(' '))
+            .lean()
+            .cursor();
 
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename=customers_export.csv');
-        res.status(200).send(csv);
+        await streamCursorToCsv(res, 'customers_export.csv', cursor, fields);
     } catch (error) {
         next(error);
     }
@@ -35,17 +61,44 @@ exports.exportCustomers = async (req, res, next) => {
 
 exports.exportLoans = async (req, res, next) => {
     try {
-        const loans = await Loan.find().populate('customerId').lean();
-        const data = loans.map(l => ({
-            ...l,
-            customerName: `${l.customerId?.firstName || ''} ${l.customerId?.lastName || ''}`
-        }));
-        const fields = ['loanNumber', 'customerName', 'principal', 'interestRate', 'tenure', 'monthlyEMI', 'status', 'remainingBalance', 'startDate'];
-        const csv = convertToCSV(data, fields);
+        const lenderId = lenderIdOf(req);
+        const fields = [
+            'loanNumber',
+            'customerId',
+            'principal',
+            'interestRate',
+            'tenure',
+            'monthlyEMI',
+            'status',
+            'remainingBalance',
+            'startDate',
+        ];
+        const cursor = Loan.find({ lenderId, isDeleted: { $ne: true } })
+            .select('loanNumber customerId principal monthlyInterestRate loanDurationMonths monthlyEMI status remainingBalance startDate')
+            .lean()
+            .cursor();
 
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', 'attachment; filename=loans_export.csv');
-        res.status(200).send(csv);
+        res.write(fields.join(',') + '\n');
+
+        for await (const doc of cursor) {
+            const mapped = {
+                loanNumber: doc.loanNumber,
+                customerId: doc.customerId ? String(doc.customerId) : '',
+                principal: doc.principal,
+                interestRate: doc.monthlyInterestRate,
+                tenure: doc.loanDurationMonths,
+                monthlyEMI: doc.monthlyEMI,
+                status: doc.status,
+                remainingBalance: doc.remainingBalance,
+                startDate: doc.startDate,
+            };
+            if (!res.write(toCsvRow(mapped, fields))) {
+                await new Promise((resolve) => res.once('drain', resolve));
+            }
+        }
+        res.end();
     } catch (error) {
         next(error);
     }
@@ -53,18 +106,14 @@ exports.exportLoans = async (req, res, next) => {
 
 exports.exportPayments = async (req, res, next) => {
     try {
-        const payments = await Payment.find().populate('customerId').populate('loanId').lean();
-        const data = payments.map(p => ({
-            ...p,
-            customerName: `${p.customerId?.firstName || ''} ${p.customerId?.lastName || ''}`,
-            loanNumber: p.loanId?.loanNumber || ''
-        }));
-        const fields = ['paymentDate', 'customerName', 'loanNumber', 'amountPaid', 'paymentMethod', 'referenceId', 'notes'];
-        const csv = convertToCSV(data, fields);
+        const lenderId = lenderIdOf(req);
+        const fields = ['paymentDate', 'customerId', 'loanId', 'amountPaid', 'paymentMethod', 'referenceId', 'notes'];
+        const cursor = Payment.find({ lenderId })
+            .select(fields.join(' '))
+            .lean()
+            .cursor();
 
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename=payments_export.csv');
-        res.status(200).send(csv);
+        await streamCursorToCsv(res, 'payments_export.csv', cursor, fields);
     } catch (error) {
         next(error);
     }

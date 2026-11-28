@@ -25,34 +25,37 @@ exports.listCustomers = async (req, res, next) => {
             filter.lenderId = req.user.lenderId;
         }
 
-        // Search filter
-        if (search) {
-            filter.$or = [
-                { firstName: new RegExp(search, 'i') },
-                { lastName: new RegExp(search, 'i') },
-                { email: new RegExp(search, 'i') },
-                { phone: new RegExp(search, 'i') },
-            ];
+        const safePage = Math.max(1, parseInt(page, 10) || PAGINATION.DEFAULT_PAGE);
+        const safeLimit = Math.min(Math.max(1, parseInt(limit, 10) || PAGINATION.DEFAULT_LIMIT), PAGINATION.MAX_LIMIT);
+
+        // Search filter using existing text index
+        let sortOption = sortBy;
+        let projection = undefined;
+        if (search && String(search).trim()) {
+            filter.$text = { $search: String(search).trim() };
+            projection = { score: { $meta: 'textScore' } };
+            sortOption = { score: { $meta: 'textScore' } };
         }
 
         // Status filter
         if (status) filter.status = status;
 
-        const customers = await Customer.find(filter)
-            .sort(sortBy)
-            .limit(Math.min(limit * 1, PAGINATION.MAX_LIMIT))
-            .skip((page - 1) * limit);
-
-        const total = await Customer.countDocuments(filter);
+        const [customers, total] = await Promise.all([
+            Customer.find(filter, projection)
+                .sort(sortOption)
+                .limit(safeLimit)
+                .skip((safePage - 1) * safeLimit),
+            Customer.countDocuments(filter),
+        ]);
 
         res.json({
             success: true,
             customers,
             pagination: {
-                page: Number(page),
-                limit: Number(limit),
+                page: safePage,
+                limit: safeLimit,
                 total,
-                pages: Math.ceil(total / limit),
+                pages: Math.ceil(total / safeLimit),
             },
         });
     } catch (error) {
@@ -90,11 +93,46 @@ exports.getCustomer = async (req, res, next) => {
  */
 exports.createCustomer = async (req, res, next) => {
     try {
-        const { enablePortal, portalPassword, ...customerData } = req.body;
+        const {
+            enablePortal,
+            portalPassword,
+            firstName,
+            lastName,
+            email,
+            phone,
+            address,
+            governmentId,
+            aadhaarNumber,
+            panNumber,
+            bankDetails,
+            notes,
+            signature,
+            photo,
+            status,
+        } = req.body;
+
+        const customerData = {
+            firstName,
+            lastName,
+            email,
+            phone,
+            address,
+            governmentId,
+            aadhaarNumber,
+            panNumber,
+            bankDetails,
+            notes,
+            signature,
+            photo,
+            status,
+        };
+
+        // Remove undefined keys so schema defaults apply cleanly
+        Object.keys(customerData).forEach((k) => customerData[k] === undefined && delete customerData[k]);
 
         // Auto-assign lenderId for data isolation
         if (req.user && req.user.lenderId) {
-            customerData.lenderId = req.user.lenderId;
+            customerData.lenderId = req.user.lenderId._id || req.user.lenderId;
         }
 
         // Handle portal access if requested
@@ -122,11 +160,11 @@ exports.createCustomer = async (req, res, next) => {
  */
 exports.updateCustomer = async (req, res, next) => {
     try {
-        const { enablePortal, portalPassword, ...updateData } = req.body;
+        const { enablePortal, portalPassword } = req.body;
 
         const filter = { _id: req.params.id, isDeleted: { $ne: true } };
         if (req.user && req.user.lenderId) {
-            filter.lenderId = req.user.lenderId;
+            filter.lenderId = req.user.lenderId._id || req.user.lenderId;
         }
 
         // Find customer first to handle password update properly
@@ -135,17 +173,30 @@ exports.updateCustomer = async (req, res, next) => {
             return next(new AppError('Customer not found', 404));
         }
 
-        // Update basic fields
-        Object.assign(customer, updateData);
+        // Explicit whitelist — never allow lenderId, password, isPortalActive, isDeleted, tokenVersion via spread
+        const ALLOWED_CUSTOMER_FIELDS = [
+            'firstName', 'lastName', 'email', 'phone', 'address',
+            'governmentId', 'aadhaarNumber', 'panNumber', 'bankDetails',
+            'notes', 'signature', 'photo', 'status',
+        ];
+        for (const field of ALLOWED_CUSTOMER_FIELDS) {
+            if (req.body[field] !== undefined) {
+                customer[field] = req.body[field];
+            }
+        }
 
-        // Handle portal access changes
-        if (typeof enablePortal !== 'undefined') {
+        // Handle portal access changes explicitly
+        if (typeof enablePortal === 'boolean') {
             customer.isPortalActive = enablePortal;
+            if (!enablePortal) {
+                customer.tokenVersion = (customer.tokenVersion || 0) + 1;
+            }
         }
 
         // Update password only if a new one is provided
         if (portalPassword && portalPassword.length >= 6) {
             customer.password = portalPassword; // Will be hashed by pre-save hook
+            customer.tokenVersion = (customer.tokenVersion || 0) + 1;
         }
 
         await customer.save();

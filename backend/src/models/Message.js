@@ -31,6 +31,10 @@ const messageSchema = new mongoose.Schema(
             type: String,
             enum: ['image', 'pdf', 'document', 'other'],
         },
+        clientMessageId: {
+            type: String,
+            trim: true,
+        },
         read: {
             type: Boolean,
             default: false,
@@ -67,5 +71,10 @@ messageSchema.index({ loanRequestId: 1, createdAt: 1 });
 messageSchema.index({ loanRequestId: 1, senderType: 1, read: 1 });
 // Compound index for fast retrieval of undelivered messages
 messageSchema.index({ loanRequestId: 1, senderType: 1, delivered: 1 });
+// Idempotency index for message retries
+messageSchema.index(
+    { loanRequestId: 1, senderId: 1, clientMessageId: 1 },
+    { unique: true, partialFilterExpression: { clientMessageId: { $type: 'string' } } }
+);
 
 module.exports = mongoose.model('Message', messageSchema);

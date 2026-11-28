@@ -5,7 +5,12 @@ const invoiceSchema = new mongoose.Schema({
     invoiceNumber: {
         type: String,
         required: true,
-        unique: true,
+        index: true,
+    },
+    lenderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Lender',
+        required: true,
         index: true,
     },
     loanId: {
@@ -70,7 +75,12 @@ const invoiceSchema = new mongoose.Schema({
     timestamps: true,
 });
 
-// Compound index
-invoiceSchema.index({ loanId: 1, 'period.year': 1, 'period.month': 1 });
+// Compound & tenant-scoped unique indexes
+invoiceSchema.index(
+    { loanId: 1, 'period.year': 1, 'period.month': 1 },
+    { unique: true, partialFilterExpression: { 'period.year': { $exists: true } } }
+);
+invoiceSchema.index({ lenderId: 1, invoiceNumber: 1 }, { unique: true });
+invoiceSchema.index({ lenderId: 1, status: 1, invoiceDate: -1 });
 
 module.exports = mongoose.model('Invoice', invoiceSchema);

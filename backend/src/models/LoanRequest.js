@@ -83,6 +83,14 @@ loanRequestSchema.index({ customerId: 1, status: 1 });
 loanRequestSchema.index({ lenderId: 1, status: 1 });
 loanRequestSchema.index({ lenderId: 1, status: 1, viewedByLender: 1 });
 loanRequestSchema.index({ guestPhone: 1, status: 1 });
+loanRequestSchema.index(
+    { lenderId: 1, guestPhone: 1 },
+    { unique: true, partialFilterExpression: { status: 'pending', guestPhone: { $type: 'string' } } }
+);
+loanRequestSchema.index(
+    { lenderId: 1, customerId: 1 },
+    { unique: true, partialFilterExpression: { status: 'pending', customerId: { $type: 'objectId' } } }
+);
 
 // Auto-generate trackingToken before save if not set
 loanRequestSchema.pre('save', function (next) {

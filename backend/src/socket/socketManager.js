@@ -13,13 +13,32 @@ const Customer = require('../models/Customer');
 const LoanRequest = require('../models/LoanRequest');
 const Message = require('../models/Message');
 const { JWT_SECRET } = require('../middleware/auth');
+const { isAllowedAttachmentUrl } = require('../utils/urlValidator');
 
-// In-memory map: userId (string) → socketId
+// In-memory map: userId (string) → Set<socketId>
 const userSocketMap = new Map();
 
+function addSocket(userId, socketId) {
+    const key = userId.toString();
+    if (!userSocketMap.has(key)) userSocketMap.set(key, new Set());
+    userSocketMap.get(key).add(socketId);
+}
+
+function removeSocket(userId, socketId) {
+    const key = userId.toString();
+    const set = userSocketMap.get(key);
+    if (!set) return;
+    set.delete(socketId);
+    if (set.size === 0) userSocketMap.delete(key);
+}
+
 const emitToUser = (io, userId, event, data) => {
-    const socketId = userSocketMap.get(userId.toString());
-    if (socketId) io.to(socketId).emit(event, data);
+    if (!io || !userId) return;
+    const sockets = userSocketMap.get(userId.toString());
+    if (!sockets) return;
+    for (const socketId of sockets) {
+        io.to(socketId).emit(event, data);
+    }
 };
 
 /**
@@ -40,12 +59,17 @@ const authenticateSocket = async (socket) => {
 
         if (decoded.role === 'lender') {
             const user = await User.findById(decoded.id).populate('lenderId');
-            if (!user || !user.isActive) throw new Error('Lender account not found or inactive');
+            if (!user || !user.isActive || (decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+                throw new Error('Lender account not found, inactive, or revoked');
+            }
             return { userId: user._id.toString(), role: 'lender', entity: user, isGuest: false };
         } else if (decoded.role === 'customer') {
             const customer = await Customer.findById(decoded.id);
             if (!customer || customer.isDeleted) throw new Error('Customer account not found');
             if (!customer.isPortalActive) throw new Error('Customer portal not activated');
+            if ((decoded.tokenVersion ?? 0) !== (customer.tokenVersion ?? 0)) {
+                throw new Error('Customer session revoked');
+            }
             return { userId: customer._id.toString(), role: 'customer', entity: customer, isGuest: false };
         }
         throw new Error('Unknown role in token');
@@ -157,11 +181,14 @@ const deliverPendingMessages = async (io, currentUser) => {
     }
 };
 
-const handleSendMessage = async ({ io, currentUser, data, callback }) => {
+const handleSendMessage = async ({ io, socket, currentUser, data, callback }) => {
     try {
-        const { loanRequestId, text, fileUrl, fileType } = data || {};
+        const { loanRequestId, text, fileUrl, fileType, clientMessageId } = data || {};
         if (!loanRequestId) throw new Error('loanRequestId is required');
         if (!text && !fileUrl) throw new Error('Message must have text or a file');
+        if (fileUrl && !isAllowedAttachmentUrl(fileUrl)) {
+            throw new Error('Attachment URL is not allowed');
+        }
 
         const loanRequest = await verifyRoomAccess(loanRequestId, currentUser);
         if (loanRequest.status !== 'accepted') {
@@ -173,20 +200,25 @@ const handleSendMessage = async ({ io, currentUser, data, callback }) => {
         let senderName = 'Someone';
 
         if (currentUser.role === 'lender') {
-            // Sender = lender → receiver = customer or guest
             if (loanRequest.customerId) {
                 receiverId = loanRequest.customerId.toString();
             } else {
-                // Guest: their socket userId = loanRequest._id
                 receiverId = loanRequest._id.toString();
             }
             senderName = currentUser.entity.lenderId?.businessName
                 || currentUser.entity.name
                 || 'Lender';
         } else {
-            // Sender = customer or guest → receiver = lender (User account)
-            const lenderUser = await User.findOne({ lenderId: loanRequest.lenderId }).select('_id');
-            receiverId = lenderUser?._id?.toString();
+            // Use cached lenderUserId on socket if resolved during join_room; fallback to lookup
+            let cachedLenderUserId = socket?.data?.lenderUserIdByRequest?.get(loanRequestId);
+            if (!cachedLenderUserId) {
+                const lenderUser = await User.findOne({ lenderId: loanRequest.lenderId }).select('_id').lean();
+                cachedLenderUserId = lenderUser?._id?.toString();
+                if (cachedLenderUserId && socket?.data?.lenderUserIdByRequest) {
+                    socket.data.lenderUserIdByRequest.set(loanRequestId, cachedLenderUserId);
+                }
+            }
+            receiverId = cachedLenderUserId;
 
             if (currentUser.isGuest) {
                 senderName = loanRequest.guestName || 'Guest Customer';
@@ -196,12 +228,18 @@ const handleSendMessage = async ({ io, currentUser, data, callback }) => {
             }
         }
 
-        // Explicit active room check:
-        // Cross-reference userSocketMap with io.sockets.adapter.rooms for this room
-        const receiverSocketId = receiverId ? userSocketMap.get(receiverId) : null;
-        const isReceiverInRoom = Boolean(
-            receiverSocketId && io.sockets?.adapter?.rooms?.get(loanRequestId)?.has(receiverSocketId)
-        );
+        // Check active room membership across all receiver sockets
+        const receiverSockets = receiverId ? userSocketMap.get(receiverId) : null;
+        const roomSet = io.sockets?.adapter?.rooms?.get(loanRequestId);
+        let isReceiverInRoom = false;
+        if (receiverSockets && roomSet) {
+            for (const sid of receiverSockets) {
+                if (roomSet.has(sid)) {
+                    isReceiverInRoom = true;
+                    break;
+                }
+            }
+        }
 
         const now = new Date();
         let delivered = false;
@@ -210,29 +248,44 @@ const handleSendMessage = async ({ io, currentUser, data, callback }) => {
         let readAt = null;
 
         if (isReceiverInRoom) {
-            // Receiver is actively in this room: immediately delivered and seen!
             delivered = true;
             deliveredAt = now;
             read = true;
             readAt = now;
-        } else if (receiverSocketId) {
-            // Receiver is online (connected to socket), but in another room/page: delivered!
+        } else if (receiverSockets && receiverSockets.size > 0) {
             delivered = true;
             deliveredAt = now;
         }
 
-        const message = await Message.create({
-            loanRequestId,
-            senderId: currentUser.userId,
-            senderType: currentUser.role,
-            text: text || undefined,
-            fileUrl: fileUrl || undefined,
-            fileType: fileType || undefined,
-            delivered,
-            deliveredAt,
-            read,
-            readAt,
-        });
+        let message;
+        try {
+            message = await Message.create({
+                loanRequestId,
+                senderId: currentUser.userId,
+                senderType: currentUser.role,
+                text: text || undefined,
+                fileUrl: fileUrl || undefined,
+                fileType: fileType || undefined,
+                clientMessageId: clientMessageId || undefined,
+                delivered,
+                deliveredAt,
+                read,
+                readAt,
+            });
+        } catch (createErr) {
+            if (createErr?.code === 11000 && clientMessageId) {
+                const existing = await Message.findOne({
+                    loanRequestId,
+                    senderId: currentUser.userId,
+                    clientMessageId,
+                });
+                if (existing) {
+                    if (callback) callback({ success: true, message: existing, replayed: true });
+                    return existing;
+                }
+            }
+            throw createErr;
+        }
 
         const payload = {
             _id: message._id,
@@ -296,8 +349,9 @@ const initSocketManager = (io) => {
         // ── Authentication ────────────────────────────────────────────────
         try {
             currentUser = await authenticateSocket(socket);
-            userSocketMap.set(currentUser.userId, socket.id);
+            addSocket(currentUser.userId, socket.id);
             socket.data.user = currentUser;
+            socket.data.lenderUserIdByRequest = new Map();
 
             console.log(`[Socket] Connected: ${currentUser.role}${currentUser.isGuest ? ' (guest)' : ''} ${currentUser.userId} (${socket.id})`);
             socket.emit('authenticated', { userId: currentUser.userId, role: currentUser.role, isGuest: currentUser.isGuest });
@@ -323,6 +377,12 @@ const initSocketManager = (io) => {
                 }
 
                 socket.join(loanRequestId);
+                if (currentUser.role !== 'lender' && !socket.data.lenderUserIdByRequest.has(loanRequestId)) {
+                    const lenderUser = await User.findOne({ lenderId: loanRequest.lenderId }).select('_id').lean();
+                    if (lenderUser) {
+                        socket.data.lenderUserIdByRequest.set(loanRequestId, lenderUser._id.toString());
+                    }
+                }
                 console.log(`[Socket] ${currentUser.role} joined room ${loanRequestId}`);
 
                 // Mark any pending unread messages from the peer as read and delivered
@@ -387,9 +447,20 @@ const initSocketManager = (io) => {
             console.log(`[Socket] ${currentUser.role} left room ${loanRequestId}`);
         });
 
-        // ── Send Message ──────────────────────────────────────────────────
+        // ── Send Message (with per-socket token bucket: 20 msgs / 10s) ────
+        let msgTokens = 20;
+        let lastRefill = Date.now();
         socket.on('send_message', (data, callback) => {
-            handleSendMessage({ io, currentUser, data, callback }).catch(() => {});
+            const now = Date.now();
+            const elapsed = (now - lastRefill) / 1000;
+            msgTokens = Math.min(20, msgTokens + elapsed * 2);
+            lastRefill = now;
+            if (msgTokens < 1) {
+                if (callback) callback({ success: false, message: 'Rate limit exceeded. Slow down.' });
+                return;
+            }
+            msgTokens -= 1;
+            handleSendMessage({ io, socket, currentUser, data, callback }).catch(() => {});
         });
 
 
@@ -406,7 +477,7 @@ const initSocketManager = (io) => {
         // ── Disconnect ────────────────────────────────────────────────────
         socket.on('disconnect', () => {
             if (currentUser) {
-                userSocketMap.delete(currentUser.userId);
+                removeSocket(currentUser.userId, socket.id);
                 console.log(`[Socket] Disconnected: ${currentUser.role} ${currentUser.userId}`);
                 socket.rooms.forEach((room) => {
                     if (room !== socket.id) {

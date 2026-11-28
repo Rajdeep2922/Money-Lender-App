@@ -1,97 +1,171 @@
+const mongoose = require('mongoose');
 const Invoice = require('../models/Invoice');
 const Loan = require('../models/Loan');
 const Lender = require('../models/Lender');
 const { AppError } = require('../middleware/errorHandler');
 const { generateInvoicePDF } = require('../utils/pdfGenerator');
 const { generateDocumentNumber } = require('../utils/formatters');
+const { INVOICE_STATUS } = require('../config/constants');
+const { lenderIdOf } = require('../utils/tenant');
+const { reserveSequenceBlock } = require('../utils/sequence');
 
 /**
  * List all invoices
  */
 exports.listInvoices = async (req, res, next) => {
     try {
-        const { loanId, customerId, status } = req.query;
-        const filter = {};
+        const lenderId = lenderIdOf(req);
+        const { loanId, customerId, status, page = 1, limit = 20 } = req.query;
+        const safePage = Math.max(1, parseInt(page, 10) || 1);
+        const safeLimit = Math.min(Math.max(1, parseInt(limit, 10) || 20), 100);
+
+        const filter = { lenderId };
         if (loanId) filter.loanId = loanId;
         if (customerId) filter.customerId = customerId;
-        if (status) filter.status = status;
+        if (status) {
+            if (!Object.values(INVOICE_STATUS).includes(status)) {
+                return next(new AppError('Invalid invoice status', 400));
+            }
+            filter.status = status;
+        }
 
-        const invoices = await Invoice.find(filter)
-            .populate('loanId', 'loanNumber')
-            .populate('customerId', 'firstName lastName')
-            .sort('-invoiceDate');
+        const [invoices, total] = await Promise.all([
+            Invoice.find(filter)
+                .populate('loanId', 'loanNumber')
+                .populate('customerId', 'firstName lastName')
+                .sort('-invoiceDate')
+                .skip((safePage - 1) * safeLimit)
+                .limit(safeLimit),
+            Invoice.countDocuments(filter),
+        ]);
 
-        res.json({ success: true, invoices });
+        res.json({
+            success: true,
+            invoices,
+            pagination: {
+                page: safePage,
+                limit: safeLimit,
+                total,
+                pages: Math.ceil(total / safeLimit),
+            },
+        });
     } catch (error) {
         next(error);
     }
 };
 
 /**
+ * Generate monthly invoices for a single lender in a constant number of queries
+ */
+async function generateMonthlyInvoicesForLender(lenderId) {
+    const lender = await Lender.getLender(lenderId);
+
+    // Step 1: Load tenant's active loans in one query
+    const loans = await Loan.find({
+        lenderId,
+        status: 'active',
+        isDeleted: { $ne: true },
+        remainingBalance: { $gt: 0 },
+    })
+        .select('_id customerId paymentsReceived amortizationSchedule')
+        .lean();
+
+    if (loans.length === 0) return 0;
+
+    // Step 2: Build candidates in memory
+    const rawCandidates = [];
+    for (const loan of loans) {
+        const nextEmi = loan.amortizationSchedule?.[loan.paymentsReceived];
+        if (!nextEmi) continue;
+        const dueDate = new Date(nextEmi.dueDate);
+        rawCandidates.push({
+            loanId: loan._id,
+            customerId: loan.customerId,
+            dueDate,
+            month: dueDate.getMonth() + 1,
+            year: dueDate.getFullYear(),
+            emi: nextEmi.emi,
+        });
+    }
+
+    if (rawCandidates.length === 0) return 0;
+
+    // Step 3: Fetch existing non-cancelled periods in one query
+    const existing = await Invoice.find({
+        lenderId,
+        loanId: { $in: rawCandidates.map((c) => c.loanId) },
+        status: { $ne: INVOICE_STATUS.CANCELLED },
+    })
+        .select('loanId period')
+        .lean();
+
+    const existingKeys = new Set(
+        existing
+            .filter((inv) => inv.period?.year && inv.period?.month)
+            .map((inv) => `${inv.loanId}:${inv.period.year}-${inv.period.month}`)
+    );
+
+    const candidates = rawCandidates.filter(
+        (c) => !existingKeys.has(`${c.loanId}:${c.year}-${c.month}`)
+    );
+
+    if (candidates.length === 0) return 0;
+
+    // Step 4: Reserve a block of document numbers & bulk upsert inside a transaction
+    const session = await mongoose.startSession();
+    let inserted = 0;
+    try {
+        await session.withTransaction(async () => {
+            const start = await reserveSequenceBlock(`invoice:${lenderId}`, candidates.length, session);
+            const prefix = lender.invoicePrefix || 'INV';
+            const ops = candidates.map((c, i) => ({
+                updateOne: {
+                    filter: {
+                        loanId: c.loanId,
+                        lenderId,
+                        'period.year': c.year,
+                        'period.month': c.month,
+                    },
+                    update: {
+                        $setOnInsert: {
+                            invoiceNumber: generateDocumentNumber(prefix, start - 1 + i),
+                            lenderId,
+                            loanId: c.loanId,
+                            customerId: c.customerId,
+                            amountDue: c.emi,
+                            balanceDue: c.emi,
+                            dueDate: c.dueDate,
+                            period: { month: c.month, year: c.year },
+                            status: INVOICE_STATUS.PENDING,
+                        },
+                    },
+                    upsert: true,
+                },
+            }));
+            const result = await Invoice.bulkWrite(ops, { ordered: false, session });
+            inserted = (result.upsertedCount || 0) + (result.modifiedCount || 0);
+        });
+    } finally {
+        await session.endSession();
+    }
+
+    return inserted;
+}
+
+exports.generateMonthlyInvoicesForLender = generateMonthlyInvoicesForLender;
+
+/**
  * Generate monthly invoices for upcoming EMIs
  */
 exports.generateMonthlyInvoices = async (req, res, next) => {
     try {
-        // Find all active loans with remaining balance
-        const loans = await Loan.find({
-            status: 'active',
-            remainingBalance: { $gt: 0 }
-        });
-
-        let generatedCount = 0;
-        const lender = await Lender.getLender(req.user?.lenderId);
-
-        for (const loan of loans) {
-            // Get the next due EMI from amortization schedule
-            const nextEmiIndex = loan.paymentsReceived;
-            const nextEmi = loan.amortizationSchedule[nextEmiIndex];
-
-            if (!nextEmi) continue; // All EMIs paid
-
-            const dueDate = new Date(nextEmi.dueDate);
-            const month = dueDate.getMonth() + 1;
-            const year = dueDate.getFullYear();
-
-            // Check if invoice already exists for this loan and period
-            const existingInvoice = await Invoice.findOne({
-                loanId: loan._id,
-                'period.month': month,
-                'period.year': year
-            });
-
-            if (!existingInvoice) {
-                // Find the last invoice to determine the next number safely
-                const lastInvoice = await Invoice.findOne().sort({ invoiceNumber: -1 });
-                let nextCount = 1;
-
-                if (lastInvoice && lastInvoice.invoiceNumber) {
-                    const parts = lastInvoice.invoiceNumber.split('-');
-                    if (parts.length === 3) {
-                        nextCount = parseInt(parts[2], 10) + 1;
-                    }
-                }
-
-                const invoiceNumber = generateDocumentNumber(lender?.invoicePrefix || 'INV', nextCount - 1); // generateDocumentNumber adds 1
-
-                const invoice = new Invoice({
-                    invoiceNumber,
-                    loanId: loan._id,
-                    customerId: loan.customerId,
-                    amountDue: nextEmi.emi,
-                    balanceDue: nextEmi.emi,
-                    dueDate: dueDate,
-                    period: { month, year },
-                    status: 'pending'
-                });
-                await invoice.save();
-                generatedCount++;
-            }
-        }
+        const lenderId = lenderIdOf(req);
+        const generatedCount = await generateMonthlyInvoicesForLender(lenderId);
 
         res.json({
             success: true,
             message: `Generated ${generatedCount} invoices`,
-            count: generatedCount
+            count: generatedCount,
         });
     } catch (error) {
         next(error);
@@ -103,16 +177,17 @@ exports.generateMonthlyInvoices = async (req, res, next) => {
  */
 exports.downloadInvoice = async (req, res, next) => {
     try {
-        const invoice = await Invoice.findById(req.params.id)
+        const lenderId = lenderIdOf(req);
+        const invoice = await Invoice.findOne({ _id: req.params.id, lenderId })
             .populate('loanId')
             .populate('customerId', 'firstName lastName email phone address signature')
             .populate('paymentId'); // Populate payment details including bank info
 
-        const lender = await Lender.findById(req.user?.lenderId);
-
         if (!invoice) {
             return next(new AppError('Invoice not found', 404));
         }
+
+        const lender = await Lender.getLender(lenderId);
 
         // Restrict Invoice/Receipt generation to Paid amounts only
         if (invoice.amountPaid <= 0) {
@@ -132,11 +207,16 @@ exports.downloadInvoice = async (req, res, next) => {
 };
 
 /**
- * Delete invoice
+ * Soft delete invoice (sets status to cancelled for audit trail)
  */
 exports.deleteInvoice = async (req, res, next) => {
     try {
-        const invoice = await Invoice.findByIdAndDelete(req.params.id);
+        const lenderId = lenderIdOf(req);
+        const invoice = await Invoice.findOneAndUpdate(
+            { _id: req.params.id, lenderId, status: { $ne: INVOICE_STATUS.CANCELLED } },
+            { $set: { status: INVOICE_STATUS.CANCELLED } },
+            { new: true }
+        );
 
         if (!invoice) {
             return next(new AppError('Invoice not found', 404));
@@ -144,7 +224,7 @@ exports.deleteInvoice = async (req, res, next) => {
 
         res.json({
             success: true,
-            message: 'Invoice deleted successfully',
+            message: 'Invoice cancelled successfully',
         });
     } catch (error) {
         next(error);

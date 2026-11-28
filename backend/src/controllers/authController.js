@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Lender = require('../models/Lender');
 const Customer = require('../models/Customer');
@@ -12,6 +13,7 @@ const { generateToken, generateCustomerToken } = require('../middleware/auth');
  * Customers cannot self-register - their credentials are created by lenders.
  */
 const register = async (req, res, next) => {
+    const session = await mongoose.startSession();
     try {
         const { username, email, password, businessName, ownerName, phone } = req.body;
 
@@ -22,17 +24,10 @@ const register = async (req, res, next) => {
             });
         }
 
-        // Check if email already registered
-        const existingEmail = await User.findOne({ email: email.toLowerCase().trim() });
-        if (existingEmail) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email already registered',
-            });
-        }
+        const normalizedEmail = email.toLowerCase().trim();
 
-        // Also check if email exists as a customer (prevent conflicts)
-        const existingCustomer = await Customer.findOne({ email: email.toLowerCase().trim(), isDeleted: false });
+        // Cross-collection check: prevent customer email from registering as lender
+        const existingCustomer = await Customer.findOne({ email: normalizedEmail, isDeleted: false });
         if (existingCustomer) {
             return res.status(400).json({
                 success: false,
@@ -40,69 +35,48 @@ const register = async (req, res, next) => {
             });
         }
 
-        // Derive unique username if not provided
         let finalUsername = (username || '').trim();
-        if (finalUsername) {
-            const existingUsername = await User.findOne({ username: finalUsername });
-            if (existingUsername) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Username already taken',
-                });
-            }
-        } else {
-            // Auto-generate sanitized unique username from email
-            const baseHandle = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') || 'lender';
+        if (!finalUsername) {
+            const baseHandle = normalizedEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') || 'lender';
             finalUsername = baseHandle.length < 3 ? `${baseHandle}_usr` : baseHandle;
-            let candidate = finalUsername;
-            let isUnique = false;
-            let attempts = 0;
-            while (!isUnique && attempts < 10) {
-                const found = await User.findOne({ username: candidate });
-                if (!found) {
-                    isUnique = true;
-                    finalUsername = candidate;
-                } else {
-                    attempts++;
-                    const suffix = Math.floor(100 + Math.random() * 900);
-                    candidate = `${baseHandle.slice(0, 15)}_${suffix}`;
-                }
-            }
         }
 
-        // Create lender profile
-        const lender = await Lender.create({
-            businessName: businessName || `${finalUsername}'s Business`,
-            ownerName: ownerName || finalUsername,
-            email: email.toLowerCase().trim(),
-            phone: phone || '+91-0000000000',
-            address: {
-                street: '',
-                city: '',
-                state: '',
-                country: 'India',
-            },
-        });
+        let createdUser;
+        await session.withTransaction(async () => {
+            const [lender] = await Lender.create([{
+                businessName: businessName || `${finalUsername}'s Business`,
+                ownerName: ownerName || finalUsername,
+                email: normalizedEmail,
+                phone: phone || '+91-0000000000',
+                address: {
+                    street: '',
+                    city: '',
+                    state: '',
+                    country: 'India',
+                },
+            }], { session });
 
-        // Create user with lender reference
-        const user = await User.create({
-            username: finalUsername,
-            email: email.toLowerCase().trim(),
-            password,
-            lenderId: lender._id,
+            const [user] = await User.create([{
+                username: finalUsername,
+                email: normalizedEmail,
+                password,
+                lenderId: lender._id,
+            }], { session });
+
+            createdUser = user;
         });
 
         // Generate token
-        const token = generateToken(user._id);
+        const token = generateToken(createdUser._id, createdUser.tokenVersion);
 
         res.status(201).json({
             success: true,
             message: 'Registration successful',
             data: {
                 user: {
-                    id: user._id,
-                    username: user.username,
-                    email: user.email,
+                    id: createdUser._id,
+                    username: createdUser.username,
+                    email: createdUser.email,
                     role: 'lender',
                 },
                 token,
@@ -110,7 +84,16 @@ const register = async (req, res, next) => {
             },
         });
     } catch (error) {
+        if (error?.code === 11000) {
+            const key = Object.keys(error.keyPattern || error.keyValue || {})[0];
+            if (key === 'username') {
+                return res.status(409).json({ success: false, message: 'Username already taken' });
+            }
+            return res.status(400).json({ success: false, message: 'Email already registered' });
+        }
         next(error);
+    } finally {
+        await session.endSession();
     }
 };
 
@@ -176,7 +159,7 @@ const login = async (req, res, next) => {
             await user.save({ validateBeforeSave: false });
 
             // Generate lender token
-            const token = generateToken(user._id);
+            const token = generateToken(user._id, user.tokenVersion);
 
             return res.json({
                 success: true,
@@ -237,7 +220,7 @@ const login = async (req, res, next) => {
             await customer.save({ validateBeforeSave: false });
 
             // Generate customer token
-            const token = generateCustomerToken(customer._id);
+            const token = generateCustomerToken(customer._id, customer.tokenVersion);
 
             return res.json({
                 success: true,
@@ -303,8 +286,10 @@ const getMe = async (req, res, next) => {
  */
 const logout = async (req, res, next) => {
     try {
-        // JWT is stateless, so we just send success
-        // Client should remove the token
+        // Increment tokenVersion to revoke existing JWTs for this user
+        if (req.user?._id) {
+            await User.findByIdAndUpdate(req.user._id, { $inc: { tokenVersion: 1 } });
+        }
         res.json({
             success: true,
             message: 'Logged out successfully',

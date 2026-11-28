@@ -18,12 +18,13 @@ const protectBoth = async (req, res, next) => {
     // ── Mode 1: trackingToken header (guest) ────────────────────────────
     const trackingToken = req.headers['x-tracking-token'];
     if (trackingToken) {
-        // Quick existence check — full validation happens inside verifyAcceptedAccess
-        const exists = await LoanRequest.exists({ trackingToken });
-        if (!exists) {
+        // Load full LoanRequest once and attach so controllers avoid duplicate queries
+        const loanReq = await LoanRequest.findOne({ trackingToken });
+        if (!loanReq) {
             return res.status(401).json({ success: false, message: 'Invalid tracking token' });
         }
         req.guestTrackingToken = trackingToken;
+        req.loanRequest = loanReq;
         return next();
     }
 
